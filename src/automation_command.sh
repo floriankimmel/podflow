@@ -30,13 +30,13 @@ sudo=$(op item get "sudo" --format json | jq -r '. | .fields | .[] | select(.lab
 
 if ! [[ -n "$skipFtp" ]]; then
     echo "Upload episode to FTP Server"
-    lep upload-ftp --file $episode
+    lep ftp --file $episode
     echo "Upload patreon episode to FTP Server"
-    lep upload-ftp --file $episode_patreon
+    lep ftp --file $episode_patreon
     echo "Upload cover to FTP Server"
-    lep upload-ftp --file $cover
+    lep ftp --file $cover
     echo "Upload youtube cover to FTP Server"
-    lep upload-ftp --file $coverYoutube 
+    lep ftp --file $coverYoutube 
 fi
 
 if ! [[ -n "$skipAws" ]]; then
@@ -81,10 +81,11 @@ fi
 if ! [[ -n "$skipBlogpost" ]]; then
     echo "Create Episode on Website"
 
-    lep create-blogpost \
+    lep blogpost \
         --number $postNumber \
         --title $postTitle \
         --publish_date $postDate \
         --slug $title
 
 fi
+

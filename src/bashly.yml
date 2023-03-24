@@ -3,9 +3,8 @@ help: Manage the laufendentdecken podcast via terminal
 version: 1.0.0
 
 commands:
-- name: upload-ftp  
-  alias: uf
-  help: Upload file to self hosted ftp  
+- name:  ftp  
+  help: Upload file to self hosted ftp server 
 
   flags:
   - long: --file
@@ -14,8 +13,7 @@ commands:
     required: true
     help: File to upload
 
-- name: upload
-  alias: up
+- name: automation
   help: Upload latest episode and start automatic post processing workflow 
 
   flags:
@@ -23,7 +21,7 @@ commands:
     short: -m
     arg: m4a
     required: true
-    help: Episode to upload as m4a
+    help: Episode as m4a
 
   - long: --skip-ftp  
     help: Skip upload to FTP server  
@@ -81,7 +79,7 @@ commands:
   examples:
     - lep auphonic --production_name episode1 --preset "123823" --cover_url "http://url" --file episode1.m4a --slug episode1 
 
-- name: create-blogpost
+- name: blogpost
   alias: cb
   help: Create wordpress blogpost on http://laufendentdecken-podcast.at
 
