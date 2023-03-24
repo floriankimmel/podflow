@@ -26,19 +26,17 @@ baseUrl="https://rssfeed.laufendentdecken-podcast.at/data/"
 coverUrl="$baseUrl$cover"
 coverUrlYoutube="$baseUrl$coverYoutube"
 
-server_pwd=$(op item get "LEP_FTP" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
 sudo=$(op item get "sudo" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
-server_username=$(op item get "LEP_FTP" --format json | jq -r '. | .fields | .[] | select(.label=="username") | .value')
 
 if ! [[ -n "$skipFtp" ]]; then
     echo "Upload episode to FTP Server"
-    curl --user $server_username:$server_pwd --upload-file $episode ftp://rssfeed.laufendentdecken-podcast.at
+    lep upload-ftp --file $episode
     echo "Upload patreon episode to FTP Server"
-    curl --user $server_username:$server_pwd --upload-file $episode_patreon ftp://rssfeed.laufendentdecken-podcast.at
+    lep upload-ftp --file $episode_patreon
     echo "Upload cover to FTP Server"
-    curl --user $server_username:$server_pwd --upload-file $cover ftp://rssfeed.laufendentdecken-podcast.at
+    lep upload-ftp --file $cover
     echo "Upload youtube cover to FTP Server"
-    curl --user $server_username:$server_pwd --upload-file $coverYoutube ftp://rssfeed.laufendentdecken-podcast.at
+    lep upload-ftp --file $coverYoutube 
 fi
 
 if ! [[ -n "$skipAws" ]]; then

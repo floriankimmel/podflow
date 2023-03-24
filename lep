@@ -34,6 +34,7 @@ lep_usage() {
   echo
   # :command.usage_commands
   printf "%s\n" "Commands:"
+  printf "  %s   Upload file to self hosted ftp\n" "upload-ftp     "
   printf "  %s   Upload latest episode and start automatic post processing workflow\n" "upload         "
   printf "  %s   Start new auphonic production\n" "auphonic       "
   printf "  %s   Create wordpress blogpost on http://laufendentdecken-podcast.at\n" "create-blogpost"
@@ -49,6 +50,44 @@ lep_usage() {
     echo
     printf "  %s\n" "--version, -v"
     printf "    Show version number\n"
+    echo
+
+  fi
+}
+
+# :command.usage
+lep_upload_ftp_usage() {
+  if [[ -n $long_usage ]]; then
+    printf "lep upload-ftp - Upload file to self hosted ftp\n"
+    echo
+
+  else
+    printf "lep upload-ftp - Upload file to self hosted ftp\n"
+    echo
+
+  fi
+
+  printf "Alias: uf\n"
+  echo
+
+  printf "%s\n" "Usage:"
+  printf "  lep upload-ftp [OPTIONS]\n"
+  printf "  lep upload-ftp --help | -h\n"
+  echo
+
+  # :command.long_usage
+  if [[ -n $long_usage ]]; then
+    printf "%s\n" "Options:"
+
+    # :command.usage_flags
+    # :flag.usage
+    printf "  %s\n" "--file, -f FILE (required)"
+    printf "    File to upload\n"
+    echo
+
+    # :command.usage_fixed_flags
+    printf "  %s\n" "--help, -h"
+    printf "    Show this help\n"
     echo
 
   fi
@@ -349,6 +388,18 @@ send_completions() {
 
 # :command.command_functions
 # :command.function
+lep_upload_ftp_command() {
+  # src/upload_ftp_command.sh
+  file=${args[--file]}
+
+  server_pwd=$(op item get "LEP_FTP" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
+  server_username=$(op item get "LEP_FTP" --format json | jq -r '. | .fields | .[] | select(.label=="username") | .value')
+
+  curl --user $server_username:$server_pwd --upload-file $file ftp://rssfeed.laufendentdecken-podcast.at
+
+}
+
+# :command.function
 lep_upload_command() {
   # src/upload_command.sh
   episode=${args[--m4a]}
@@ -379,19 +430,18 @@ lep_upload_command() {
   coverUrl="$baseUrl$cover"
   coverUrlYoutube="$baseUrl$coverYoutube"
 
-  server_pwd=$(op item get "LEP_FTP" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
   sudo=$(op item get "sudo" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
-  server_username=$(op item get "LEP_FTP" --format json | jq -r '. | .fields | .[] | select(.label=="username") | .value')
 
   if ! [[ -n "$skipFtp" ]]; then
       echo "Upload episode to FTP Server"
-      curl --user $server_username:$server_pwd --upload-file $episode ftp://rssfeed.laufendentdecken-podcast.at
+      lep upload-ftp --file $episode
       echo "Upload patreon episode to FTP Server"
-      curl --user $server_username:$server_pwd --upload-file $episode_patreon ftp://rssfeed.laufendentdecken-podcast.at
+      lep upload-ftp --file $episode_patreon
       echo "Upload cover to FTP Server"
-      curl --user $server_username:$server_pwd --upload-file $cover ftp://rssfeed.laufendentdecken-podcast.at
+      lep upload-ftp --file $cover
       echo "Upload youtube cover to FTP Server"
-      curl --user $server_username:$server_pwd --upload-file $coverYoutube ftp://rssfeed.laufendentdecken-podcast.at
+      lep upload-ftp --file $coverYoutube
+
   fi
 
   if ! [[ -n "$skipAws" ]]; then
@@ -555,6 +605,13 @@ parse_requirements() {
   case $action in
     -*) ;;
 
+    upload-ftp | uf)
+      action="upload-ftp"
+      shift
+      lep_upload_ftp_parse_requirements "$@"
+      shift $#
+      ;;
+
     upload | up)
       action="upload"
       shift
@@ -609,6 +666,70 @@ parse_requirements() {
 
     esac
   done
+
+}
+
+# :command.parse_requirements
+lep_upload_ftp_parse_requirements() {
+  # :command.fixed_flags_filter
+  while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+      --help | -h)
+        long_usage=yes
+        lep_upload_ftp_usage
+        exit
+        ;;
+
+      *)
+        break
+        ;;
+
+    esac
+  done
+
+  # :command.command_filter
+  action="upload-ftp"
+
+  # :command.parse_requirements_while
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+      # :flag.case
+      --file | -f)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+
+          args['--file']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--file requires an argument: --file, -f FILE" >&2
+          exit 1
+        fi
+        ;;
+
+      -?*)
+        printf "invalid option: %s\n" "$key" >&2
+        exit 1
+        ;;
+
+      *)
+        # :command.parse_requirements_case
+        # :command.parse_requirements_case_simple
+        printf "invalid argument: %s\n" "$key" >&2
+        exit 1
+
+        ;;
+
+    esac
+  done
+
+  # :command.required_flags_filter
+  if [[ -z ${args['--file']+x} ]]; then
+    printf "missing required flag: --file, -f FILE\n" >&2
+    exit 1
+  fi
 
 }
 
@@ -997,6 +1118,7 @@ run() {
   parse_requirements "${input[@]}"
 
   case "$action" in
+    "upload-ftp") lep_upload_ftp_command ;;
     "upload") lep_upload_command ;;
     "auphonic") lep_auphonic_command ;;
     "create-blogpost") lep_create_blogpost_command ;;

@@ -3,6 +3,17 @@ help: Manage the laufendentdecken podcast via terminal
 version: 1.0.0
 
 commands:
+- name: upload-ftp  
+  alias: uf
+  help: Upload file to self hosted ftp  
+
+  flags:
+  - long: --file
+    short: -f
+    arg: file
+    required: true
+    help: File to upload
+
 - name: upload
   alias: up
   help: Upload latest episode and start automatic post processing workflow 
