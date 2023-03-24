@@ -326,7 +326,6 @@ send_completions() {
 # :command.function
 lep_upload_command() {
   # src/upload_command.sh
-  inspect_args
   episode=${args[--m4a]}
   echo $episode
 
@@ -409,10 +408,6 @@ lep_upload_command() {
 # :command.function
 lep_auphonic_command() {
   # src/auphonic_command.sh
-  echo "# this file is located in 'src/auphonic_command.sh'"
-  echo "# code for 'lep auphonic' goes here"
-  echo "# you can edit it freely and regenerate (it will not be overwritten)"
-  inspect_args
   title=${args[--slug]}
   episode=${args[--file]}
   coverUrl=${args[--cover_url]}
@@ -463,8 +458,6 @@ lep_auphonic_command() {
 # :command.function
 lep_create_blogpost_command() {
   # src/create_blogpost_command.sh
-  inspect_args
-
   postNumber=${args[--number]}
   postTitle=${args[--title]}
   postDate=${args[--publish_date]}

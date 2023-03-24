@@ -1,4 +1,3 @@
-inspect_args
 episode=${args[--m4a]}
 echo $episode
 

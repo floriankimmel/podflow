@@ -1,5 +1,3 @@
-inspect_args
-
 postNumber=${args[--number]}
 postTitle=${args[--title]}
 postDate=${args[--publish_date]}

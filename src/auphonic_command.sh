@@ -1,7 +1,3 @@
-echo "# this file is located in 'src/auphonic_command.sh'"
-echo "# code for 'lep auphonic' goes here"
-echo "# you can edit it freely and regenerate (it will not be overwritten)"
-inspect_args
 title=${args[--slug]}
 episode=${args[--file]}
 coverUrl=${args[--cover_url]}
@@ -47,7 +43,3 @@ do
     echo -ne "Auphonic status: $status_string                         \r"
     sleep 2
 done
-
-
-
-
