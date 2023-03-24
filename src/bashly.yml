@@ -14,6 +14,21 @@ commands:
     required: true
     help: Episode to upload as m4a
 
+  - long: --skip-ftp  
+    help: Skip upload to FTP server  
+
+  - long: --skip-aws  
+    help: Skip upload to aws
+
+  - long: --skip-auphonic   
+    help: Skip upload to Auphonic 
+
+  - long: --skip-patreon 
+    help: Skip download from patreon
+
+  - long: --skip-blogpost   
+    help: Skip create blogpost
+
   examples:
   - lep upload --m4a episode.m4a
 
