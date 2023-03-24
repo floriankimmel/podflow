@@ -20,7 +20,7 @@ json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
      -F "track=$title" \
      -F "chapters=$chapters" \
      -F "input_file=$episode" \
-     -F "image =$coverUrl"
+     -F "image =$coverUrl" \
      -F "action=start")
 
 
