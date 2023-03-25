@@ -3,6 +3,22 @@ help: Manage the laufendentdecken podcast via terminal
 version: 1.0.0
 
 commands:
+- name: youtube
+  help: Configure youtube video
+
+  flags:
+  - long: --title
+    short: -t
+    arg: title    
+    required: true
+    help: Episode Title
+
+  - long: --publish_date
+    short: -p
+    arg: publish_date    
+    required: true
+    help: Publish Date
+
 - name:  ftp  
   help: Upload file to self hosted ftp server 
 

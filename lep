@@ -34,6 +34,7 @@ lep_usage() {
   echo
   # :command.usage_commands
   printf "%s\n" "Commands:"
+  printf "  %s   Configure youtube video\n" "youtube   "
   printf "  %s   Upload file to self hosted ftp server\n" "ftp       "
   printf "  %s   Upload latest episode and start automatic post processing workflow\n" "automation"
   printf "  %s   Start new auphonic production\n" "auphonic  "
@@ -50,6 +51,46 @@ lep_usage() {
     echo
     printf "  %s\n" "--version, -v"
     printf "    Show version number\n"
+    echo
+
+  fi
+}
+
+# :command.usage
+lep_youtube_usage() {
+  if [[ -n $long_usage ]]; then
+    printf "lep youtube - Configure youtube video\n"
+    echo
+
+  else
+    printf "lep youtube - Configure youtube video\n"
+    echo
+
+  fi
+
+  printf "%s\n" "Usage:"
+  printf "  lep youtube [OPTIONS]\n"
+  printf "  lep youtube --help | -h\n"
+  echo
+
+  # :command.long_usage
+  if [[ -n $long_usage ]]; then
+    printf "%s\n" "Options:"
+
+    # :command.usage_flags
+    # :flag.usage
+    printf "  %s\n" "--title, -t TITLE (required)"
+    printf "    Episode Title\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "--publish_date, -p PUBLISH_DATE (required)"
+    printf "    Publish Date\n"
+    echo
+
+    # :command.usage_fixed_flags
+    printf "  %s\n" "--help, -h"
+    printf "    Show this help\n"
     echo
 
   fi
@@ -335,6 +376,72 @@ inspect_args() {
 
 # :command.command_functions
 # :command.function
+lep_youtube_command() {
+  # src/youtube_command.sh
+  #!/bin/bash
+
+  API_KEY=$(op item get "YoutubeApiKey" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
+
+  # Set the title of the video you want to search for
+  local string="LEP#125"
+
+  local length="${#string}"
+  local result=''
+
+  for ((i = 0; i < length; i++)); do
+      local char="${string:i:1}"
+      case $char in
+          [a-zA-Z0-9.~_-])
+              result+="$char"
+              ;;
+          *)
+              printf -v hex '%%%02X' "'$char"
+              result+="$hex"
+              ;;
+      esac
+  done
+
+  # Send a request to the YouTube Data API to search for the video
+  JSON=$(curl -s "https://www.googleapis.com/youtube/v3/search?key=$API_KEY&q=$result&part=id&part=snippet&maxResults=1&type=video")
+
+  # Parse the JSON response to extract the video ID
+  VIDEO_ID=$(echo "$JSON" | jq -r '.items[0].id.videoId')
+
+  # Print the video ID
+  echo "The video ID for \"$result\" is: $VIDEO_ID"
+
+  # Set the necessary scopes for the API request
+  SCOPES="https://www.googleapis.com/auth/youtube.force-ssl"
+
+  # Set your API key file path and application name
+  API_KEY_FILE="/Users/fkimmel/Dropbox/Tresor/key.json"
+  APPLICATION_NAME="CLI"
+
+  # Get the OAuth 2.0 access token
+  ACCESS_TOKEN=$(google-oauthlib-tool --client-secrets $API_KEY_FILE \
+                    --scope $SCOPES \
+                    --save \
+                    --headless \
+                    | grep access_token \
+                    | cut -d' ' -f2)
+
+  DESCRIPTION="LEP#125 - Wir zwei allein heut Nacht"
+  PUBLISH_DATE="2021-11-12T09:00:00.000Z"
+
+  echo $ACCESS_TOKEN
+
+  # Construct the request body
+  REQUEST_BODY=$(jq -n --arg desc "$DESCRIPTION" --arg date "$PUBLISH_DATE" '{snippet: {description: $desc, publishedAt: $date}}')
+
+  # Make the API request to update the video
+  curl --request PUT "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=$VIDEO_ID" \
+      --header "Authorization: Bearer $ACCESS_TOKEN" \
+      --header "Content-Type: application/json" \
+      --data "$REQUEST_BODY"
+
+}
+
+# :command.function
 lep_ftp_command() {
   # src/ftp_command.sh
   file=${args[--file]}
@@ -565,6 +672,13 @@ parse_requirements() {
   case $action in
     -*) ;;
 
+    youtube)
+      action="youtube"
+      shift
+      lep_youtube_parse_requirements "$@"
+      shift $#
+      ;;
+
     ftp)
       action="ftp"
       shift
@@ -626,6 +740,89 @@ parse_requirements() {
 
     esac
   done
+
+}
+
+# :command.parse_requirements
+lep_youtube_parse_requirements() {
+  # :command.fixed_flags_filter
+  while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+      --help | -h)
+        long_usage=yes
+        lep_youtube_usage
+        exit
+        ;;
+
+      *)
+        break
+        ;;
+
+    esac
+  done
+
+  # :command.command_filter
+  action="youtube"
+
+  # :command.parse_requirements_while
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+      # :flag.case
+      --title | -t)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+
+          args['--title']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--title requires an argument: --title, -t TITLE" >&2
+          exit 1
+        fi
+        ;;
+
+      # :flag.case
+      --publish_date | -p)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+
+          args['--publish_date']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--publish_date requires an argument: --publish_date, -p PUBLISH_DATE" >&2
+          exit 1
+        fi
+        ;;
+
+      -?*)
+        printf "invalid option: %s\n" "$key" >&2
+        exit 1
+        ;;
+
+      *)
+        # :command.parse_requirements_case
+        # :command.parse_requirements_case_simple
+        printf "invalid argument: %s\n" "$key" >&2
+        exit 1
+
+        ;;
+
+    esac
+  done
+
+  # :command.required_flags_filter
+  if [[ -z ${args['--title']+x} ]]; then
+    printf "missing required flag: --title, -t TITLE\n" >&2
+    exit 1
+  fi
+  if [[ -z ${args['--publish_date']+x} ]]; then
+    printf "missing required flag: --publish_date, -p PUBLISH_DATE\n" >&2
+    exit 1
+  fi
 
 }
 
@@ -1094,6 +1291,7 @@ run() {
   before_hook
 
   case "$action" in
+    "youtube") lep_youtube_command ;;
     "ftp") lep_ftp_command ;;
     "automation") lep_automation_command ;;
     "auphonic") lep_auphonic_command ;;
