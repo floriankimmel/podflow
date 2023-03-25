@@ -38,6 +38,7 @@ commands:
     arg: m4a
     required: true
     help: Episode as m4a
+    validate: file_exists
 
   - long: --skip-ftp  
     help: Skip upload to FTP server  

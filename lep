@@ -920,6 +920,11 @@ lep_automation_parse_requirements() {
 
         # :flag.case_arg
         if [[ -n ${2+x} ]]; then
+          # :flag.validations
+          if [[ -n $(validate_file_exists "$2") ]]; then
+            printf "validation error in %s:\n%s\n" "--m4a, -m M4A" "$(validate_file_exists "$2")" >&2
+            exit 1
+          fi
 
           args['--m4a']="$2"
           shift
