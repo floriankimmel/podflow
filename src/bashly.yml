@@ -76,6 +76,9 @@ commands:
     required: true
     help: Slug of the auphonic production
 
+  - long: --no-start
+    help: Dont automatically start the auphonic production
+
   examples:
     - lep auphonic --production_name episode1 --preset "123823" --cover_url "http://url" --file episode1.m4a --slug episode1 
 

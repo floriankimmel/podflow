@@ -3,15 +3,23 @@ episode=${args[--file]}
 coverUrl=${args[--cover_url]}
 auphonicTitle=${args[--production_name]}
 preset=${args[--preset]}
+noStart=${args[--no_start]}
 
 chapters=$(<"$title".chapters.txt)
 
 auphonic_pwd=$(op item get "Auphonic" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
 auphonic_username=$( op item get "Auphonic" --format json | jq -r '. | .fields | .[] | select(.purpose=="USERNAME") | .value')
 
-echo \n
-echo "Start $auphonicTitle Upload"
 
+action="start"
+
+# If no start is set, we just want to save the production
+if [[ -z "$noStart" ]]; then
+    action="save"
+fi
+
+echo
+echo "Create $auphonicTitle Production"
 json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
      -u $auphonic_username:$auphonic_pwd \
      -F "preset=$preset" \
@@ -21,25 +29,30 @@ json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
      -F "chapters=$chapters" \
      -F "input_file=$episode" \
      -F "image =$coverUrl" \
-     -F "action=start")
+     -F "action=$action")
 
+# Only query the status if we started the production
+if [[ -n "$noStart" ]]; then
+    echo "Production started"
+    content=$(echo $json | jq -r ' . | "\(.data.status_string):\(.data.uuid)"')
+    IFS=':' read -ra response <<< "$content"
 
-content=$(echo $json | jq -r ' . | "\(.data.status_string):\(.data.uuid)"')
-IFS=':' read -ra response <<< "$content"
+    status_string=${response[0]}
+    uuid=${response[1]}
 
-status_string=${response[0]}
-uuid=${response[1]}
+    echo "UUID: $uuid"
+    echo -ne "Auphonic status: $status_string \r"
 
-echo "UUID: $uuid"
-echo -ne "Auphonic status: $status_string \r"
+    while [[ $status_string != "Done"  ]]
+    do
+        json=$(curl -s -X GET https://auphonic.com/api/production/$uuid.json \
+            -u $auphonic_username:$auphonic_pwd) 
 
-while [[ $status_string != "Done"  ]]
-do
-    json=$(curl -s -X GET https://auphonic.com/api/production/$uuid.json \
-        -u $auphonic_username:$auphonic_pwd) 
+        status_string=$(echo $json | jq -r ' . | .data.status_string')
 
-    status_string=$(echo $json | jq -r ' . | .data.status_string')
-
-    echo -ne "Auphonic status: $status_string                         \r"
-    sleep 2
-done
+        echo -ne "Auphonic status: $status_string                         \r"
+        sleep 2
+    done
+else
+    echo "Production $auphonicTitle saved"
+fi
