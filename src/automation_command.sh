@@ -25,6 +25,7 @@ coverUrlYoutube="$baseUrl$coverYoutube"
 sudo=$(op item get "sudo" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
 
 if [[ -z "$skipFtp" ]]; then
+    echo
     echo "Upload episode to FTP Server"
     lep ftp --file $episode
     echo "Upload patreon episode to FTP Server"
@@ -36,6 +37,7 @@ if [[ -z "$skipFtp" ]]; then
 fi
 
 if [[ -z "$skipAws" ]]; then
+    echo
     echo "Backup to S3"
 
     aws s3 cp $episode s3://laufendentdecken-podcast/
@@ -70,11 +72,13 @@ if [[ -z "$skipAuphonic" ]]; then
 fi
 
 if [[ -z "$skipPatreon" ]]; then
+    echo
     echo "Download Patreon again to be able to upload it to the server"
     curl https://rssfeed.laufendentdecken-podcast.at/data/$title_patreon.mp3 --output ~/Downloads/$title_patreon.mp3
 fi
 
 if [[ -z "$skipBlogpost" ]]; then
+    echo
     echo "Create Episode on Website"
 
     lep blogpost \
