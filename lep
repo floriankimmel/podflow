@@ -356,10 +356,6 @@ lep_automation_command() {
   skipPatreon=${args[--skip-patreon]}
   skipBlogpost=${args[--skip-blogpost]}
 
-  echo $episode
-
-  op signin --account my.1password.com
-
   read -p "Episode Nummer: " postNumber
   read -p "Episode Titel: " postTitle
   read -p "Release (YYYY-MM-DD): " postDate
@@ -379,7 +375,7 @@ lep_automation_command() {
 
   sudo=$(op item get "sudo" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
 
-  if ! [[ -n "$skipFtp" ]]; then
+  if [[ -z "$skipFtp" ]]; then
       echo "Upload episode to FTP Server"
       lep ftp --file $episode
       echo "Upload patreon episode to FTP Server"
@@ -391,7 +387,7 @@ lep_automation_command() {
 
   fi
 
-  if ! [[ -n "$skipAws" ]]; then
+  if [[ -z "$skipAws" ]]; then
       echo "Backup to S3"
 
       aws s3 cp $episode s3://laufendentdecken-podcast/
@@ -401,7 +397,7 @@ lep_automation_command() {
       aws s3 cp s3://laufendentdecken-podcast/$episode_patreon s3://laufendentdecken-podcast-backup/
   fi
 
-  if ! [[ -n "$skipAuphonic" ]]; then
+  if [[ -z "$skipAuphonic" ]]; then
       lep auphonic  \
           --production_name $title \
           --preset "WbQunVJaZFitr3z74XTyxJ" \
@@ -425,12 +421,12 @@ lep_automation_command() {
       echo "Podcast successfully uploaded"
   fi
 
-  if ! [[ -n "$skipPatreon" ]]; then
+  if [[ -z "$skipPatreon" ]]; then
       echo "Download Patreon again to be able to upload it to the server"
       curl https://rssfeed.laufendentdecken-podcast.at/data/$title_patreon.mp3 --output ~/Downloads/$title_patreon.mp3
   fi
 
-  if ! [[ -n "$skipBlogpost" ]]; then
+  if [[ -z "$skipBlogpost" ]]; then
       echo "Create Episode on Website"
 
       lep blogpost \
@@ -1066,6 +1062,13 @@ lep_blogpost_parse_requirements() {
 
 }
 
+# :command.user_hooks
+before_hook() {
+  # src/before.sh
+  op signin --account my.1password.com
+
+}
+
 # :command.initialize
 initialize() {
   version="1.0.0"
@@ -1084,6 +1087,7 @@ run() {
   declare -a input=()
   normalize_input "$@"
   parse_requirements "${input[@]}"
+  before_hook
 
   case "$action" in
     "ftp") lep_ftp_command ;;

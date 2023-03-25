@@ -5,10 +5,6 @@ skipAuphonic=${args[--skip-auphonic]}
 skipPatreon=${args[--skip-patreon]}
 skipBlogpost=${args[--skip-blogpost]}
 
-echo $episode
-
-op signin --account my.1password.com
-
 read -p "Episode Nummer: " postNumber
 read -p "Episode Titel: " postTitle
 read -p "Release (YYYY-MM-DD): " postDate
