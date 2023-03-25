@@ -28,7 +28,7 @@ coverUrlYoutube="$baseUrl$coverYoutube"
 
 sudo=$(op item get "sudo" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
 
-if ! [[ -n "$skipFtp" ]]; then
+if [[ -z "$skipFtp" ]]; then
     echo "Upload episode to FTP Server"
     lep ftp --file $episode
     echo "Upload patreon episode to FTP Server"
@@ -39,7 +39,7 @@ if ! [[ -n "$skipFtp" ]]; then
     lep ftp --file $coverYoutube 
 fi
 
-if ! [[ -n "$skipAws" ]]; then
+if [[ -z "$skipAws" ]]; then
     echo "Backup to S3"
 
     aws s3 cp $episode s3://laufendentdecken-podcast/
@@ -49,7 +49,7 @@ if ! [[ -n "$skipAws" ]]; then
     aws s3 cp s3://laufendentdecken-podcast/$episode_patreon s3://laufendentdecken-podcast-backup/
 fi
 
-if ! [[ -n "$skipAuphonic" ]]; then
+if [[ -z "$skipAuphonic" ]]; then
     lep auphonic  \
         --production_name $title \
         --preset "WbQunVJaZFitr3z74XTyxJ" \
@@ -73,12 +73,12 @@ if ! [[ -n "$skipAuphonic" ]]; then
     echo "Podcast successfully uploaded"
 fi
 
-if ! [[ -n "$skipPatreon" ]]; then
+if [[ -z "$skipPatreon" ]]; then
     echo "Download Patreon again to be able to upload it to the server"
     curl https://rssfeed.laufendentdecken-podcast.at/data/$title_patreon.mp3 --output ~/Downloads/$title_patreon.mp3
 fi
 
-if ! [[ -n "$skipBlogpost" ]]; then
+if [[ -z "$skipBlogpost" ]]; then
     echo "Create Episode on Website"
 
     lep blogpost \
