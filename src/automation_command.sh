@@ -48,28 +48,31 @@ if [[ -z "$skipAws" ]]; then
 fi
 
 if [[ -z "$skipAuphonic" ]]; then
+    episodePreset = "WbQunVJaZFitr3z74XTyxJ" 
+    youtubePreset = "M9ageytQCjaFAYn7EjSYPZ" 
     lep auphonic  \
         --production_name $title \
-        --preset "WbQunVJaZFitr3z74XTyxJ" \
+        --preset $episodePreset\
         --cover_url $coverUrl \
         --file $episode \
         --slug $title
 
     lep auphonic  \
-        --production_name "$title (Youtube)" \
-        --preset "M9ageytQCjaFAYn7EjSYPZ" \
+        --production_name "LEP#$postNumber - $postTitle" \
+        --preset $youtubePreset \
         --cover_url $coverUrlYoutube \
         --file $episode \
         --slug $title
 
     lep auphonic  \
         --production_name "$title (Patreon/Steady)" \
-        --preset "WbQunVJaZFitr3z74XTyxJ" \
+        --preset $episodePreset \
         --cover_url $coverUrl \
         --file $episode_patreon \
         --slug $title
     echo "Podcast successfully uploaded"
 fi
+
 
 if [[ -z "$skipPatreon" ]]; then
     echo
