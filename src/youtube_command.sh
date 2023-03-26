@@ -41,7 +41,6 @@ APPLICATION_NAME="CLI"
 ACCESS_TOKEN=$(google-oauthlib-tool --client-secrets $API_KEY_FILE \
                   --scope $SCOPES \
                   --save \
-                  --headless \
                   | grep access_token \
                   | cut -d' ' -f2)
 
