@@ -36,6 +36,10 @@ if [[ -z "$skipFtp" ]]; then
     lep ftp --file $coverYoutube 
 fi
 
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
 if [[ -z "$skipAws" ]]; then
     echo
     echo "Backup to S3"
@@ -45,6 +49,10 @@ if [[ -z "$skipAws" ]]; then
 
     aws s3 cp $episode_patreon s3://laufendentdecken-podcast/
     aws s3 cp s3://laufendentdecken-podcast/$episode_patreon s3://laufendentdecken-podcast-backup/
+fi
+
+if [ $? -ne 0 ]; then
+  exit 1
 fi
 
 if [[ -z "$skipAuphonic" ]]; then
@@ -78,11 +86,18 @@ if [[ -z "$skipAuphonic" ]]; then
     echo "Podcast successfully uploaded"
 fi
 
+if [ $? -ne 0 ]; then
+  exit 1
+fi
 
 if [[ -z "$skipPatreon" ]]; then
     echo
     echo "Download Patreon again to be able to upload it to the server"
     curl https://rssfeed.laufendentdecken-podcast.at/data/$title_patreon.mp3 --output ~/Downloads/$title_patreon.mp3
+fi
+
+if [ $? -ne 0 ]; then
+  exit 1
 fi
 
 if [[ -z "$skipBlogpost" ]]; then
