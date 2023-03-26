@@ -93,6 +93,11 @@ commands:
     required: true
     help: Slug of the auphonic production
 
+  - long: --description
+    short: -d
+    arg: description      
+    help: Description of the episode 
+
   - long: --no-start
     help: Dont automatically start the auphonic production
 

@@ -50,6 +50,9 @@ fi
 if [[ -z "$skipAuphonic" ]]; then
     episodePreset = "WbQunVJaZFitr3z74XTyxJ" 
     youtubePreset = "M9ageytQCjaFAYn7EjSYPZ" 
+
+    youtubeDescription=$(echo -e "Hört rein auf:\n🔗Https://laufendentdecken.at/$postNumber/\n\nUnd natürlich auf\n🎧Spotify, iTunes, Google Podcast, zencastr und in allen podcatchern über das RSS Feed.\n\n✅ Folge uns auf Instagram @laufendentdeckenpodcast , @floderandere und @redendentdecken\n\nUnd auf Facebook https://www.facebook.com/laufendentdeckenpodcast/\n\nWer uns unterstützen mag: https://www.patreon.com/laufendentdecken\noder Steady: https://steadyhq.com/de/laufendentdecken")
+
     lep auphonic  \
         --production_name $title \
         --preset $episodePreset\
@@ -62,7 +65,8 @@ if [[ -z "$skipAuphonic" ]]; then
         --preset $youtubePreset \
         --cover_url $coverUrlYoutube \
         --file $episode \
-        --slug $title
+        --slug $title \
+        --description "$youtubeDescription"
 
     lep auphonic  \
         --production_name "$title (Patreon/Steady)" \
@@ -70,6 +74,7 @@ if [[ -z "$skipAuphonic" ]]; then
         --cover_url $coverUrl \
         --file $episode_patreon \
         --slug $title
+
     echo "Podcast successfully uploaded"
 fi
 

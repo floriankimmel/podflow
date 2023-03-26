@@ -247,6 +247,11 @@ lep_auphonic_usage() {
     echo
 
     # :flag.usage
+    printf "  %s\n" "--description, -d DESCRIPTION"
+    printf "    Description of the episode\n"
+    echo
+
+    # :flag.usage
     printf "  %s\n" "--no-start"
     printf "    Dont automatically start the auphonic production\n"
     echo
@@ -510,6 +515,8 @@ lep_automation_command() {
 
       youtubePreset = "M9ageytQCjaFAYn7EjSYPZ"
 
+      youtubeDescription=$(echo -e "Hört rein auf:\n🔗Https://laufendentdecken.at/$postNumber/\n\nUnd natürlich auf\n🎧Spotify, iTunes, Google Podcast, zencastr und in allen podcatchern über das RSS Feed.\n\n✅ Folge uns auf Instagram @laufendentdeckenpodcast , @floderandere und @redendentdecken\n\nUnd auf Facebook https://www.facebook.com/laufendentdeckenpodcast/\n\nWer uns unterstützen mag: https://www.patreon.com/laufendentdecken\noder Steady: https://steadyhq.com/de/laufendentdecken")
+
       lep auphonic  \
           --production_name $title \
           --preset $episodePreset\
@@ -522,7 +529,8 @@ lep_automation_command() {
           --preset $youtubePreset \
           --cover_url $coverUrlYoutube \
           --file $episode \
-          --slug $title
+          --slug $title \
+          --description "$youtubeDescription"
 
       lep auphonic  \
           --production_name "$title (Patreon/Steady)" \
@@ -530,6 +538,7 @@ lep_automation_command() {
           --cover_url $coverUrl \
           --file $episode_patreon \
           --slug $title
+
       echo "Podcast successfully uploaded"
   fi
 
@@ -562,6 +571,7 @@ lep_auphonic_command() {
   auphonicTitle=${args[--production_name]}
   preset=${args[--preset]}
   noStart=${args[--no_start]}
+  description=${args[--description]}
 
   chapters=$(<"$title".chapters.txt)
 
@@ -585,7 +595,8 @@ lep_auphonic_command() {
        -F "track=$title" \
        -F "chapters=$chapters" \
        -F "input_file=$episode" \
-       -F "image =$coverUrl" \
+       -F "image=$coverUrl" \
+       -F "summary=$description" \
        -F "action=$action")
 
   # Only query the status if we started the production
@@ -1098,6 +1109,21 @@ lep_auphonic_parse_requirements() {
           shift
         else
           printf "%s\n" "--slug requires an argument: --slug, -s SLUG" >&2
+          exit 1
+        fi
+        ;;
+
+      # :flag.case
+      --description | -d)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+
+          args['--description']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--description requires an argument: --description, -d DESCRIPTION" >&2
           exit 1
         fi
         ;;

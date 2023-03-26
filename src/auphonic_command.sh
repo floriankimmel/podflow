@@ -4,6 +4,7 @@ coverUrl=${args[--cover_url]}
 auphonicTitle=${args[--production_name]}
 preset=${args[--preset]}
 noStart=${args[--no_start]}
+description=${args[--description]}
 
 chapters=$(<"$title".chapters.txt)
 
@@ -28,7 +29,8 @@ json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
      -F "track=$title" \
      -F "chapters=$chapters" \
      -F "input_file=$episode" \
-     -F "image =$coverUrl" \
+     -F "image=$coverUrl" \
+     -F "summary=$description" \
      -F "action=$action")
 
 # Only query the status if we started the production
