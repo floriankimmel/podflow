@@ -5,7 +5,7 @@ skipAuphonic=${args[--skip-auphonic]}
 skipPatreon=${args[--skip-patreon]}
 skipBlogpost=${args[--skip-blogpost]}
 
-if [[ -z "$m4a" ]]; then
+if [[ -z "$episode" ]]; then
     shopt -s nullglob # um die Schleife zu vermeiden, wenn keine m4a-Dateien vorhanden sind
     for file in ./*.m4a; do
         episode=$(basename "$file")
