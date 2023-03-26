@@ -379,6 +379,27 @@ inspect_args() {
 
 }
 
+# :command.user_lib
+# src/lib/validations/validate_dir_exists.sh
+validate_dir_exists() {
+  [[ -d "$1" ]] || echo "must be an existing directory"
+}
+
+# src/lib/validations/validate_file_exists.sh
+validate_file_exists() {
+  [[ -f "$1" ]] || echo "must be an existing file"
+}
+
+# src/lib/validations/validate_integer.sh
+validate_integer() {
+  [[ "$1" =~ ^[0-9]+$ ]] || echo "must be an integer"
+}
+
+# src/lib/validations/validate_not_empty.sh
+validate_not_empty() {
+  [[ -z "$1" ]] && echo "must not be empty"
+}
+
 # :command.command_functions
 # :command.function
 lep_youtube_command() {
