@@ -5,6 +5,14 @@ skipAuphonic=${args[--skip-auphonic]}
 skipPatreon=${args[--skip-patreon]}
 skipBlogpost=${args[--skip-blogpost]}
 
+if [[ -z "$m4a" ]]; then
+    shopt -s nullglob # um die Schleife zu vermeiden, wenn keine m4a-Dateien vorhanden sind
+    for file in ./*.m4a; do
+        episode=$(basename "$file")
+        break
+    done
+fi
+
 read -p "Episode Nummer: " postNumber
 read -p "Episode Titel: " postTitle
 read -p "Release (YYYY-MM-DD): " postDate

@@ -36,7 +36,6 @@ commands:
   - long: --m4a
     short: -m
     arg: m4a
-    required: true
     help: Episode as m4a
     validate: file_exists
 

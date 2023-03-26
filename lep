@@ -154,7 +154,7 @@ lep_automation_usage() {
 
     # :command.usage_flags
     # :flag.usage
-    printf "  %s\n" "--m4a, -m M4A (required)"
+    printf "  %s\n" "--m4a, -m M4A"
     printf "    Episode as m4a\n"
     echo
 
@@ -466,6 +466,14 @@ lep_automation_command() {
   skipAuphonic=${args[--skip-auphonic]}
   skipPatreon=${args[--skip-patreon]}
   skipBlogpost=${args[--skip-blogpost]}
+
+  if [[ -z "$m4a" ]]; then
+      shopt -s nullglob # um die Schleife zu vermeiden, wenn keine m4a-Dateien vorhanden sind
+      for file in ./*.m4a; do
+          episode=$(basename "$file")
+          break
+      done
+  fi
 
   read -p "Episode Nummer: " postNumber
   read -p "Episode Titel: " postTitle
@@ -1020,12 +1028,6 @@ lep_automation_parse_requirements() {
 
     esac
   done
-
-  # :command.required_flags_filter
-  if [[ -z ${args['--m4a']+x} ]]; then
-    printf "missing required flag: --m4a, -m M4A\n" >&2
-    exit 1
-  fi
 
 }
 
