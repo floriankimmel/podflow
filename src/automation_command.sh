@@ -21,8 +21,8 @@ title=$(echo "$episode" | cut -d'.' -f 1)
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
 
-episodeAdFree="$title"_patreon.m4a
-titleAdFree="$title"_patreon
+episodeAdFree="$title"_addfree.m4a
+titleAdFree="$title"_addfree
 
 coverYoutube="$title"_youtube.png
 baseUrl="https://rssfeed.laufendentdecken-podcast.at/data/"
