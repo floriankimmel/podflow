@@ -679,6 +679,7 @@ lep_blogpost_command() {
   slug=${args[--slug]}
 
   fullPostTitle="LEP#$postNumber - $postTitle"
+  content="Zusätzlich habt ihr ab sofort die Möglichkeit euch das exklusive <a href='https://www.patreon.com/laufendentdecken'>Patreonfeed </a>zu sichern – werbefrei und liebevoll exportiert.\n Am besten direkt mitmachen und unterstützen: <a href='https://www.patreon.com/laufendentdecken'>https://www.patreon.com/laufendentdecken</a>\n\n<b>Links zum weiterlesen</b>\n\nMehr Informationen zu [Guest]: Instagram | Facebook \n\nWenn ihr den Podcast direkt ohne Installation hören möchtet, könnt ihr das hier tun: Laufend Entdecken auf Podbay\n\nFlorian: <a href='http://twitter.com/laufenentdecken'>Twitter</a>, <a href='https://www.strava.com/athletes/1651823'>Strava</a>\nPeter: <a href='https://twitter.com/redendentdecken'>Twitter</a>, <a href='https://www.instagram.com/redendentdecken'>Instagram</a>, <a href='https://www.strava.com/athletes/24464941'>Strava</a>\n\n<a href='http://facebook.com/laufendentdeckenblog/'>Facebook</a>, <a href='https://instagram.com/laufendentdeckenpodcast/'>Instagram</a>, <a href='https://www.strava.com/clubs/473847'>Strava Club</a>"
 
   apiKey=$(op item get "PodloveApiKey" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
 
@@ -696,7 +697,7 @@ lep_blogpost_command() {
   response=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
       --header "Authorization: Basic $apiKey" \
       --header 'Content-Type: application/json; charset=utf-8' \
-      --data-raw "{ \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate 09:00:00\", \"slug\": \"$postNumber\" }")
+      --data-raw "{ \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate 09:00:00\", \"slug\": \"$postNumber\", \"content\": \"$content\", \"format\": \"standard\" }")
 
 }
 
