@@ -6,7 +6,13 @@ slug=${args[--slug]}
 ag1=${args[--ag1]}
 
 fullPostTitle="LEP#$postNumber - $postTitle"
-guest=${postTitle#"Ein Gespräch mit "}
+
+if [[ $postTitle == "Ein Gespräch mit "* ]]; then
+    guest=${postTitle#"Ein Gespräch mit "}
+else
+    guest="[Guest]"
+fi
+
 
 content="<b> Werbefrei </b>\n\nZusätzlich habt ihr ab sofort die Möglichkeit euch das exklusive <a href='https://www.patreon.com/laufendentdecken'>Patreonfeed </a>zu sichern – werbefrei und liebevoll exportiert.\n Am besten direkt mitmachen und unterstützen: <a href='https://www.patreon.com/laufendentdecken'>https://www.patreon.com/laufendentdecken</a>\n\n<b>Links zum weiterlesen</b>\n\nMehr Informationen zu $guest: Instagram | Facebook \n\nWenn ihr den Podcast direkt ohne Installation hören möchtet, könnt ihr das hier tun: Laufend Entdecken auf Podbay\n\nFlorian: <a href='http://twitter.com/laufenentdecken'>Twitter</a>, <a href='https://www.strava.com/athletes/1651823'>Strava</a>\nPeter: <a href='https://twitter.com/redendentdecken'>Twitter</a>, <a href='https://www.instagram.com/redendentdecken'>Instagram</a>, <a href='https://www.strava.com/athletes/24464941'>Strava</a>\n\n<a href='http://facebook.com/laufendentdeckenblog/'>Facebook</a>, <a href='https://instagram.com/laufendentdeckenpodcast/'>Instagram</a>, <a href='https://www.strava.com/clubs/473847'>Strava Club</a>"
 
