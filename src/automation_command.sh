@@ -41,8 +41,12 @@ if [[ -z "$skipFtp" ]]; then
     echo
     echo "Upload episode to FTP Server"
     lep ftp --file $episode
-    echo "Upload addfree episode to FTP Server"
-    lep ftp --file $episodeAdFree
+
+    if [[ -z "$ag1" ]]; then
+        echo "Upload addfree episode to FTP Server"
+        lep ftp --file $episodeAdFree
+    fi
+
     echo "Upload cover to FTP Server"
     lep ftp --file $cover
     echo "Upload youtube cover to FTP Server"
@@ -60,8 +64,10 @@ if [[ -z "$skipAws" ]]; then
     aws s3 cp $episode s3://laufendentdecken-podcast/
     aws s3 cp s3://laufendentdecken-podcast/$episode s3://laufendentdecken-podcast-backup/
 
-    aws s3 cp $episodeAdFree s3://laufendentdecken-podcast/
-    aws s3 cp s3://laufendentdecken-podcast/$episodeAdFree s3://laufendentdecken-podcast-backup/
+    if [[ -z "$ag1" ]]; then
+        aws s3 cp $episodeAdFree s3://laufendentdecken-podcast/
+        aws s3 cp s3://laufendentdecken-podcast/$episodeAdFree s3://laufendentdecken-podcast-backup/
+    fi
 fi
 
 if [ $? -ne 0 ]; then
