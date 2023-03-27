@@ -1,10 +1,10 @@
-episode=${args[--m4a]}
 skipFtp=${args[--skip-ftp]}
 skipAws=${args[--skip-aws]}
 skipAuphonic=${args[--skip-auphonic]}
-skipPatreon=${args[--skip-patreon]}
+skipDownload=${args[--skip-download]}
 skipBlogpost=${args[--skip-blogpost]}
 
+episode=${args[--m4a]}
 if [[ -z "$episode" ]]; then
     shopt -s nullglob # um die Schleife zu vermeiden, wenn keine m4a-Dateien vorhanden sind
     for file in ./*.m4a; do
@@ -21,8 +21,8 @@ title=$(echo "$episode" | cut -d'.' -f 1)
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
 
-episode_patreon="$title"_patreon.m4a
-title_patreon="$title"_patreon
+episodeAdFree="$title"_patreon.m4a
+titleAdFree="$title"_patreon
 
 coverYoutube="$title"_youtube.png
 baseUrl="https://rssfeed.laufendentdecken-podcast.at/data/"
@@ -30,14 +30,12 @@ baseUrl="https://rssfeed.laufendentdecken-podcast.at/data/"
 coverUrl="$baseUrl$cover"
 coverUrlYoutube="$baseUrl$coverYoutube"
 
-sudo=$(op item get "sudo" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
-
 if [[ -z "$skipFtp" ]]; then
     echo
     echo "Upload episode to FTP Server"
     lep ftp --file $episode
-    echo "Upload patreon episode to FTP Server"
-    lep ftp --file $episode_patreon
+    echo "Upload addfree episode to FTP Server"
+    lep ftp --file $episodeAdFree
     echo "Upload cover to FTP Server"
     lep ftp --file $cover
     echo "Upload youtube cover to FTP Server"
@@ -55,8 +53,8 @@ if [[ -z "$skipAws" ]]; then
     aws s3 cp $episode s3://laufendentdecken-podcast/
     aws s3 cp s3://laufendentdecken-podcast/$episode s3://laufendentdecken-podcast-backup/
 
-    aws s3 cp $episode_patreon s3://laufendentdecken-podcast/
-    aws s3 cp s3://laufendentdecken-podcast/$episode_patreon s3://laufendentdecken-podcast-backup/
+    aws s3 cp $episodeAdFree s3://laufendentdecken-podcast/
+    aws s3 cp s3://laufendentdecken-podcast/$episodeAdFree s3://laufendentdecken-podcast-backup/
 fi
 
 if [ $? -ne 0 ]; then
@@ -85,10 +83,10 @@ if [[ -z "$skipAuphonic" ]]; then
         --description "$youtubeDescription"
 
     lep auphonic  \
-        --production_name "$title (Patreon/Steady)" \
+        --production_name "$title (addfree)" \
         --preset $episodePreset \
         --cover_url $coverUrl \
-        --file $episode_patreon \
+        --file $episodeAdFree \
         --slug $title
 
     echo "Podcast successfully uploaded"
@@ -98,10 +96,10 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-if [[ -z "$skipPatreon" ]]; then
+if [[ -z "$skipDownload" ]]; then
     echo
-    echo "Download Patreon again to be able to upload it to the server"
-    curl https://rssfeed.laufendentdecken-podcast.at/data/$title_patreon.mp3 --output ~/Downloads/$title_patreon.mp3
+    echo "Download adfree version again to be able to upload it to patroen/steady"
+    curl https://rssfeed.laufendentdecken-podcast.at/data/$titleAdFree.mp3 --output ~/Downloads/$titleAdFree.mp3
 fi
 
 if [ $? -ne 0 ]; then

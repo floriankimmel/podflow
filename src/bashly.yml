@@ -48,7 +48,7 @@ commands:
   - long: --skip-auphonic   
     help: Skip upload to Auphonic 
 
-  - long: --skip-patreon 
+  - long: --skip-download
     help: Skip download from patreon
 
   - long: --skip-blogpost   
