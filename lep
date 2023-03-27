@@ -159,6 +159,11 @@ lep_automation_usage() {
     echo
 
     # :flag.usage
+    printf "  %s\n" "--ag1"
+    printf "    This episodes is supportd by AG1\n"
+    echo
+
+    # :flag.usage
     printf "  %s\n" "--skip-ftp"
     printf "    Skip upload to FTP server\n"
     echo
@@ -294,6 +299,11 @@ lep_blogpost_usage() {
     printf "%s\n" "Options:"
 
     # :command.usage_flags
+    # :flag.usage
+    printf "  %s\n" "--ag1"
+    printf "    This episodes is supportd by AG1\n"
+    echo
+
     # :flag.usage
     printf "  %s\n" "--number, -n NUMBER (required)"
     printf "    Episode Number\n"
@@ -487,6 +497,8 @@ lep_automation_command() {
   skipDownload=${args[--skip-download]}
   skipBlogpost=${args[--skip-blogpost]}
 
+  ag1=${args[--ag1]}
+
   episode=${args[--m4a]}
   if [[ -z "$episode" ]]; then
       shopt -s nullglob # um die Schleife zu vermeiden, wenn keine m4a-Dateien vorhanden sind
@@ -595,11 +607,22 @@ lep_automation_command() {
       echo
       echo "Create Episode on Website"
 
-      lep blogpost \
-          --number $postNumber \
-          --title $postTitle \
-          --publish_date $postDate \
-          --slug $title
+      if [[ -z "$ag1" ]]; then
+          lep blogpost \
+              --number $postNumber \
+              --title $postTitle \
+              --publish_date $postDate \
+              --slug $title
+      fi
+
+      if [[ -n "$ag1" ]]; then
+          lep blogpost \
+              --number $postNumber \
+              --title $postTitle \
+              --publish_date $postDate \
+              --slug $title \
+              --ag1
+      fi
 
   fi
 
@@ -678,8 +701,14 @@ lep_blogpost_command() {
   postDate=${args[--publish_date]}
   slug=${args[--slug]}
 
+  ag1=${args[--ag1]}
+
   fullPostTitle="LEP#$postNumber - $postTitle"
-  content="Zusätzlich habt ihr ab sofort die Möglichkeit euch das exklusive <a href='https://www.patreon.com/laufendentdecken'>Patreonfeed </a>zu sichern – werbefrei und liebevoll exportiert.\n Am besten direkt mitmachen und unterstützen: <a href='https://www.patreon.com/laufendentdecken'>https://www.patreon.com/laufendentdecken</a>\n\n<b>Links zum weiterlesen</b>\n\nMehr Informationen zu [Guest]: Instagram | Facebook \n\nWenn ihr den Podcast direkt ohne Installation hören möchtet, könnt ihr das hier tun: Laufend Entdecken auf Podbay\n\nFlorian: <a href='http://twitter.com/laufenentdecken'>Twitter</a>, <a href='https://www.strava.com/athletes/1651823'>Strava</a>\nPeter: <a href='https://twitter.com/redendentdecken'>Twitter</a>, <a href='https://www.instagram.com/redendentdecken'>Instagram</a>, <a href='https://www.strava.com/athletes/24464941'>Strava</a>\n\n<a href='http://facebook.com/laufendentdeckenblog/'>Facebook</a>, <a href='https://instagram.com/laufendentdeckenpodcast/'>Instagram</a>, <a href='https://www.strava.com/clubs/473847'>Strava Club</a>"
+  content="<b> Werbefrei </b>\n\nZusätzlich habt ihr ab sofort die Möglichkeit euch das exklusive <a href='https://www.patreon.com/laufendentdecken'>Patreonfeed </a>zu sichern – werbefrei und liebevoll exportiert.\n Am besten direkt mitmachen und unterstützen: <a href='https://www.patreon.com/laufendentdecken'>https://www.patreon.com/laufendentdecken</a>\n\n<b>Links zum weiterlesen</b>\n\nMehr Informationen zu [Guest]: Instagram | Facebook \n\nWenn ihr den Podcast direkt ohne Installation hören möchtet, könnt ihr das hier tun: Laufend Entdecken auf Podbay\n\nFlorian: <a href='http://twitter.com/laufenentdecken'>Twitter</a>, <a href='https://www.strava.com/athletes/1651823'>Strava</a>\nPeter: <a href='https://twitter.com/redendentdecken'>Twitter</a>, <a href='https://www.instagram.com/redendentdecken'>Instagram</a>, <a href='https://www.strava.com/athletes/24464941'>Strava</a>\n\n<a href='http://facebook.com/laufendentdeckenblog/'>Facebook</a>, <a href='https://instagram.com/laufendentdeckenpodcast/'>Instagram</a>, <a href='https://www.strava.com/clubs/473847'>Strava Club</a>"
+
+  if [[ -n "$ag1" ]]; then
+      content="<b>Werbung</b>\n\nInformiere dich jetzt auf <a href='http://athleticgreens.com/laufendentdecken'>athleticgreens.com/laufendentdecken</a> , teste AG1 völlig risikofrei mit 90 Tagen Geld-zurück-Garantie und sichere dir bei deiner AG1 Erstbestellung einen kostenlosen Jahresvorrat an Vitamin D3+K2 zur Unterstützung des Immunsystems & 5 praktische Travel Packs! Gesundheitsbezogene Angaben zu AG1 und unser Angebot findest du auf: <a href='http://athleticgreens.com/laufendentdecken'>athleticgreens.com/laufendentdecken</a>\n\nAuf die Bedeutung einer abwechslungsreichen und ausgewogenen Ernährung und einer gesunden Lebensweise wird hingewiesen. Außer Reichweite von Kindern aufbewahren. Nicht geeignet für Kinder und Jugendliche unter 18 Jahren, schwangere oder stillende Frauen. Die angegebene empfohlene tägliche Verzehrmenge darf nicht überschritten werden. \n\n $content"
+  fi
 
   apiKey=$(op item get "PodloveApiKey" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
 
@@ -994,6 +1023,14 @@ lep_automation_parse_requirements() {
         ;;
 
       # :flag.case
+      --ag1)
+
+        # :flag.case_no_arg
+        args['--ag1']=1
+        shift
+        ;;
+
+      # :flag.case
       --skip-ftp)
 
         # :flag.case_no_arg
@@ -1239,6 +1276,14 @@ lep_blogpost_parse_requirements() {
   while [[ $# -gt 0 ]]; do
     key="$1"
     case "$key" in
+      # :flag.case
+      --ag1)
+
+        # :flag.case_no_arg
+        args['--ag1']=1
+        shift
+        ;;
+
       # :flag.case
       --number | -n)
 

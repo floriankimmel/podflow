@@ -4,6 +4,8 @@ skipAuphonic=${args[--skip-auphonic]}
 skipDownload=${args[--skip-download]}
 skipBlogpost=${args[--skip-blogpost]}
 
+ag1=${args[--ag1]}
+
 episode=${args[--m4a]}
 if [[ -z "$episode" ]]; then
     shopt -s nullglob # um die Schleife zu vermeiden, wenn keine m4a-Dateien vorhanden sind
@@ -110,11 +112,22 @@ if [[ -z "$skipBlogpost" ]]; then
     echo
     echo "Create Episode on Website"
 
-    lep blogpost \
-        --number $postNumber \
-        --title $postTitle \
-        --publish_date $postDate \
-        --slug $title
+    if [[ -z "$ag1" ]]; then
+        lep blogpost \
+            --number $postNumber \
+            --title $postTitle \
+            --publish_date $postDate \
+            --slug $title
+    fi   
+
+    if [[ -n "$ag1" ]]; then
+        lep blogpost \
+            --number $postNumber \
+            --title $postTitle \
+            --publish_date $postDate \
+            --slug $title \
+            --ag1
+    fi
 
 fi
 

@@ -39,6 +39,9 @@ commands:
     help: Episode as m4a
     validate: file_exists
 
+  - long: --ag1
+    help: This episodes is supportd by AG1
+
   - long: --skip-ftp  
     help: Skip upload to FTP server  
 
@@ -108,6 +111,10 @@ commands:
   help: Create wordpress blogpost on http://laufendentdecken-podcast.at
 
   flags:
+
+  - long: --ag1
+    help: This episodes is supportd by AG1
+
   - long: --number
     short: -n
     arg: number    
