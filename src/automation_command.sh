@@ -15,6 +15,8 @@ if [[ -z "$episode" ]]; then
     done
 fi
 
+echo "Start automatic workflow for file $episode"
+
 read -p "Episode Nummer: " postNumber
 read -p "Episode Titel: " postTitle
 read -p "Release (YYYY-MM-DD): " postDate
