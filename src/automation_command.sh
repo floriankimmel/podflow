@@ -23,8 +23,13 @@ title=$(echo "$episode" | cut -d'.' -f 1)
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
 
-episodeAdFree="$title"_addfree.m4a
-titleAdFree="$title"_addfree
+if [[ -z "$ag1" ]]; then
+    episodeAdFree="$title"_addfree.m4a
+    titleAdFree="$title"_addfree
+else
+    episodeAdFree=$episode
+    titleAdFree=$title
+fi
 
 coverYoutube="$title"_youtube.png
 baseUrl="https://rssfeed.laufendentdecken-podcast.at/data/"
@@ -84,12 +89,14 @@ if [[ -z "$skipAuphonic" ]]; then
         --slug $title \
         --description "$youtubeDescription"
 
-    lep auphonic  \
-        --production_name "$title (addfree)" \
-        --preset $episodePreset \
-        --cover_url $coverUrl \
-        --file $episodeAdFree \
-        --slug $title
+    if [[ -z "$ag1" ]]; then
+        lep auphonic  \
+            --production_name "$title (addfree)" \
+            --preset $episodePreset \
+            --cover_url $coverUrl \
+            --file $episodeAdFree \
+            --slug $title
+    fi
 
     echo "Podcast successfully uploaded"
 fi
@@ -112,7 +119,7 @@ if [[ -z "$skipBlogpost" ]]; then
     echo
     echo "Create Episode on Website"
 
-    if [[ -z "$ag1" ]]; then
+    if [[ -n "$ag1" ]]; then
         lep blogpost \
             --number $postNumber \
             --title $postTitle \
@@ -120,7 +127,7 @@ if [[ -z "$skipBlogpost" ]]; then
             --slug $title
     fi   
 
-    if [[ -n "$ag1" ]]; then
+    if [[ -z "$ag1" ]]; then
         lep blogpost \
             --number $postNumber \
             --title $postTitle \

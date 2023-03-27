@@ -516,8 +516,13 @@ lep_automation_command() {
   chapters=$(<"$title".chapters.txt)
   cover="$title".png
 
-  episodeAdFree="$title"_addfree.m4a
-  titleAdFree="$title"_addfree
+  if [[ -z "$ag1" ]]; then
+      episodeAdFree="$title"_addfree.m4a
+      titleAdFree="$title"_addfree
+  else
+      episodeAdFree=$episode
+      titleAdFree=$title
+  fi
 
   coverYoutube="$title"_youtube.png
   baseUrl="https://rssfeed.laufendentdecken-podcast.at/data/"
@@ -579,12 +584,14 @@ lep_automation_command() {
           --slug $title \
           --description "$youtubeDescription"
 
-      lep auphonic  \
-          --production_name "$title (addfree)" \
-          --preset $episodePreset \
-          --cover_url $coverUrl \
-          --file $episodeAdFree \
-          --slug $title
+      if [[ -z "$ag1" ]]; then
+          lep auphonic  \
+              --production_name "$title (addfree)" \
+              --preset $episodePreset \
+              --cover_url $coverUrl \
+              --file $episodeAdFree \
+              --slug $title
+      fi
 
       echo "Podcast successfully uploaded"
   fi
@@ -607,7 +614,7 @@ lep_automation_command() {
       echo
       echo "Create Episode on Website"
 
-      if [[ -z "$ag1" ]]; then
+      if [[ -n "$ag1" ]]; then
           lep blogpost \
               --number $postNumber \
               --title $postTitle \
@@ -615,7 +622,7 @@ lep_automation_command() {
               --slug $title
       fi
 
-      if [[ -n "$ag1" ]]; then
+      if [[ -z "$ag1" ]]; then
           lep blogpost \
               --number $postNumber \
               --title $postTitle \
