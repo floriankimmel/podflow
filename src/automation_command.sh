@@ -25,7 +25,7 @@ title=$(echo "$episode" | cut -d'.' -f 1)
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
 
-if [[ -z "$ag1" ]]; then
+if [[ -n "$ag1" ]]; then
     episodeAdFree="$title"_addfree.m4a
     titleAdFree="$title"_addfree
 else
@@ -44,7 +44,7 @@ if [[ -z "$skipFtp" ]]; then
     echo "Upload episode to FTP Server"
     lep ftp --file $episode
 
-    if [[ -z "$ag1" ]]; then
+    if [[ -n "$ag1" ]]; then
         echo "Upload addfree episode to FTP Server"
         lep ftp --file $episodeAdFree
     fi
@@ -66,7 +66,7 @@ if [[ -z "$skipAws" ]]; then
     aws s3 cp $episode s3://laufendentdecken-podcast/
     aws s3 cp s3://laufendentdecken-podcast/$episode s3://laufendentdecken-podcast-backup/
 
-    if [[ -z "$ag1" ]]; then
+    if [[ -n "$ag1" ]]; then
         aws s3 cp $episodeAdFree s3://laufendentdecken-podcast/
         aws s3 cp s3://laufendentdecken-podcast/$episodeAdFree s3://laufendentdecken-podcast-backup/
     fi
@@ -77,8 +77,8 @@ if [ $? -ne 0 ]; then
 fi
 
 if [[ -z "$skipAuphonic" ]]; then
-    episodePreset = "WbQunVJaZFitr3z74XTyxJ" 
-    youtubePreset = "M9ageytQCjaFAYn7EjSYPZ" 
+    episodePreset="WbQunVJaZFitr3z74XTyxJ"
+    youtubePreset="M9ageytQCjaFAYn7EjSYPZ"
 
     youtubeDescription=$(echo -e "Hört rein auf:\n🔗Https://laufendentdecken.at/$postNumber/\n\nUnd natürlich auf\n🎧Spotify, iTunes, Google Podcast, zencastr und in allen podcatchern über das RSS Feed.\n\n✅ Folge uns auf Instagram @laufendentdeckenpodcast , @floderandere und @redendentdecken\n\nUnd auf Facebook https://www.facebook.com/laufendentdeckenpodcast/\n\nWer uns unterstützen mag: https://www.patreon.com/laufendentdecken\noder Steady: https://steadyhq.com/de/laufendentdecken")
 
@@ -97,7 +97,7 @@ if [[ -z "$skipAuphonic" ]]; then
         --slug $title \
         --description "$youtubeDescription"
 
-    if [[ -z "$ag1" ]]; then
+    if [[ -n "$ag1" ]]; then
         lep auphonic  \
             --production_name "$title (addfree)" \
             --preset $episodePreset \
@@ -127,18 +127,18 @@ if [[ -z "$skipBlogpost" ]]; then
     echo
     echo "Create Episode on Website"
 
-    if [[ -n "$ag1" ]]; then
+    if [[ -z "$ag1" ]]; then
         lep blogpost \
             --number $postNumber \
-            --title $postTitle \
+            --title "$postTitle" \
             --publish_date $postDate \
             --slug $title
     fi   
 
-    if [[ -z "$ag1" ]]; then
+    if [[ -n "$ag1" ]]; then
         lep blogpost \
             --number $postNumber \
-            --title $postTitle \
+            --title "$postTitle" \
             --publish_date $postDate \
             --slug $title \
             --ag1

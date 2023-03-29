@@ -3,7 +3,7 @@ episode=${args[--file]}
 coverUrl=${args[--cover_url]}
 auphonicTitle=${args[--production_name]}
 preset=${args[--preset]}
-noStart=${args[--no_start]}
+noStart=${args[--no-start]}
 description=${args[--description]}
 
 chapters=$(<"$title".chapters.txt)
@@ -15,7 +15,7 @@ auphonic_username=$( op item get "Auphonic" --format json | jq -r '. | .fields |
 action="start"
 
 # If no start is set, we just want to save the production
-if [[ -z "$noStart" ]]; then
+if [[ -n "$noStart" ]]; then
     action="save"
 fi
 
@@ -34,7 +34,7 @@ json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
      -F "action=$action")
 
 # Only query the status if we started the production
-if [[ -n "$noStart" ]]; then
+if [[ -z "$noStart" ]]; then
     echo "Production started"
     content=$(echo $json | jq -r ' . | "\(.data.status_string):\(.data.uuid)"')
     IFS=':' read -ra response <<< "$content"

@@ -518,7 +518,7 @@ lep_automation_command() {
   chapters=$(<"$title".chapters.txt)
   cover="$title".png
 
-  if [[ -z "$ag1" ]]; then
+  if [[ -n "$ag1" ]]; then
       episodeAdFree="$title"_addfree.m4a
       titleAdFree="$title"_addfree
   else
@@ -537,7 +537,7 @@ lep_automation_command() {
       echo "Upload episode to FTP Server"
       lep ftp --file $episode
 
-      if [[ -z "$ag1" ]]; then
+      if [[ -n "$ag1" ]]; then
           echo "Upload addfree episode to FTP Server"
           lep ftp --file $episodeAdFree
       fi
@@ -560,7 +560,7 @@ lep_automation_command() {
       aws s3 cp $episode s3://laufendentdecken-podcast/
       aws s3 cp s3://laufendentdecken-podcast/$episode s3://laufendentdecken-podcast-backup/
 
-      if [[ -z "$ag1" ]]; then
+      if [[ -n "$ag1" ]]; then
           aws s3 cp $episodeAdFree s3://laufendentdecken-podcast/
           aws s3 cp s3://laufendentdecken-podcast/$episodeAdFree s3://laufendentdecken-podcast-backup/
       fi
@@ -571,9 +571,8 @@ lep_automation_command() {
   fi
 
   if [[ -z "$skipAuphonic" ]]; then
-      episodePreset = "WbQunVJaZFitr3z74XTyxJ"
-
-      youtubePreset = "M9ageytQCjaFAYn7EjSYPZ"
+      episodePreset="WbQunVJaZFitr3z74XTyxJ"
+      youtubePreset="M9ageytQCjaFAYn7EjSYPZ"
 
       youtubeDescription=$(echo -e "Hört rein auf:\n🔗Https://laufendentdecken.at/$postNumber/\n\nUnd natürlich auf\n🎧Spotify, iTunes, Google Podcast, zencastr und in allen podcatchern über das RSS Feed.\n\n✅ Folge uns auf Instagram @laufendentdeckenpodcast , @floderandere und @redendentdecken\n\nUnd auf Facebook https://www.facebook.com/laufendentdeckenpodcast/\n\nWer uns unterstützen mag: https://www.patreon.com/laufendentdecken\noder Steady: https://steadyhq.com/de/laufendentdecken")
 
@@ -592,7 +591,7 @@ lep_automation_command() {
           --slug $title \
           --description "$youtubeDescription"
 
-      if [[ -z "$ag1" ]]; then
+      if [[ -n "$ag1" ]]; then
           lep auphonic  \
               --production_name "$title (addfree)" \
               --preset $episodePreset \
@@ -622,18 +621,18 @@ lep_automation_command() {
       echo
       echo "Create Episode on Website"
 
-      if [[ -n "$ag1" ]]; then
+      if [[ -z "$ag1" ]]; then
           lep blogpost \
               --number $postNumber \
-              --title $postTitle \
+              --title "$postTitle" \
               --publish_date $postDate \
               --slug $title
       fi
 
-      if [[ -z "$ag1" ]]; then
+      if [[ -n "$ag1" ]]; then
           lep blogpost \
               --number $postNumber \
-              --title $postTitle \
+              --title "$postTitle" \
               --publish_date $postDate \
               --slug $title \
               --ag1
@@ -651,7 +650,7 @@ lep_auphonic_command() {
   coverUrl=${args[--cover_url]}
   auphonicTitle=${args[--production_name]}
   preset=${args[--preset]}
-  noStart=${args[--no_start]}
+  noStart=${args[--no-start]}
   description=${args[--description]}
 
   chapters=$(<"$title".chapters.txt)
@@ -662,7 +661,7 @@ lep_auphonic_command() {
   action="start"
 
   # If no start is set, we just want to save the production
-  if [[ -z "$noStart" ]]; then
+  if [[ -n "$noStart" ]]; then
       action="save"
   fi
 
@@ -681,7 +680,7 @@ lep_auphonic_command() {
        -F "action=$action")
 
   # Only query the status if we started the production
-  if [[ -n "$noStart" ]]; then
+  if [[ -z "$noStart" ]]; then
       echo "Production started"
       content=$(echo $json | jq -r ' . | "\(.data.status_string):\(.data.uuid)"')
       IFS=':' read -ra response <<< "$content"
