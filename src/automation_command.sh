@@ -16,12 +16,21 @@ if [[ -z "$episode" ]]; then
 fi
 
 echo "Start automatic workflow for file $episode"
-
-read -p "Episode Nummer: " postNumber
-read -p "Episode Titel: " postTitle
-read -p "Release (YYYY-MM-DD): " postDate
-
 title=$(echo "$episode" | cut -d'.' -f 1)
+dataFile="$title".txt
+
+if [[ -e $dataFile ]]; then
+    IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
+else
+    read -p "Episode Nummer: " postNumber
+    read -p "Episode Titel: " postTitle
+    read -p "Release (YYYY-MM-DD): " postDate
+
+    echo "$postNumber,$postTitle,$postDate" >> $dataFile
+fi
+
+echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
+
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
 
@@ -145,4 +154,3 @@ if [[ -z "$skipBlogpost" ]]; then
     fi
 
 fi
-
