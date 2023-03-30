@@ -800,6 +800,39 @@ parse_requirements() {
     esac
   done
 
+  # :command.dependencies_filter
+  if command -v aws >/dev/null 2>&1; then
+    deps['aws']="$(command -v aws | head -n1)"
+  else
+    printf "missing dependency: aws\n" >&2
+    printf "%s\n" "install by running: 'brew install awscli'" >&2
+    exit 1
+  fi
+
+  if command -v op >/dev/null 2>&1; then
+    deps['op']="$(command -v op | head -n1)"
+  else
+    printf "missing dependency: op\n" >&2
+    printf "%s\n" "install by running: 'brew install 1password-cli'" >&2
+    exit 1
+  fi
+
+  if command -v jq >/dev/null 2>&1; then
+    deps['jq']="$(command -v jq | head -n1)"
+  else
+    printf "missing dependency: jq\n" >&2
+    printf "%s\n" "install by running: 'brew install jq'" >&2
+    exit 1
+  fi
+
+  if command -v curl >/dev/null 2>&1; then
+    deps['curl']="$(command -v curl | head -n1)"
+  else
+    printf "missing dependency: curl\n" >&2
+    printf "%s\n" "Please install curl" >&2
+    exit 1
+  fi
+
   # :command.command_filter
   action=${1:-}
 
