@@ -509,6 +509,7 @@ lep_automation_command() {
   fi
 
   echo "Start automatic workflow for file $episode"
+
   title=$(echo "$episode" | cut -d'.' -f 1)
   dataFile="$title".txt
 
@@ -522,7 +523,7 @@ lep_automation_command() {
               break
 
           fi
-       done
+      done
       read -p "Episode Titel: " postTitle
 
       while true; do
@@ -532,7 +533,7 @@ lep_automation_command() {
               break
 
           fi
-       done
+      done
 
       echo "$postNumber,$postTitle,$postDate" >> $dataFile
   fi

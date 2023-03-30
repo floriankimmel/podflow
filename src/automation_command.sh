@@ -17,6 +17,7 @@ if [[ -z "$episode" ]]; then
 fi
 
 echo "Start automatic workflow for file $episode"
+
 title=$(echo "$episode" | cut -d'.' -f 1)
 dataFile="$title".txt
 
@@ -29,7 +30,7 @@ else
         if [[ "$postNumber" =~ ^[0-9]*$ ]]; then
             break 
         fi
-     done
+    done
     read -p "Episode Titel: " postTitle
 
     while true; do
@@ -38,7 +39,7 @@ else
         if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
             break 
         fi
-     done
+    done
 
     echo "$postNumber,$postTitle,$postDate" >> $dataFile
 fi
