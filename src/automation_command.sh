@@ -4,6 +4,7 @@ skipAuphonic=${args[--skip-auphonic]}
 skipDownload=${args[--skip-download]}
 skipBlogpost=${args[--skip-blogpost]}
 
+
 ag1=${args[--ag1]}
 
 episode=${args[--m4a]}
@@ -22,9 +23,22 @@ dataFile="$title".txt
 if [[ -e $dataFile ]]; then
     IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
 else
-    read -p "Episode Nummer: " postNumber
+    while true; do
+        read -p "Episode Nummer: " postNumber
+
+        if [[ "$postNumber" =~ ^[0-9]*$ ]]; then
+            break 
+        fi
+     done
     read -p "Episode Titel: " postTitle
-    read -p "Release (YYYY-MM-DD): " postDate
+
+    while true; do
+        read -p "Release (YYYY-MM-DD): " postDate
+
+        if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+            break 
+        fi
+     done
 
     echo "$postNumber,$postTitle,$postDate" >> $dataFile
 fi
