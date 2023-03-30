@@ -1,6 +1,7 @@
 name: lep
 help: Manage the laufendentdecken podcast via terminal
 version: 1.0.0
+
 dependencies:
   aws: "install by running: 'brew install awscli'"
   op: "install by running: 'brew install 1password-cli'"
