@@ -508,6 +508,11 @@ lep_automation_command() {
       done
   fi
 
+  if [[ -n "$title"_addfree.m4a ]] && [[ -z "$ag1" ]]; then
+      echo "Addfree version detected but no advertisement provided"
+      exit 1
+  fi
+
   echo "Start automatic workflow for file $episode"
 
   title=$(echo "$episode" | cut -d'.' -f 1)
