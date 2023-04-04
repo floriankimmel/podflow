@@ -17,15 +17,15 @@ if [[ -z "$episode" ]]; then
     done
 fi
 
-if [[ -n "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
-    echo "Addfree version detected but no advertisement provided"
-    exit 1
-fi
-
 echo "Start automatic workflow for file $episode"
 
 title=$(echo "$episode" | cut -d'.' -f 1)
 dataFile="$title".txt
+
+if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
+    echo "Addfree version detected but no advertisement information provided"
+    exit 1
+fi
 
 if [[ -e $dataFile ]]; then
     IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
