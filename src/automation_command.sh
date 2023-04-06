@@ -23,9 +23,27 @@ title=$(echo "$episode" | cut -d'.' -f 1)
 dataFile="$title".txt
 
 if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
-    echo "Addfree version detected but no advertisement information provided"
-    exit 1
+    echo "Addfree version detected. Need to specify which advirtesemtn should be used"
+    echo "Supported Advirtesements:"
+    echo "(1) ag1"
+
+    while true
+    do
+        read -p "Please choose: " option
+
+        case $option in
+            1)
+                ag1="1"
+                break
+                ;;
+            *)
+                ;;
+        esac
+    done
 fi
+
+echo $ag1
+exit 1
 
 if [[ -e $dataFile ]]; then
     IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
