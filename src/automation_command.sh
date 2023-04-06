@@ -23,7 +23,7 @@ title=$(echo "$episode" | cut -d'.' -f 1)
 dataFile="$title".txt
 
 if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
-    echo "Addfree version detected. Need to specify which advirtesemtn should be used"
+    echo "Addfree version detected, but no advirtesement provided"
     echo "Supported Advirtesements:"
     echo "(1) ag1"
 
