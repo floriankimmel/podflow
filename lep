@@ -534,6 +534,9 @@ lep_automation_command() {
       done
   fi
 
+  [[ -z "$ag1" ]] && echo " test" || echo "provided"
+  exit 1
+
   if [[ -e $dataFile ]]; then
       IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
   else

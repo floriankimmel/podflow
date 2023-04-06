@@ -42,6 +42,9 @@ if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
     done
 fi
 
+[[ -z "$ag1" ]] && echo " test" || echo "provided"
+exit 1
+
 if [[ -e $dataFile ]]; then
     IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
 else
