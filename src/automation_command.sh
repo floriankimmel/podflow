@@ -43,6 +43,10 @@ if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
     done
 fi
 
+nextFriday=$(date -v+friday '+%Y-%m-%d')  # Nächstes Freitagsdatum
+echo $nextFriday
+
+
 if [[ -e $dataFile ]]; then
     IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
 else
@@ -56,7 +60,11 @@ else
     read -p "Episode Titel: " postTitle
 
     while true; do
-        read -p "Release (YYYY-MM-DD): " postDate
+        read -p "Release (next Friday per default: $nextFriday): " postDate
+
+        if [[ -z "$postDate" ]] then
+            postDate=$nextFriday
+        fi
 
         if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
             break 
