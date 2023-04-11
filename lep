@@ -536,9 +536,6 @@ lep_automation_command() {
       done
   fi
 
-  nextFriday=$(date -v+friday '+%Y-%m-%d')  # Nächstes Freitagsdatum
-  echo $nextFriday
-
   if [[ -e $dataFile ]]; then
       IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
   else
@@ -553,6 +550,8 @@ lep_automation_command() {
       read -p "Episode Titel: " postTitle
 
       while true; do
+          nextFriday=$(date -v+friday '+%Y-%m-%d')
+
           read -p "Release (next Friday per default: $nextFriday): " postDate
 
           if [[ -z "$postDate" ]] then
