@@ -7,13 +7,20 @@ ag1=${args[--ag1]}
 
 fullPostTitle="LEP#$postNumber - $postTitle"
 
-if [[ $postTitle == "Ein Gespräch mit "* ]]; then
-    guest=${postTitle#"Ein Gespräch mit "}
-    guest="Mehr Informationen zu $guest: Instagram | Facebook <br><br>"
-else
-    guest=""
-fi
+case $postTitle in
+    "Ein Gespräch mit "*)
+        guest=${postTitle#"Ein Gespräch mit "}
+        guest="Mehr Informationen zu $guest: Instagram | Facebook <br><br>"
+        ;;
 
+    "Ein Wiedersehen mit "*)
+        guest=${postTitle#"Ein Wiedersehen mit "}
+        guest="Mehr Informationen zu $guest: Instagram | Facebook <br><br>"
+        ;;
+    *)
+        guest=""
+        ;;
+esac
 
 content="<b>Werbefrei</b><br><br>Zusätzlich habt ihr ab sofort die Möglichkeit euch das exklusive <a href='https://www.patreon.com/laufendentdecken'>Patreonfeed</a> zu sichern – werbefrei und liebevoll exportiert.<br><br>Am besten direkt mitmachen und unterstützen: <a href='https://www.patreon.com/laufendentdecken'>Patreon</a><br><br><b>Links zum weiterlesen</b><br><br>$guest Wenn ihr den Podcast direkt ohne Installation hören möchtet, könnt ihr das hier tun: Laufend Entdecken auf Podbay<br><br>Florian: <a href='http://twitter.com/laufenentdecken'>Twitter</a>, <a href='https://www.strava.com/athletes/1651823'>Strava</a><br>Peter: <a href='https://twitter.com/redendentdecken'>Twitter</a>, <a href='https://www.instagram.com/redendentdecken'>Instagram</a>, <a href='https://www.strava.com/athletes/24464941'>Strava</a><br><br><a href='http://facebook.com/laufendentdeckenblog/'>Facebook</a>, <a href='https://instagram.com/laufendentdeckenpodcast/'>Instagram</a>, <a href='https://www.strava.com/clubs/473847'>Strava Club</a>"
 
