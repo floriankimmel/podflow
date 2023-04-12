@@ -6,6 +6,7 @@ dataFile="$title".txt
 if ! [[ -e $dataFile ]]; then
     postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
     postNumber=$(expr $postNumber + 1)
+
     if [[ -z "$debug" ]]; then
         op item edit 'Podcast' 'Episode='$postNumber > /dev/null
     fi
@@ -30,12 +31,17 @@ if ! [[ -e $dataFile ]]; then
                 ;;
             *)
                 postTitle=""
+                break
                 ;;
         esac
     done
 
-    name=$(echo $title | sed 's/\([a-z]\)\([A-Z]\)/\1 \2/g')
-    postTitle=$postTitle$name
+    if [[ -n "$postTitle" ]]; then
+        name=$(echo $title | sed 's/\([a-z]\)\([A-Z]\)/\1 \2/g')
+        postTitle=$postTitle$name
+    else
+        read -p "Custom title: " postTitle
+    fi
 
     if [[ -n "$noDefaultReleaseDate" ]] then
         while true; do
