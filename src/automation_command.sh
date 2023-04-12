@@ -6,6 +6,7 @@ skipBlogpost=${args[--skip-blogpost]}
 noDefaultReleaseDate=${args[--no-default-releasedate]}
 
 ag1=${args[--ag1]}
+debug=${args[--debug]}
 add=$([ -n "$ag1" ] && echo "true" || echo "false")
 
 episode=${args[--m4a]}
@@ -42,7 +43,11 @@ if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
     done
 fi
 
-lep metadata --title $title
+if [[ -n "$debug" ]]; then
+    lep metadata --title $title --debug 
+else 
+    lep metadata --title $title 
+fi
 
 IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 

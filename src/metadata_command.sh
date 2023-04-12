@@ -1,11 +1,14 @@
 title=${args[--title]}
+debug=${args[--debug]}
 
 dataFile="$title".txt
 
 if ! [[ -e $dataFile ]]; then
     postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
     postNumber=$(expr $postNumber + 1)
-    op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+    if [[ -z "$debug" ]]; then
+        op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+    fi
 
     echo "Title Template"
     echo "(1) Ein Gespräch mit "

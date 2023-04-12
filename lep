@@ -84,6 +84,11 @@ lep_metadata_usage() {
     printf "    Episode Title\n"
     echo
 
+    # :flag.usage
+    printf "  %s\n" "--debug"
+    printf "    Don't change any state in 1password\n"
+    echo
+
     # :command.usage_fixed_flags
     printf "  %s\n" "--help, -h"
     printf "    Show this help\n"
@@ -197,6 +202,11 @@ lep_automation_usage() {
     # :flag.usage
     printf "  %s\n" "--ag1"
     printf "    This episodes is supportd by AG1\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "--debug"
+    printf "    Dont change\n"
     echo
 
     # :flag.usage
@@ -456,13 +466,16 @@ validate_not_empty() {
 lep_metadata_command() {
   # src/metadata_command.sh
   title=${args[--title]}
+  debug=${args[--debug]}
 
   dataFile="$title".txt
 
   if ! [[ -e $dataFile ]]; then
       postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
       postNumber=$(expr $postNumber + 1)
-      op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+      if [[ -z "$debug" ]]; then
+          op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+      fi
 
       echo "Title Template"
       echo "(1) Ein Gespräch mit "
@@ -599,6 +612,7 @@ lep_automation_command() {
   noDefaultReleaseDate=${args[--no-default-releasedate]}
 
   ag1=${args[--ag1]}
+  debug=${args[--debug]}
   add=$([ -n "$ag1" ] && echo "true" || echo "false")
 
   episode=${args[--m4a]}
@@ -636,7 +650,14 @@ lep_automation_command() {
       done
   fi
 
-  lep metadata --title $title
+  if [[ -n "$debug" ]]; then
+      lep metadata --title $title --debug
+
+  else
+
+      lep metadata --title $title
+
+  fi
 
   IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
@@ -1067,6 +1088,14 @@ lep_metadata_parse_requirements() {
         fi
         ;;
 
+      # :flag.case
+      --debug)
+
+        # :flag.case_no_arg
+        args['--debug']=1
+        shift
+        ;;
+
       -?*)
         printf "invalid option: %s\n" "$key" >&2
         exit 1
@@ -1288,6 +1317,14 @@ lep_automation_parse_requirements() {
 
         # :flag.case_no_arg
         args['--ag1']=1
+        shift
+        ;;
+
+      # :flag.case
+      --debug)
+
+        # :flag.case_no_arg
+        args['--debug']=1
         shift
         ;;
 

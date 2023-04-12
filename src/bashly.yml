@@ -19,6 +19,9 @@ commands:
     required: true
     help: Episode Title
 
+  - long: --debug
+    help: Don't change any state in 1password 
+
 - name: youtube
   help: Configure youtube video
 
@@ -57,6 +60,9 @@ commands:
 
   - long: --ag1
     help: This episodes is supportd by AG1
+
+  - long: --debug
+    help: Dont change 
 
   - long: --no-default-releasedate
     help: Change default release date 
