@@ -2,6 +2,14 @@
 
 A cli tool to automate everthing related to upload and manage the laufend entdecken podcast. A typical automation worklow does the following steps
 
+* Try to detect if addfree version is available and if not provided let user
+  choose which type of add should be used
+* Generate metadata like title, number and schedule date
+  * title: Choose a template and use title of file to determine guest
+    automatically
+  * number: store last episode number in 1password and use that to calculate
+    next episode number  
+  * schedule date: calculate date of next friday  
 * Uploads addfree, non-adfree, cover thumbnail and youtube cover thumbnail to our own ftp server (command: `ftp`)
 * Backup all those file to 2 s3 buckets in 2 different regions 
 * Start auphonic productions for (command: `auphonic`)
