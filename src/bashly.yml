@@ -9,6 +9,16 @@ dependencies:
   curl: "Please install curl"
 
 commands:
+- name: metadata
+  help: Generate episode metadata
+
+  flags:
+  - long: --title
+    short: -t
+    arg: title    
+    required: true
+    help: Episode Title
+
 - name: youtube
   help: Configure youtube video
 

@@ -34,6 +34,7 @@ lep_usage() {
   echo
   # :command.usage_commands
   printf "%s\n" "Commands:"
+  printf "  %s   Generate episode metadata\n" "metadata  "
   printf "  %s   Configure youtube video\n" "youtube   "
   printf "  %s   Upload file to self hosted ftp server\n" "ftp       "
   printf "  %s   Upload latest episode and start automatic post processing workflow\n" "automation"
@@ -51,6 +52,41 @@ lep_usage() {
     echo
     printf "  %s\n" "--version, -v"
     printf "    Show version number\n"
+    echo
+
+  fi
+}
+
+# :command.usage
+lep_metadata_usage() {
+  if [[ -n $long_usage ]]; then
+    printf "lep metadata - Generate episode metadata\n"
+    echo
+
+  else
+    printf "lep metadata - Generate episode metadata\n"
+    echo
+
+  fi
+
+  printf "%s\n" "Usage:"
+  printf "  lep metadata [OPTIONS]\n"
+  printf "  lep metadata --help | -h\n"
+  echo
+
+  # :command.long_usage
+  if [[ -n $long_usage ]]; then
+    printf "%s\n" "Options:"
+
+    # :command.usage_flags
+    # :flag.usage
+    printf "  %s\n" "--title, -t TITLE (required)"
+    printf "    Episode Title\n"
+    echo
+
+    # :command.usage_fixed_flags
+    printf "  %s\n" "--help, -h"
+    printf "    Show this help\n"
     echo
 
   fi
@@ -417,6 +453,65 @@ validate_not_empty() {
 
 # :command.command_functions
 # :command.function
+lep_metadata_command() {
+  # src/metadata_command.sh
+  title=${args[--title]}
+
+  dataFile="$title".txt
+
+  if ! [[ -e $dataFile ]]; then
+      postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
+      postNumber=$(expr $postNumber + 1)
+      op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+
+      echo "Title Template"
+      echo "(1) Ein Gespräch mit "
+      echo "(2) Ein Wiedersehen mit "
+      echo "(*) Custom"
+
+      while true
+      do
+          read -p "Please choose: " option
+
+          case $option in
+              1)
+                  postTitle="Ein Gespräch mit "
+                  break
+                  ;;
+              2)
+                  postTitle="Ein Wiedersehen mit "
+                  break
+                  ;;
+              *)
+                  postTitle=""
+                  ;;
+          esac
+      done
+
+      name=$(echo $title | sed 's/\([a-z]\)\([A-Z]\)/\1 \2/g')
+      postTitle=$postTitle$name
+
+      if [[ -n "$noDefaultReleaseDate" ]] then
+          while true; do
+              read -p "Release Date: $nextFriday): " postDate
+
+              if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                  break
+
+              fi
+          done
+      else
+
+          postDate=$(date -v+friday '+%Y-%m-%d')
+
+      fi
+
+      echo "$postNumber,$postTitle,$postDate" >> $dataFile
+  fi
+
+}
+
+# :command.function
 lep_youtube_command() {
   # src/youtube_command.sh
   #!/bin/bash
@@ -520,7 +615,6 @@ lep_automation_command() {
   echo "Start automatic workflow for file $episode"
 
   title=$(echo "$episode" | cut -d'.' -f 1)
-  dataFile="$title".txt
 
   if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
       echo "Addfree version detected, but no advirtesement provided"
@@ -542,32 +636,9 @@ lep_automation_command() {
       done
   fi
 
-  if [[ -e $dataFile ]]; then
-      IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
-  else
-      postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
-      postNumber=$(expr $postNumber + 1)
-      op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+  lep metadata --title $title
 
-      read -p "Episode Titel: " postTitle
-
-      if [[ -n "$noDefaultReleaseDate" ]] then
-          while true; do
-              read -p "Release Date: $nextFriday): " postDate
-
-              if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-                  break
-
-              fi
-          done
-      else
-
-          postDate=$(date -v+friday '+%Y-%m-%d')
-
-      fi
-
-      echo "$postNumber,$postTitle,$postDate" >> $dataFile
-  fi
+  IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
   echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
 
@@ -878,6 +949,13 @@ parse_requirements() {
   case $action in
     -*) ;;
 
+    metadata)
+      action="metadata"
+      shift
+      lep_metadata_parse_requirements "$@"
+      shift $#
+      ;;
+
     youtube)
       action="youtube"
       shift
@@ -946,6 +1024,70 @@ parse_requirements() {
 
     esac
   done
+
+}
+
+# :command.parse_requirements
+lep_metadata_parse_requirements() {
+  # :command.fixed_flags_filter
+  while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+      --help | -h)
+        long_usage=yes
+        lep_metadata_usage
+        exit
+        ;;
+
+      *)
+        break
+        ;;
+
+    esac
+  done
+
+  # :command.command_filter
+  action="metadata"
+
+  # :command.parse_requirements_while
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+      # :flag.case
+      --title | -t)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+
+          args['--title']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--title requires an argument: --title, -t TITLE" >&2
+          exit 1
+        fi
+        ;;
+
+      -?*)
+        printf "invalid option: %s\n" "$key" >&2
+        exit 1
+        ;;
+
+      *)
+        # :command.parse_requirements_case
+        # :command.parse_requirements_case_simple
+        printf "invalid argument: %s\n" "$key" >&2
+        exit 1
+
+        ;;
+
+    esac
+  done
+
+  # :command.required_flags_filter
+  if [[ -z ${args['--title']+x} ]]; then
+    printf "missing required flag: --title, -t TITLE\n" >&2
+    exit 1
+  fi
 
 }
 
@@ -1535,6 +1677,7 @@ run() {
   before_hook
 
   case "$action" in
+    "metadata") lep_metadata_command ;;
     "youtube") lep_youtube_command ;;
     "ftp") lep_ftp_command ;;
     "automation") lep_automation_command ;;

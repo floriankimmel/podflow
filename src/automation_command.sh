@@ -5,7 +5,6 @@ skipDownload=${args[--skip-download]}
 skipBlogpost=${args[--skip-blogpost]}
 noDefaultReleaseDate=${args[--no-default-releasedate]}
 
-
 ag1=${args[--ag1]}
 add=$([ -n "$ag1" ] && echo "true" || echo "false")
 
@@ -22,7 +21,6 @@ fi
 echo "Start automatic workflow for file $episode"
 
 title=$(echo "$episode" | cut -d'.' -f 1)
-dataFile="$title".txt
 
 if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
     echo "Addfree version detected, but no advirtesement provided"
@@ -44,31 +42,9 @@ if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
     done
 fi
 
+lep metadata --title $title
 
-
-if [[ -e $dataFile ]]; then
-    IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
-else
-    postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
-    postNumber=$(expr $postNumber + 1)
-    op item edit 'Podcast' 'Episode='$postNumber > /dev/null
-
-    read -p "Episode Titel: " postTitle
-
-    if [[ -n "$noDefaultReleaseDate" ]] then
-        while true; do
-            read -p "Release Date: $nextFriday): " postDate
-
-            if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-                break 
-            fi
-        done
-    else   
-        postDate=$(date -v+friday '+%Y-%m-%d')  
-    fi
-
-    echo "$postNumber,$postTitle,$postDate" >> $dataFile
-fi
+IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
 echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
 
