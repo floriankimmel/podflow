@@ -3,6 +3,7 @@ skipAws=${args[--skip-aws]}
 skipAuphonic=${args[--skip-auphonic]}
 skipDownload=${args[--skip-download]}
 skipBlogpost=${args[--skip-blogpost]}
+noDefaultReleaseDate=${args[--no-default-releasedate]}
 
 
 ag1=${args[--ag1]}
@@ -48,27 +49,23 @@ fi
 if [[ -e $dataFile ]]; then
     IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
 else
-    while true; do
-        read -p "Episode Nummer: " postNumber
+    postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
+    postNumber=$(expr $postNumber + 1)
+    op item edit 'Podcast' 'Episode='$postNumber > /dev/null
 
-        if [[ "$postNumber" =~ ^[0-9]*$ ]]; then
-            break 
-        fi
-    done
     read -p "Episode Titel: " postTitle
 
-    while true; do
-        nextFriday=$(date -v+friday '+%Y-%m-%d')  
-        read -p "Release (next Friday per default: $nextFriday): " postDate
+    if [[ -n "$noDefaultReleaseDate" ]] then
+        while true; do
+            read -p "Release Date: $nextFriday): " postDate
 
-        if [[ -z "$postDate" ]] then
-            postDate=$nextFriday
-        fi
-
-        if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-            break 
-        fi
-    done
+            if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                break 
+            fi
+        done
+    else   
+        postDate=$(date -v+friday '+%Y-%m-%d')  
+    fi
 
     echo "$postNumber,$postTitle,$postDate" >> $dataFile
 fi

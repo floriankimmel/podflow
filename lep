@@ -164,6 +164,11 @@ lep_automation_usage() {
     echo
 
     # :flag.usage
+    printf "  %s\n" "--no-default-releasedate"
+    printf "    Change default release date\n"
+    echo
+
+    # :flag.usage
     printf "  %s\n" "--skip-ftp"
     printf "    Skip upload to FTP server\n"
     echo
@@ -496,6 +501,7 @@ lep_automation_command() {
   skipAuphonic=${args[--skip-auphonic]}
   skipDownload=${args[--skip-download]}
   skipBlogpost=${args[--skip-blogpost]}
+  noDefaultReleaseDate=${args[--no-default-releasedate]}
 
   ag1=${args[--ag1]}
   add=$([ -n "$ag1" ] && echo "true" || echo "false")
@@ -539,30 +545,26 @@ lep_automation_command() {
   if [[ -e $dataFile ]]; then
       IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$dataFile")"
   else
-      while true; do
-          read -p "Episode Nummer: " postNumber
+      postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
+      postNumber=$(expr $postNumber + 1)
+      op item edit 'Podcast' 'Episode='$postNumber > /dev/null
 
-          if [[ "$postNumber" =~ ^[0-9]*$ ]]; then
-              break
-
-          fi
-      done
       read -p "Episode Titel: " postTitle
 
-      while true; do
-          nextFriday=$(date -v+friday '+%Y-%m-%d')
+      if [[ -n "$noDefaultReleaseDate" ]] then
+          while true; do
+              read -p "Release Date: $nextFriday): " postDate
 
-          read -p "Release (next Friday per default: $nextFriday): " postDate
+              if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+                  break
 
-          if [[ -z "$postDate" ]] then
-              postDate=$nextFriday
-          fi
+              fi
+          done
+      else
 
-          if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
-              break
+          postDate=$(date -v+friday '+%Y-%m-%d')
 
-          fi
-      done
+      fi
 
       echo "$postNumber,$postTitle,$postDate" >> $dataFile
   fi
@@ -1144,6 +1146,14 @@ lep_automation_parse_requirements() {
 
         # :flag.case_no_arg
         args['--ag1']=1
+        shift
+        ;;
+
+      # :flag.case
+      --no-default-releasedate)
+
+        # :flag.case_no_arg
+        args['--no-default-releasedate']=1
         shift
         ;;
 

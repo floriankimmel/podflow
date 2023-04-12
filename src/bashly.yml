@@ -48,6 +48,9 @@ commands:
   - long: --ag1
     help: This episodes is supportd by AG1
 
+  - long: --no-default-releasedate
+    help: Change default release date 
+
   - long: --skip-ftp  
     help: Skip upload to FTP server  
 
