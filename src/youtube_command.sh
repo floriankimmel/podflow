@@ -37,24 +37,29 @@ SCOPES="https://www.googleapis.com/auth/youtube.force-ssl"
 API_KEY_FILE="/Users/fkimmel/Dropbox/Tresor/key.json"
 APPLICATION_NAME="CLI"
 
-# Get the OAuth 2.0 access token
-ACCESS_TOKEN=$(google-oauthlib-tool --client-secrets $API_KEY_FILE \
-                  --scope $SCOPES \
-                  --save \
-                  | grep access_token \
-                  | cut -d' ' -f2)
-
+credentials="/Users/fkimmel/Library/Application Support/google-oauthlib-tool/credentials.json"
+if ! [[ -e $credentials ]]; then
+    google-oauthlib-tool --client-secrets $API_KEY_FILE --scope $SCOPES --save 
+fi
+client_id=$(jq -r '.client_id' "$credentials")
+client_secret=$(jq -r '.client_secret' "$credentials")
+refresh_token=$(jq -r '.refresh_token' "$credentials")
+# Get the access token
+ACCESS_TOKEN=$(curl -s -X POST "https://oauth2.googleapis.com/token" \
+                    -H "Content-Type: application/x-www-form-urlencoded" \
+                    -d "client_id=$client_id&client_secret=$client_secret&refresh_token=$refresh_token&grant_type=refresh_token" \
+                    | jq -r '.access_token')
 
 DESCRIPTION="LEP#125 - Wir zwei allein heut Nacht"
 PUBLISH_DATE="2021-11-12T09:00:00.000Z"
 
 echo $ACCESS_TOKEN
 
-# Construct the request body
-REQUEST_BODY=$(jq -n --arg desc "$DESCRIPTION" --arg date "$PUBLISH_DATE" '{snippet: {description: $desc, publishedAt: $date}}')
+REQUEST_BODY=$(jq -n --arg videoId "$VIDEO_ID" --arg desc "$DESCRIPTION" --arg date "$PUBLISH_DATE" '{ id: $videoId, status: { privacyStatus: "private" } }')
+echo $REQUEST_BODY
 
 # Make the API request to update the video
-curl --request PUT "https://www.googleapis.com/youtube/v3/videos?part=snippet&id=$VIDEO_ID" \
+curl --request PUT "https://www.googleapis.com/youtube/v3/videos?part=status&key=${API_KEY}" \
     --header "Authorization: Bearer $ACCESS_TOKEN" \
     --header "Content-Type: application/json" \
     --data "$REQUEST_BODY" 
