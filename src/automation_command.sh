@@ -67,23 +67,33 @@ fi
 coverYoutube="$title"_youtube.png
 baseUrl="https://rssfeed.laufendentdecken-podcast.at/data/"
 
-coverUrl="$baseUrl$cover"
-coverUrlYoutube="$baseUrl$coverYoutube"
+coverWithPostNumber="$postNumber"_"$cover"
+coverYoutubeWithPostNumber="$postNumber"_"$coverYoutube"
+
+coverUrl="$baseUrl$coverWithPostNumber"
+coverUrlYoutube="$baseUrl$coverYoutubeWithPostNumber"
+
+episodeWithPostNumber="$postNumber"_"$episode"
+episodeAdFreeWithPostNumber="$postNumber"_"$episodeAdFree"
+slug="$postNumber"_"$title"
+slugAdFree="$postNumber"_"$titleAdFree"
+
+
 
 if [[ -z "$skipFtp" ]]; then
     echo
     echo "Upload episode to FTP Server"
-    lep ftp --file $episode
+    lep ftp --file $episode --name $episodeWithPostNumber
 
     if [[ "$add" = "true" ]]; then
         echo "Upload addfree episode to FTP Server"
-        lep ftp --file $episodeAdFree
+        lep ftp --file $episodeAdFree --name $episodeAdFreeWithPostNumber
     fi
 
     echo "Upload cover to FTP Server"
-    lep ftp --file $cover
+    lep ftp --file $cover --name $coverWithPostNumber
     echo "Upload youtube cover to FTP Server"
-    lep ftp --file $coverYoutube 
+    lep ftp --file $coverYoutube --name $coverYoutubeWithPostNumber 
 fi
 
 if [ $? -ne 0 ]; then
@@ -94,12 +104,12 @@ if [[ -z "$skipAws" ]]; then
     echo
     echo "Backup to S3"
 
-    aws s3 cp $episode s3://laufendentdecken-podcast/
-    aws s3 cp s3://laufendentdecken-podcast/$episode s3://laufendentdecken-podcast-backup/
+    aws s3 cp $episode s3://laufendentdecken-podcast/$episodeWithPostNumber
+    aws s3 cp s3://laufendentdecken-podcast/$episodeWithPostNumber s3://laufendentdecken-podcast-backup/
 
     if [[ "$add" = "true" ]]; then
-        aws s3 cp $episodeAdFree s3://laufendentdecken-podcast/
-        aws s3 cp s3://laufendentdecken-podcast/$episodeAdFree s3://laufendentdecken-podcast-backup/
+        aws s3 cp $episodeAdFree s3://laufendentdecken-podcast/$episodeAdFreeWithPostNumber
+        aws s3 cp s3://laufendentdecken-podcast/$episodeAdFreeWithPostNumber s3://laufendentdecken-podcast-backup/
     fi
 fi
 
@@ -117,15 +127,15 @@ if [[ -z "$skipAuphonic" ]]; then
         --production_name $title \
         --preset $episodePreset\
         --cover_url $coverUrl \
-        --file $episode \
-        --slug $title
+        --file $episodeWithPostNumber \
+        --slug $slug 
 
     lep auphonic  \
         --production_name "LEP#$postNumber - $postTitle" \
         --preset $youtubePreset \
         --cover_url $coverUrlYoutube \
-        --file $episode \
-        --slug $title \
+        --file $episodeWithPostNumber \
+        --slug $slug \
         --description "$youtubeDescription"
 
     if [[ "$add" = "true" ]]; then
@@ -133,8 +143,8 @@ if [[ -z "$skipAuphonic" ]]; then
             --production_name "$title (addfree)" \
             --preset $episodePreset \
             --cover_url $coverUrl \
-            --file $episodeAdFree \
-            --slug $title
+            --file $episodeAdFreeWithPostNumber \
+            --slug $slugAdFree
     fi
 
     echo "Podcast successfully uploaded"
@@ -147,7 +157,7 @@ fi
 if [[ -z "$skipDownload" ]]; then
     echo
     echo "Download adfree version again to be able to upload it to patroen/steady"
-    curl https://rssfeed.laufendentdecken-podcast.at/data/$titleAdFree.mp3 --output ~/Downloads/$titleAdFree.mp3
+    curl https://rssfeed.laufendentdecken-podcast.at/data/$slugAdFree.mp3 --output ~/Downloads/$slugAdFree.mp3
 fi
 
 if [ $? -ne 0 ]; then
@@ -163,7 +173,7 @@ if [[ -z "$skipBlogpost" ]]; then
             --number $postNumber \
             --title "$postTitle" \
             --publish_date $postDate \
-            --slug $title
+            --slug $slug
     fi   
 
     if [[ -n "$ag1" ]]; then
@@ -171,7 +181,7 @@ if [[ -z "$skipBlogpost" ]]; then
             --number $postNumber \
             --title "$postTitle" \
             --publish_date $postDate \
-            --slug $title \
+            --slug $slug \
             --ag1
     fi
 

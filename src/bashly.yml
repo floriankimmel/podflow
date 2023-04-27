@@ -47,6 +47,11 @@ commands:
     arg: file
     required: true
     help: File to upload
+  - long: --name
+    short: -n
+    arg: name
+    required: true
+    help: Name of file on server
 
 - name: automation
   help: Upload latest episode and start automatic post processing workflow 
