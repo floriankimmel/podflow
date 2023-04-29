@@ -651,6 +651,8 @@ lep_automation_command() {
   skipYoutube=${args[--skip-youtube]}
   noDefaultReleaseDate=${args[--no-default-releasedate]}
 
+  defaultAirTime="09:00:00"
+
   ag1=${args[--ag1]}
   debug=${args[--debug]}
   add=$([ -n "$ag1" ] && echo "true" || echo "false")
@@ -830,7 +832,7 @@ lep_automation_command() {
           lep blogpost \
               --number $postNumber \
               --title "$postTitle" \
-              --publish_date $postDate \
+              --publish_date "$postdate $defaultAirTime" \
               --slug $slug \
               --ag1
       fi
@@ -842,7 +844,7 @@ lep_automation_command() {
       echo "Schedule youtube video"
       lep youtube \
           --title "LEP#$postNumber - $postTitle" \
-          --publish_date "$postDate 09:00:00"
+          --publish_date "$postdate $defaultAirTime"
   fi
 
 }
@@ -980,7 +982,7 @@ lep_blogpost_command() {
       --form "title=${postId} image" \
       | jq -r '.id')
 
-  postData="{ \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate 09:00:00\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph --> <!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"
+  postData="{ \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph --> <!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"
   response=$(curl --silent -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
       --header "Authorization: Basic $apiKey" \
       --header 'Content-Type: application/json; charset=utf-8' \

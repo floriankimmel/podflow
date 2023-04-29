@@ -6,6 +6,8 @@ skipBlogpost=${args[--skip-blogpost]}
 skipYoutube=${args[--skip-youtube]}
 noDefaultReleaseDate=${args[--no-default-releasedate]}
 
+defaultAirTime="09:00:00"
+
 ag1=${args[--ag1]}
 debug=${args[--debug]}
 add=$([ -n "$ag1" ] && echo "true" || echo "false")
@@ -180,7 +182,7 @@ if [[ -z "$skipBlogpost" ]]; then
         lep blogpost \
             --number $postNumber \
             --title "$postTitle" \
-            --publish_date $postDate \
+            --publish_date "$postdate $defaultAirTime" \
             --slug $slug \
             --ag1
     fi
@@ -192,5 +194,5 @@ if [[ -z "$skipYoutube" ]]; then
     echo "Schedule youtube video"
     lep youtube \
         --title "LEP#$postNumber - $postTitle" \
-        --publish_date "$postDate 09:00:00"
+        --publish_date "$postdate $defaultAirTime"
 fi
