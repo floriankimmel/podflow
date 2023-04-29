@@ -7,6 +7,15 @@ ag1=${args[--ag1]}
 
 fullPostTitle="LEP#$postNumber - $postTitle"
 
+title=$(echo "${slug#*_}")
+contentHtml="$title".html 
+
+if  [[ -e $contentHtml ]]; then
+    description=$(sed -n '/<body/,/<\/body>/p' contentHtml | sed '1d;$d')
+else
+    description=""
+fi
+
 case $postTitle in
     "Ein Gespräch mit "*)
         guest=${postTitle#"Ein Gespräch mit "}
@@ -27,6 +36,8 @@ content="<b>Werbefrei</b><br><br>Zusätzlich habt ihr ab sofort die Möglichkeit
 if [[ -n "$ag1" ]]; then
     content="<b>Werbung</b><br><br>Informiere dich jetzt auf <a href='http://athleticgreens.com/laufendentdecken'>athleticgreens.com/laufendentdecken</a> , teste AG1 völlig risikofrei mit 90 Tagen Geld-zurück-Garantie und sichere dir bei deiner AG1 Erstbestellung einen kostenlosen Jahresvorrat an Vitamin D3+K2 zur Unterstützung des Immunsystems & 5 praktische Travel Packs! Gesundheitsbezogene Angaben zu AG1 und unser Angebot findest du auf: <a href='http://athleticgreens.com/laufendentdecken'>athleticgreens.com/laufendentdecken</a><br><br>Auf die Bedeutung einer abwechslungsreichen und ausgewogenen Ernährung und einer gesunden Lebensweise wird hingewiesen. Außer Reichweite von Kindern aufbewahren. Nicht geeignet für Kinder und Jugendliche unter 18 Jahren, schwangere oder stillende Frauen. Die angegebene empfohlene tägliche Verzehrmenge darf nicht überschritten werden.<br><br>$content"
 fi
+
+content="$description$content"
 
 apiKey=$(op item get "PodloveApiKey" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
 

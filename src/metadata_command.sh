@@ -2,6 +2,12 @@ title=${args[--title]}
 debug=${args[--debug]}
 
 dataFile="$title".txt
+contentFile="$title".html
+sourceFile="$title".md
+
+if ! [[ -e $contentFile ]]; then
+    pandoc -s -o $contentFile $sourceFile
+fi
 
 if ! [[ -e $dataFile ]]; then
     postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
@@ -57,3 +63,9 @@ if ! [[ -e $dataFile ]]; then
 
     echo "$postNumber,$postTitle,$postDate" >> $dataFile
 fi
+
+echo "Kopiere Content in Clipboard"
+pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | pbcopy
+
+echo "Kopiere Titeln in Clipboard"
+echo "LEP#$postNumber - $postTitle" | pbcopy
