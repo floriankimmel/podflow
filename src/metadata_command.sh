@@ -64,6 +64,7 @@ if ! [[ -e $dataFile ]]; then
     echo "$postNumber,$postTitle,$postDate" >> $dataFile
 fi
 
+IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
 echo "Kopiere Titeln in Clipboard"
 echo "LEP#$postNumber - $postTitle" | pbcopy
