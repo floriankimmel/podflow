@@ -244,6 +244,11 @@ lep_automation_usage() {
     printf "    Skip create blogpost\n"
     echo
 
+    # :flag.usage
+    printf "  %s\n" "--skip-youtube"
+    printf "    Skip scheduling youtube video\n"
+    echo
+
     # :command.usage_fixed_flags
     printf "  %s\n" "--help, -h"
     printf "    Show this help\n"
@@ -540,7 +545,7 @@ lep_youtube_command() {
   # src/youtube_command.sh
   #!/bin/bash
 
-  PUBLISH_DATE=${args[--publish_date]}
+  PUBLISH_DATE=$(date -jf "%Y-%m-%d %H:%M:%S" "${args[--publish_date]}" "+%Y-%m-%dT%H:%M:%S%z")
   DESCRIPTION=${args[--title]}
 
   API_KEY=$(op item get "YoutubeApiKey" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
@@ -569,6 +574,7 @@ lep_youtube_command() {
   APPLICATION_NAME="CLI"
 
   credentials="/Users/fkimmel/Library/Application Support/google-oauthlib-tool/credentials.json"
+
   if ! [[ -e $credentials ]]; then
       google-oauthlib-tool --client-secrets $API_KEY_FILE --scope $SCOPES --save
 
@@ -629,6 +635,7 @@ lep_automation_command() {
   skipAuphonic=${args[--skip-auphonic]}
   skipDownload=${args[--skip-download]}
   skipBlogpost=${args[--skip-blogpost]}
+  skipYoutube=${args[--skip-youtube]}
   noDefaultReleaseDate=${args[--no-default-releasedate]}
 
   ag1=${args[--ag1]}
@@ -682,6 +689,9 @@ lep_automation_command() {
   IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
   echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
+
+  echo "Titel ist kopiert"
+  echo "LEP#$postNumber - $postTitle" | pbcopy
 
   chapters=$(<"$title".chapters.txt)
   cover="$title".png
@@ -813,6 +823,15 @@ lep_automation_command() {
               --slug $slug \
               --ag1
       fi
+
+  fi
+
+  if [[ -z "$skipYoutube" ]]; then
+      echo
+      echo "Schedule youtube video"
+      lep youtube \
+          --title "LEP#$postNumber - $postTitle" \
+          --publish_date $postDate
 
   fi
 
@@ -1420,6 +1439,14 @@ lep_automation_parse_requirements() {
 
         # :flag.case_no_arg
         args['--skip-blogpost']=1
+        shift
+        ;;
+
+      # :flag.case
+      --skip-youtube)
+
+        # :flag.case_no_arg
+        args['--skip-youtube']=1
         shift
         ;;
 

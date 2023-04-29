@@ -3,6 +3,7 @@ skipAws=${args[--skip-aws]}
 skipAuphonic=${args[--skip-auphonic]}
 skipDownload=${args[--skip-download]}
 skipBlogpost=${args[--skip-blogpost]}
+skipYoutube=${args[--skip-youtube]}
 noDefaultReleaseDate=${args[--no-default-releasedate]}
 
 ag1=${args[--ag1]}
@@ -52,6 +53,10 @@ fi
 IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
 echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
+
+echo "Titel ist kopiert"
+echo "LEP#$postNumber - $postTitle" | pbcopy
+
 
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
@@ -185,4 +190,12 @@ if [[ -z "$skipBlogpost" ]]; then
             --ag1
     fi
 
+fi
+
+if [[ -z "$skipYoutube" ]]; then
+    echo
+    echo "Schedule youtube video"
+    lep youtube \
+        --title "LEP#$postNumber - $postTitle" \
+        --publish_date $postDate 
 fi

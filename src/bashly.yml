@@ -87,6 +87,9 @@ commands:
   - long: --skip-blogpost   
     help: Skip create blogpost
 
+  - long: --skip-youtube   
+    help: Skip scheduling youtube video
+
   examples:
   - lep upload --m4a episode.m4a
 

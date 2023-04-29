@@ -1,6 +1,6 @@
 #!/bin/bash
 
-PUBLISH_DATE=${args[--publish_date]}
+PUBLISH_DATE=$(date -jf "%Y-%m-%d %H:%M:%S" "${args[--publish_date]}" "+%Y-%m-%dT%H:%M:%S%z")
 DESCRIPTION=${args[--title]}
 
 API_KEY=$(op item get "YoutubeApiKey" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
@@ -29,6 +29,7 @@ API_KEY_FILE="/Users/fkimmel/Dropbox/Tresor/key.json"
 APPLICATION_NAME="CLI"
 
 credentials="/Users/fkimmel/Library/Application Support/google-oauthlib-tool/credentials.json"
+
 if ! [[ -e $credentials ]]; then
     google-oauthlib-tool --client-secrets $API_KEY_FILE --scope $SCOPES --save 
 fi
