@@ -197,5 +197,5 @@ if [[ -z "$skipYoutube" ]]; then
     echo "Schedule youtube video"
     lep youtube \
         --title "LEP#$postNumber - $postTitle" \
-        --publish_date $postDate 
+        --publish_date "$postDate 09:00:00"
 fi
