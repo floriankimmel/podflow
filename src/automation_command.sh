@@ -54,8 +54,6 @@ IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
 echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
 
-
-
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
 
@@ -80,8 +78,6 @@ episodeWithPostNumber="$postNumber"_"$episode"
 episodeAdFreeWithPostNumber="$postNumber"_"$episodeAdFree"
 slug="$postNumber"_"$title"
 slugAdFree="$postNumber"_"$titleAdFree"
-
-
 
 if [[ -z "$skipFtp" ]]; then
     echo
