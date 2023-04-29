@@ -57,7 +57,6 @@ VIDEO_ID=$(echo "$JSON" | jq -r '.items[0].id.videoId')
 echo "The video ID is: $VIDEO_ID"
 
 REQUEST_BODY=$(jq -n --arg videoId "$VIDEO_ID" --arg date $PUBLISH_DATE '{ id: $videoId, status: { privacyStatus: "private", "publishAt": $date , "license": "youtube", "publicStatsViewable": true } }')
-echo $REQUEST_BODY
 
 # Make the API request to update the video
 curl -X PUT "https://youtube.googleapis.com/youtube/v3/videos?part=status" \
