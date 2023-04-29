@@ -9,6 +9,7 @@ fullPostTitle="LEP#$postNumber - $postTitle"
 
 title=$(echo "${slug#*_}")
 contentHtml="$title".html 
+image="$title".png
 
 if  [[ -e $contentHtml ]]; then
     description=$(sed -n '/<body/,/<\/body>/p' contentHtml | sed '1d;$d')
@@ -52,8 +53,20 @@ response=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v
 json=$(curl -s -X GET https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId --header "Authorization: Basic $apiKey")
 postId=$(echo $json | jq -r ' . | "\(.post_id)"')
 
-response=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
+featureMedia=$(curl --silent \
+    --request POST \
+    --url https://laufendentdecken-podcast.at/wp-json/wp/v2/media \
+    --header "authorization: Basic ${apiKey}" \
+    --header 'content-type: multipart/form-data' \
+    --form "file=@${image}" \
+    --form "title=${postId} image" \
+    | jq -r '.id')
+
+
+postData="{ \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate 09:00:00\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph --> <!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"
+response=$(curl --silent -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
     --header "Authorization: Basic $apiKey" \
     --header 'Content-Type: application/json; charset=utf-8' \
-    --data-raw "{ \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate 09:00:00\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph --> <!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }")
+    --data-raw "$postData")
 
+echo "Blogpost erstellt"
