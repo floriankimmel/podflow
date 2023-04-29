@@ -54,8 +54,6 @@ IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
 echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
 
-echo "Titel ist kopiert"
-echo "LEP#$postNumber - $postTitle" | pbcopy
 
 
 chapters=$(<"$title".chapters.txt)
@@ -126,7 +124,8 @@ if [[ -z "$skipAuphonic" ]]; then
     episodePreset="WbQunVJaZFitr3z74XTyxJ"
     youtubePreset="M9ageytQCjaFAYn7EjSYPZ"
 
-    youtubeDescription=$(echo -e "Hört rein auf:\n🔗Https://laufendentdecken.at/$postNumber/\n\nUnd natürlich auf\n🎧Spotify, iTunes, Google Podcast, zencastr und in allen podcatchern über das RSS Feed.\n\n✅ Folge uns auf Instagram @laufendentdeckenpodcast , @floderandere und @redendentdecken\n\nUnd auf Facebook https://www.facebook.com/laufendentdeckenpodcast/\n\nWer uns unterstützen mag: https://www.patreon.com/laufendentdecken\noder Steady: https://steadyhq.com/de/laufendentdecken")
+    description=$(pbpaste)
+    youtubeDescription=$(echo -e "${description}\nHört rein auf:\n🔗Https://laufendentdecken.at/$postNumber/\n\nUnd natürlich auf\n🎧Spotify, iTunes, Google Podcast, zencastr und in allen podcatchern über das RSS Feed.\n\n✅ Folge uns auf Instagram @laufendentdeckenpodcast , @floderandere und @redendentdecken\n\nUnd auf Facebook https://www.facebook.com/laufendentdeckenpodcast/\n\nWer uns unterstützen mag: https://www.patreon.com/laufendentdecken\noder Steady: https://steadyhq.com/de/laufendentdecken")
 
     lep auphonic  \
         --production_name $title \

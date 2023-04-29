@@ -64,8 +64,9 @@ if ! [[ -e $dataFile ]]; then
     echo "$postNumber,$postTitle,$postDate" >> $dataFile
 fi
 
-echo "Kopiere Content in Clipboard"
-pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | pbcopy
 
 echo "Kopiere Titeln in Clipboard"
 echo "LEP#$postNumber - $postTitle" | pbcopy
+
+echo "Kopiere Content in Clipboard"
+pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | pbcopy

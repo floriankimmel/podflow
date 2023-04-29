@@ -544,11 +544,11 @@ lep_metadata_command() {
       echo "$postNumber,$postTitle,$postDate" >> $dataFile
   fi
 
-  echo "Kopiere Content in Clipboard"
-  pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | pbcopy
-
   echo "Kopiere Titeln in Clipboard"
   echo "LEP#$postNumber - $postTitle" | pbcopy
+
+  echo "Kopiere Content in Clipboard"
+  pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | pbcopy
 
 }
 
@@ -701,9 +701,6 @@ lep_automation_command() {
 
   echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
 
-  echo "Titel ist kopiert"
-  echo "LEP#$postNumber - $postTitle" | pbcopy
-
   chapters=$(<"$title".chapters.txt)
   cover="$title".png
 
@@ -771,7 +768,8 @@ lep_automation_command() {
       episodePreset="WbQunVJaZFitr3z74XTyxJ"
       youtubePreset="M9ageytQCjaFAYn7EjSYPZ"
 
-      youtubeDescription=$(echo -e "Hört rein auf:\n🔗Https://laufendentdecken.at/$postNumber/\n\nUnd natürlich auf\n🎧Spotify, iTunes, Google Podcast, zencastr und in allen podcatchern über das RSS Feed.\n\n✅ Folge uns auf Instagram @laufendentdeckenpodcast , @floderandere und @redendentdecken\n\nUnd auf Facebook https://www.facebook.com/laufendentdeckenpodcast/\n\nWer uns unterstützen mag: https://www.patreon.com/laufendentdecken\noder Steady: https://steadyhq.com/de/laufendentdecken")
+      description=$(pbpaste)
+      youtubeDescription=$(echo -e "${description}\nHört rein auf:\n🔗Https://laufendentdecken.at/$postNumber/\n\nUnd natürlich auf\n🎧Spotify, iTunes, Google Podcast, zencastr und in allen podcatchern über das RSS Feed.\n\n✅ Folge uns auf Instagram @laufendentdeckenpodcast , @floderandere und @redendentdecken\n\nUnd auf Facebook https://www.facebook.com/laufendentdeckenpodcast/\n\nWer uns unterstützen mag: https://www.patreon.com/laufendentdecken\noder Steady: https://steadyhq.com/de/laufendentdecken")
 
       lep auphonic  \
           --production_name $title \
