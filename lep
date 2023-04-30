@@ -34,6 +34,7 @@ lep_usage() {
   echo
   # :command.usage_commands
   printf "%s\n" "Commands:"
+  printf "  %s   Initialise episode\n" "init      "
   printf "  %s   Generate episode metadata\n" "metadata  "
   printf "  %s   Configure youtube video\n" "youtube   "
   printf "  %s   Upload file to self hosted ftp server\n" "ftp       "
@@ -52,6 +53,35 @@ lep_usage() {
     echo
     printf "  %s\n" "--version, -v"
     printf "    Show version number\n"
+    echo
+
+  fi
+}
+
+# :command.usage
+lep_init_usage() {
+  if [[ -n $long_usage ]]; then
+    printf "lep init - Initialise episode\n"
+    echo
+
+  else
+    printf "lep init - Initialise episode\n"
+    echo
+
+  fi
+
+  printf "%s\n" "Usage:"
+  printf "  lep init\n"
+  printf "  lep init --help | -h\n"
+  echo
+
+  # :command.long_usage
+  if [[ -n $long_usage ]]; then
+    printf "%s\n" "Options:"
+
+    # :command.usage_fixed_flags
+    printf "  %s\n" "--help, -h"
+    printf "    Show this help\n"
     echo
 
   fi
@@ -472,6 +502,17 @@ validate_not_empty() {
 }
 
 # :command.command_functions
+# :command.function
+lep_init_command() {
+  # src/init_command.sh
+  folder=$(basename "$(pwd)")
+  touch "$folder.md"
+  window=$(tmux display-message -p '#I')
+  tmux rename-window -t Aufnahmen:$window $folder
+  fish -c "vim $folder.md"
+
+}
+
 # :command.function
 lep_metadata_command() {
   # src/metadata_command.sh
@@ -1054,6 +1095,13 @@ parse_requirements() {
   case $action in
     -*) ;;
 
+    init)
+      action="init"
+      shift
+      lep_init_parse_requirements "$@"
+      shift $#
+      ;;
+
     metadata)
       action="metadata"
       shift
@@ -1108,6 +1156,50 @@ parse_requirements() {
       ;;
 
   esac
+
+  # :command.parse_requirements_while
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+
+      -?*)
+        printf "invalid option: %s\n" "$key" >&2
+        exit 1
+        ;;
+
+      *)
+        # :command.parse_requirements_case
+        # :command.parse_requirements_case_simple
+        printf "invalid argument: %s\n" "$key" >&2
+        exit 1
+
+        ;;
+
+    esac
+  done
+
+}
+
+# :command.parse_requirements
+lep_init_parse_requirements() {
+  # :command.fixed_flags_filter
+  while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+      --help | -h)
+        long_usage=yes
+        lep_init_usage
+        exit
+        ;;
+
+      *)
+        break
+        ;;
+
+    esac
+  done
+
+  # :command.command_filter
+  action="init"
 
   # :command.parse_requirements_while
   while [[ $# -gt 0 ]]; do
@@ -1825,6 +1917,7 @@ run() {
   before_hook
 
   case "$action" in
+    "init") lep_init_command ;;
     "metadata") lep_metadata_command ;;
     "youtube") lep_youtube_command ;;
     "ftp") lep_ftp_command ;;

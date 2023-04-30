@@ -9,6 +9,9 @@ dependencies:
   curl: "Please install curl"
 
 commands:
+- name: init
+  help: Initialise episode
+
 - name: metadata
   help: Generate episode metadata
 
