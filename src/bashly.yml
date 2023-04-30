@@ -12,6 +12,9 @@ commands:
 - name: init
   help: Initialise episode
 
+- name: check
+  help: Check if ready to start automation
+
 - name: metadata
   help: Generate episode metadata
 

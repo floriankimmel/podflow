@@ -22,6 +22,12 @@ if [[ -z "$episode" ]]; then
     done
 fi
 
+lep check
+
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
 echo "Start automatic workflow for file $episode"
 
 title=$(echo "$episode" | cut -d'.' -f 1)

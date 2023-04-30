@@ -35,6 +35,7 @@ lep_usage() {
   # :command.usage_commands
   printf "%s\n" "Commands:"
   printf "  %s   Initialise episode\n" "init      "
+  printf "  %s   Check if ready to start automation\n" "check     "
   printf "  %s   Generate episode metadata\n" "metadata  "
   printf "  %s   Configure youtube video\n" "youtube   "
   printf "  %s   Upload file to self hosted ftp server\n" "ftp       "
@@ -73,6 +74,35 @@ lep_init_usage() {
   printf "%s\n" "Usage:"
   printf "  lep init\n"
   printf "  lep init --help | -h\n"
+  echo
+
+  # :command.long_usage
+  if [[ -n $long_usage ]]; then
+    printf "%s\n" "Options:"
+
+    # :command.usage_fixed_flags
+    printf "  %s\n" "--help, -h"
+    printf "    Show this help\n"
+    echo
+
+  fi
+}
+
+# :command.usage
+lep_check_usage() {
+  if [[ -n $long_usage ]]; then
+    printf "lep check - Check if ready to start automation\n"
+    echo
+
+  else
+    printf "lep check - Check if ready to start automation\n"
+    echo
+
+  fi
+
+  printf "%s\n" "Usage:"
+  printf "  lep check\n"
+  printf "  lep check --help | -h\n"
   echo
 
   # :command.long_usage
@@ -514,6 +544,56 @@ lep_init_command() {
 }
 
 # :command.function
+lep_check_command() {
+  # src/check_command.sh
+  folder=$(basename "$(pwd)")
+  error=0
+
+  if [[ -e "$folder.m4a" ]]; then
+      echo -e "\e[32m Episode is already exported\e[0m"
+  else
+
+      echo -e "\e[31m No Episode is exported to automate\e[0m"
+      error=1
+  fi
+
+  if [[ -e "$folder.md" ]]; then
+      echo -e "\e[32m Episode description exists\e[0m"
+  else
+
+      echo -e "\e[31m No Episode description available\e[0m"
+      error=1
+  fi
+
+  if [[ -e "$folder.png" ]]; then
+      echo -e "\e[32m Episode picture exists\e[0m"
+  else
+
+      echo -e "\e[31m No Episode picture available\e[0m"
+      error=1
+  fi
+
+  if [[ -e "${folder}_youtube.png" ]]; then
+      echo -e "\e[32m Episode youtube picture exists\e[0m"
+  else
+
+      echo -e "\e[31m No Episode youtube picture available\e[0m"
+      error=1
+  fi
+
+  if [[ -e "$folder.chapters.txt" ]]; then
+      echo -e "\e[32m Episode chapters exists\e[0m"
+  else
+
+      echo -e "\e[31m No Episode chapters available\e[0m"
+      error=1
+  fi
+
+  exit $error
+
+}
+
+# :command.function
 lep_metadata_command() {
   # src/metadata_command.sh
   title=${args[--title]}
@@ -707,6 +787,12 @@ lep_automation_command() {
           episode=$(basename "$file")
           break
       done
+  fi
+
+  lep check
+
+  if [ $? -ne 0 ]; then
+    exit 1
   fi
 
   echo "Start automatic workflow for file $episode"
@@ -1102,6 +1188,13 @@ parse_requirements() {
       shift $#
       ;;
 
+    check)
+      action="check"
+      shift
+      lep_check_parse_requirements "$@"
+      shift $#
+      ;;
+
     metadata)
       action="metadata"
       shift
@@ -1200,6 +1293,50 @@ lep_init_parse_requirements() {
 
   # :command.command_filter
   action="init"
+
+  # :command.parse_requirements_while
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+
+      -?*)
+        printf "invalid option: %s\n" "$key" >&2
+        exit 1
+        ;;
+
+      *)
+        # :command.parse_requirements_case
+        # :command.parse_requirements_case_simple
+        printf "invalid argument: %s\n" "$key" >&2
+        exit 1
+
+        ;;
+
+    esac
+  done
+
+}
+
+# :command.parse_requirements
+lep_check_parse_requirements() {
+  # :command.fixed_flags_filter
+  while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+      --help | -h)
+        long_usage=yes
+        lep_check_usage
+        exit
+        ;;
+
+      *)
+        break
+        ;;
+
+    esac
+  done
+
+  # :command.command_filter
+  action="check"
 
   # :command.parse_requirements_while
   while [[ $# -gt 0 ]]; do
@@ -1918,6 +2055,7 @@ run() {
 
   case "$action" in
     "init") lep_init_command ;;
+    "check") lep_check_command ;;
     "metadata") lep_metadata_command ;;
     "youtube") lep_youtube_command ;;
     "ftp") lep_ftp_command ;;
