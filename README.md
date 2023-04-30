@@ -2,6 +2,7 @@
 
 A cli tool to automate everthing related to upload and manage the laufend entdecken podcast. A typical automation worklow does the following steps
 
+* Check if all preconditions are met (command: `check`)
 * Try to detect if addfree version is available and if not provided let user
   choose which type of add should be used
 * Generate metadata like title, number and schedule date
@@ -18,6 +19,7 @@ A cli tool to automate everthing related to upload and manage the laufend entdec
   * adfree version of the episode
 * Downloads the result of the adfree production to `~/Downloads` so I can create the Patreon/Steady HQ posts by hand
 * Create Blogpost on our wordpress site (command: `blogpost`)
+* Schedule youtube video  (command: `youtube`)
 
 Everystep can be skipped with an approriate skip flag. 
 
