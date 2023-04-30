@@ -28,7 +28,7 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
-echo "Start automatic workflow for file $episode"
+echo "󰀂Start automatic workflow for file $episode"
 
 title=$(echo "$episode" | cut -d'.' -f 1)
 
@@ -60,7 +60,7 @@ fi
 
 IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
-echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
+echo " Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
 
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
@@ -89,7 +89,7 @@ slugAdFree="$postNumber"_"$titleAdFree"
 
 if [[ -z "$skipFtp" ]]; then
     echo
-    echo "Upload episode to FTP Server"
+    echo " Upload episode to FTP Server"
     lep ftp --file $episode --name $episodeWithPostNumber
 
     if [[ "$add" = "true" ]]; then
@@ -97,7 +97,7 @@ if [[ -z "$skipFtp" ]]; then
         lep ftp --file $episodeAdFree --name $episodeAdFreeWithPostNumber
     fi
 
-    echo "Upload cover to FTP Server"
+    echo " Upload cover to FTP Server"
     lep ftp --file $cover --name $coverWithPostNumber
     echo "Upload youtube cover to FTP Server"
     lep ftp --file $coverYoutube --name $coverYoutubeWithPostNumber 
@@ -109,7 +109,7 @@ fi
 
 if [[ -z "$skipAws" ]]; then
     echo
-    echo "Backup to S3"
+    echo " Backup to S3"
 
     aws s3 cp $episode s3://laufendentdecken-podcast/$episodeWithPostNumber
     aws s3 cp s3://laufendentdecken-podcast/$episodeWithPostNumber s3://laufendentdecken-podcast-backup/
@@ -155,7 +155,7 @@ if [[ -z "$skipAuphonic" ]]; then
             --slug $slugAdFree
     fi
 
-    echo "Podcast successfully uploaded"
+    echo " Podcast successfully uploaded"
 fi
 
 if [ $? -ne 0 ]; then
@@ -164,7 +164,7 @@ fi
 
 if [[ -z "$skipDownload" ]]; then
     echo
-    echo "Download adfree version again to be able to upload it to patroen/steady"
+    echo " Download adfree version again to be able to upload it to patroen/steady"
     curl https://rssfeed.laufendentdecken-podcast.at/data/$slugAdFree.mp3 --output ~/Downloads/$slugAdFree.mp3
 fi
 
@@ -174,7 +174,7 @@ fi
 
 if [[ -z "$skipBlogpost" ]]; then
     echo
-    echo "Create Episode on Website"
+    echo "󰜏Create Episode on Website"
 
     if [[ "$add" = "false" ]]; then
         lep blogpost \
@@ -197,7 +197,7 @@ fi
 
 if [[ -z "$skipYoutube" ]]; then
     echo
-    echo "Schedule youtube video"
+    echo " Schedule youtube video"
     lep youtube \
         --title "LEP#$postNumber - $postTitle" \
         --publish_date "$postdate $defaultAirTime"

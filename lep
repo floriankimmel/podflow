@@ -795,7 +795,7 @@ lep_automation_command() {
     exit 1
   fi
 
-  echo "Start automatic workflow for file $episode"
+  echo "󰀂Start automatic workflow for file $episode"
 
   title=$(echo "$episode" | cut -d'.' -f 1)
 
@@ -830,7 +830,7 @@ lep_automation_command() {
 
   IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
-  echo "Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
+  echo " Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
 
   chapters=$(<"$title".chapters.txt)
   cover="$title".png
@@ -859,7 +859,7 @@ lep_automation_command() {
 
   if [[ -z "$skipFtp" ]]; then
       echo
-      echo "Upload episode to FTP Server"
+      echo " Upload episode to FTP Server"
       lep ftp --file $episode --name $episodeWithPostNumber
 
       if [[ "$add" = "true" ]]; then
@@ -867,7 +867,7 @@ lep_automation_command() {
           lep ftp --file $episodeAdFree --name $episodeAdFreeWithPostNumber
       fi
 
-      echo "Upload cover to FTP Server"
+      echo " Upload cover to FTP Server"
       lep ftp --file $cover --name $coverWithPostNumber
       echo "Upload youtube cover to FTP Server"
       lep ftp --file $coverYoutube --name $coverYoutubeWithPostNumber
@@ -880,7 +880,7 @@ lep_automation_command() {
 
   if [[ -z "$skipAws" ]]; then
       echo
-      echo "Backup to S3"
+      echo " Backup to S3"
 
       aws s3 cp $episode s3://laufendentdecken-podcast/$episodeWithPostNumber
       aws s3 cp s3://laufendentdecken-podcast/$episodeWithPostNumber s3://laufendentdecken-podcast-backup/
@@ -926,7 +926,7 @@ lep_automation_command() {
               --slug $slugAdFree
       fi
 
-      echo "Podcast successfully uploaded"
+      echo " Podcast successfully uploaded"
   fi
 
   if [ $? -ne 0 ]; then
@@ -935,7 +935,7 @@ lep_automation_command() {
 
   if [[ -z "$skipDownload" ]]; then
       echo
-      echo "Download adfree version again to be able to upload it to patroen/steady"
+      echo " Download adfree version again to be able to upload it to patroen/steady"
       curl https://rssfeed.laufendentdecken-podcast.at/data/$slugAdFree.mp3 --output ~/Downloads/$slugAdFree.mp3
   fi
 
@@ -945,7 +945,7 @@ lep_automation_command() {
 
   if [[ -z "$skipBlogpost" ]]; then
       echo
-      echo "Create Episode on Website"
+      echo "󰜏Create Episode on Website"
 
       if [[ "$add" = "false" ]]; then
           lep blogpost \
@@ -968,7 +968,7 @@ lep_automation_command() {
 
   if [[ -z "$skipYoutube" ]]; then
       echo
-      echo "Schedule youtube video"
+      echo " Schedule youtube video"
       lep youtube \
           --title "LEP#$postNumber - $postTitle" \
           --publish_date "$postdate $defaultAirTime"
@@ -1000,7 +1000,8 @@ lep_auphonic_command() {
   fi
 
   echo
-  echo "Create $auphonicTitle Production"
+  echo
+  echo " Create $auphonicTitle Production"
   json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
        -u $auphonic_username:$auphonic_pwd \
        -F "preset=$preset" \
@@ -1015,7 +1016,7 @@ lep_auphonic_command() {
 
   # Only query the status if we started the production
   if [[ -z "$noStart" ]]; then
-      echo "Production started"
+      echo " Production started"
       content=$(echo $json | jq -r ' . | "\(.data.status_string):\(.data.uuid)"')
       IFS=':' read -ra response <<< "$content"
 
@@ -1036,7 +1037,7 @@ lep_auphonic_command() {
           sleep 2
       done
   else
-      echo "Production $auphonicTitle saved"
+      echo " Production $auphonicTitle saved"
   fi
 
 }

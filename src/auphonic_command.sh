@@ -20,7 +20,8 @@ if [[ -n "$noStart" ]]; then
 fi
 
 echo
-echo "Create $auphonicTitle Production"
+echo
+echo " Create $auphonicTitle Production"
 json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
      -u $auphonic_username:$auphonic_pwd \
      -F "preset=$preset" \
@@ -35,7 +36,7 @@ json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
 
 # Only query the status if we started the production
 if [[ -z "$noStart" ]]; then
-    echo "Production started"
+    echo " Production started"
     content=$(echo $json | jq -r ' . | "\(.data.status_string):\(.data.uuid)"')
     IFS=':' read -ra response <<< "$content"
 
@@ -56,5 +57,5 @@ if [[ -z "$noStart" ]]; then
         sleep 2
     done
 else
-    echo "Production $auphonicTitle saved"
+    echo " Production $auphonicTitle saved"
 fi

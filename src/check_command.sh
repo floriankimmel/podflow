@@ -36,6 +36,4 @@ else
     error=1
 fi
 
-
-
 exit $error
