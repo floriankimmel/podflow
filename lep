@@ -565,6 +565,14 @@ lep_check_command() {
       error=1
   fi
 
+  if [[ -s "$folder.md" ]]; then
+      echo -e "\e[32m Episode description is not empty\e[0m"
+  else
+
+      echo -e "\e[31m Episode description is empty\e[0m"
+      error=1
+  fi
+
   if [[ -e "$folder.png" ]]; then
       echo -e "\e[32m Episode picture exists\e[0m"
   else
