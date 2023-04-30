@@ -6,7 +6,8 @@ preset=${args[--preset]}
 noStart=${args[--no-start]}
 description=${args[--description]}
 
-chapters=$(<"$title".chapters.txt)
+name=$(echo "${title#*_}")
+chapters=$(<"$name".chapters.txt)
 
 auphonic_pwd=$(op item get "Auphonic" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
 auphonic_username=$( op item get "Auphonic" --format json | jq -r '. | .fields | .[] | select(.purpose=="USERNAME") | .value')

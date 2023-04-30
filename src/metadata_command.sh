@@ -66,8 +66,8 @@ fi
 
 IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
-echo "Kopiere Titeln in Clipboard"
-echo "LEP#$postNumber - $postTitle" | pbcopy
+echo " Kopiere Titel in Clipboard"
+echo "LEP#$postNumber - $postTitle" | pbcopy -Prefer r 
 
-echo "Kopiere Content in Clipboard"
-pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | pbcopy
+echo " Kopiere Content in Clipboard"
+pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | pbcopy -Prefer r

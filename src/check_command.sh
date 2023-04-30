@@ -8,6 +8,12 @@ else
     error=1
 fi
 
+if [[ -e "${folder}_addfree.m4a" ]]; then
+    echo -e "\e[32m Addfree Episode is already exported\e[0m"
+else
+    echo -e "\e[33m No Addfree Episode \e[0m"
+fi
+
 if [[ -e "$folder.md" ]]; then
     echo -e "\e[32m Episode description exists\e[0m"
 else 

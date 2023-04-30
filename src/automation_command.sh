@@ -152,7 +152,7 @@ if [[ -z "$skipAuphonic" ]]; then
             --preset $episodePreset \
             --cover_url $coverUrl \
             --file $episodeAdFreeWithPostNumber \
-            --slug $slugAdFree
+            --slug $slug
     fi
 
     echo " Podcast successfully uploaded"
@@ -180,7 +180,7 @@ if [[ -z "$skipBlogpost" ]]; then
         lep blogpost \
             --number $postNumber \
             --title "$postTitle" \
-            --publish_date $postDate \
+            --publish_date "$postDate $defaultAirTime" \
             --slug $slug
     fi   
 
@@ -188,7 +188,7 @@ if [[ -z "$skipBlogpost" ]]; then
         lep blogpost \
             --number $postNumber \
             --title "$postTitle" \
-            --publish_date "$postdate $defaultAirTime" \
+            --publish_date "$postDate $defaultAirTime" \
             --slug $slug \
             --ag1
     fi
@@ -199,6 +199,6 @@ if [[ -z "$skipYoutube" ]]; then
     echo
     echo " Schedule youtube video"
     lep youtube \
-        --title "LEP#$postNumber - $postTitle" \
-        --publish_date "$postdate $defaultAirTime"
+        --title "LEP#$postNumber" \
+        --publish_date "$postDate $defaultAirTime"
 fi
