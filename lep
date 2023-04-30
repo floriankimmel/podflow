@@ -574,18 +574,18 @@ lep_check_command() {
   fi
 
   if [[ -e "$folder.png" ]]; then
-      echo -e "\e[32m Episode picture exists\e[0m"
+      echo -e "\e[32m Episode thumbnail exists\e[0m"
   else
 
-      echo -e "\e[31m No Episode picture available\e[0m"
+      echo -e "\e[31m No Episode thumbnail available\e[0m"
       error=1
   fi
 
   if [[ -e "${folder}_youtube.png" ]]; then
-      echo -e "\e[32m Episode youtube picture exists\e[0m"
+      echo -e "\e[32m Episode youtube thumbnail exists\e[0m"
   else
 
-      echo -e "\e[31m No Episode youtube picture available\e[0m"
+      echo -e "\e[31m No Episode youtube thumbnail available\e[0m"
       error=1
   fi
 
