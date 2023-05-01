@@ -32,8 +32,8 @@ echo "󰀂Start automatic workflow for file $episode"
 
 title=$(echo "$episode" | cut -d'.' -f 1)
 
-if [[ -e "$title"_addfree.m4a ]] && [[ "$add" = "false" ]]; then
-    echo "Addfree version detected, but no advirtesement provided"
+if [[ -e "$title"_adfree.m4a ]] && [[ "$add" = "false" ]]; then
+    echo "Adfree version detected, but no advirtesement provided"
     echo "Supported Advirtesements:"
     echo "(1) ag1"
 
@@ -60,14 +60,14 @@ fi
 
 IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
-echo " Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
+echo "  Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
 
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
 
 if [[ "$add" = "true" ]]; then
-    episodeAdFree="$title"_addfree.m4a
-    titleAdFree="$title"_addfree
+    episodeAdFree="$title"_adfree.m4a
+    titleAdFree="$title"_adfree
 else
     episodeAdFree=$episode
     titleAdFree=$title
@@ -89,17 +89,17 @@ slugAdFree="$postNumber"_"$titleAdFree"
 
 if [[ -z "$skipFtp" ]]; then
     echo
-    echo " Upload episode to FTP Server"
+    echo "  Upload episode to FTP Server"
     lep ftp --file $episode --name $episodeWithPostNumber
 
     if [[ "$add" = "true" ]]; then
-        echo "Upload addfree episode to FTP Server"
+        echo "  Upload adfree episode to FTP Server"
         lep ftp --file $episodeAdFree --name $episodeAdFreeWithPostNumber
     fi
 
-    echo " Upload cover to FTP Server"
+    echo "  Upload cover to FTP Server"
     lep ftp --file $cover --name $coverWithPostNumber
-    echo "Upload youtube cover to FTP Server"
+    echo "  Upload youtube cover to FTP Server"
     lep ftp --file $coverYoutube --name $coverYoutubeWithPostNumber 
 fi
 
@@ -148,7 +148,7 @@ if [[ -z "$skipAuphonic" ]]; then
 
     if [[ "$add" = "true" ]]; then
         lep auphonic  \
-            --production_name "$title (addfree)" \
+            --production_name "$title (adfree)" \
             --preset $episodePreset \
             --cover_url $coverUrl \
             --file $episodeAdFreeWithPostNumber \
