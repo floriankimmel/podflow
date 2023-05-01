@@ -760,6 +760,8 @@ lep_youtube_command() {
       --header 'Content-Type: application/json' \
       --data "$REQUEST_BODY"
 
+  echo " Youtube Video has been scheduled"
+
 }
 
 # :command.function

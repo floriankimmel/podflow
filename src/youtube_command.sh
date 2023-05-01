@@ -64,3 +64,5 @@ curl -X PUT "https://youtube.googleapis.com/youtube/v3/videos?part=status" \
     --header 'Accept: application/json' \
     --header 'Content-Type: application/json' \
     --data "$REQUEST_BODY"
+
+echo " Youtube Video has been scheduled"
