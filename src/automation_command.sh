@@ -14,12 +14,7 @@ add=$([ -n "$ag1" ] && echo "true" || echo "false")
 
 episode=${args[--m4a]}
 if [[ -z "$episode" ]]; then
-    # um die Schleife zu vermeiden, wenn keine m4a-Dateien vorhanden sind
-    shopt -s nullglob 
-    for file in ./*.m4a; do
-        episode=$(basename "$file")
-        break
-    done
+    episode=$(basename "$(pwd)")
 fi
 
 lep check
