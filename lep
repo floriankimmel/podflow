@@ -101,13 +101,19 @@ lep_check_usage() {
   fi
 
   printf "%s\n" "Usage:"
-  printf "  lep check\n"
+  printf "  lep check [OPTIONS]\n"
   printf "  lep check --help | -h\n"
   echo
 
   # :command.long_usage
   if [[ -n $long_usage ]]; then
     printf "%s\n" "Options:"
+
+    # :command.usage_flags
+    # :flag.usage
+    printf "  %s\n" "--skip-youtube"
+    printf "    Skip scheduling youtube video\n"
+    echo
 
     # :command.usage_fixed_flags
     printf "  %s\n" "--help, -h"
@@ -546,6 +552,8 @@ lep_init_command() {
 # :command.function
 lep_check_command() {
   # src/check_command.sh
+  skipYoutube=${args[--skip-youtube]}
+
   folder=$(basename "$(pwd)")
   error=0
 
@@ -587,12 +595,14 @@ lep_check_command() {
       error=1
   fi
 
-  if [[ -e "${folder}_youtube.png" ]]; then
-      echo -e "\e[32m Episode youtube thumbnail exists\e[0m"
-  else
+  if [[ -z "$skipYoutube" ]]; then
+      if [[ -e "${folder}_youtube.png" ]]; then
+          echo -e "\e[32m Episode youtube thumbnail exists\e[0m"
+      else
 
-      echo -e "\e[31m No Episode youtube thumbnail available\e[0m"
-      error=1
+          echo -e "\e[31m No Episode youtube thumbnail available\e[0m"
+          error=1
+      fi
   fi
 
   if [[ -e "$folder.chapters.txt" ]]; then
@@ -799,7 +809,12 @@ lep_automation_command() {
       episode=$(basename "$(pwd)")
   fi
 
-  lep check
+  if [[ -z "$skipYoutube" ]]; then
+      lep check
+  else
+
+      lep check --skip-youtube
+  fi
 
   if [ $? -ne 0 ]; then
     exit 1
@@ -1360,6 +1375,13 @@ lep_check_parse_requirements() {
   while [[ $# -gt 0 ]]; do
     key="$1"
     case "$key" in
+      # :flag.case
+      --skip-youtube)
+
+        # :flag.case_no_arg
+        args['--skip-youtube']=1
+        shift
+        ;;
 
       -?*)
         printf "invalid option: %s\n" "$key" >&2

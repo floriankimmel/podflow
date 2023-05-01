@@ -1,3 +1,5 @@
+skipYoutube=${args[--skip-youtube]}
+
 folder=$(basename "$(pwd)")
 error=0
 
@@ -35,11 +37,14 @@ else
     error=1
 fi
 
-if [[ -e "${folder}_youtube.png" ]]; then
-    echo -e "\e[32m Episode youtube thumbnail exists\e[0m"
-else 
-    echo -e "\e[31m No Episode youtube thumbnail available\e[0m"
-    error=1
+
+if [[ -z "$skipYoutube" ]]; then
+    if [[ -e "${folder}_youtube.png" ]]; then
+        echo -e "\e[32m Episode youtube thumbnail exists\e[0m"
+    else 
+        echo -e "\e[31m No Episode youtube thumbnail available\e[0m"
+        error=1
+    fi
 fi
 
 if [[ -e "$folder.chapters.txt" ]]; then

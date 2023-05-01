@@ -17,7 +17,11 @@ if [[ -z "$episode" ]]; then
     episode=$(basename "$(pwd)")
 fi
 
-lep check
+if [[ -z "$skipYoutube" ]]; then
+    lep check
+else 
+    lep check --skip-youtube
+fi
 
 if [ $? -ne 0 ]; then
   exit 1
