@@ -94,8 +94,11 @@ if [[ -z "$skipFtp" ]]; then
 
     echo "  Upload cover to FTP Server"
     lep ftp --file $cover --name $coverWithPostNumber
-    echo "  Upload youtube cover to FTP Server"
-    lep ftp --file $coverYoutube --name $coverYoutubeWithPostNumber 
+
+    if [[ -z "$skipYoutube" ]]; then
+        echo "  Upload youtube cover to FTP Server"
+        lep ftp --file $coverYoutube --name $coverYoutubeWithPostNumber 
+    fi
 fi
 
 if [ $? -ne 0 ]; then
@@ -133,13 +136,15 @@ if [[ -z "$skipAuphonic" ]]; then
         --file $episodeWithPostNumber \
         --slug $slug 
 
-    lep auphonic  \
-        --production_name "LEP#$postNumber - $postTitle" \
-        --preset $youtubePreset \
-        --cover_url $coverUrlYoutube \
-        --file $episodeWithPostNumber \
-        --slug $slug \
-        --description "$youtubeDescription"
+    if [[ -z "$skipYoutube" ]]; then
+        lep auphonic  \
+            --production_name "LEP#$postNumber - $postTitle" \
+            --preset $youtubePreset \
+            --cover_url $coverUrlYoutube \
+            --file $episodeWithPostNumber \
+            --slug $slug \
+            --description "$youtubeDescription"
+    fi
 
     if [[ "$add" = "true" ]]; then
         lep auphonic  \
