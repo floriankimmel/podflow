@@ -1066,6 +1066,7 @@ lep_blogpost_command() {
   fullPostTitle="LEP#$postNumber - $postTitle"
 
   title=$(echo "${slug#*_}")
+  name=$(echo $title | sed 's/\([a-z]\)\([A-Z]\)/\1 \2/g')
   contentHtml="$title".html
 
   image="$title".png
@@ -1116,7 +1117,7 @@ lep_blogpost_command() {
       --header "authorization: Basic ${apiKey}" \
       --header 'content-type: multipart/form-data' \
       --form "file=@${image}" \
-      --form "title=${postId} image" \
+      --form "title=$name" \
       | jq -r '.id')
 
   postData="{ \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph -->$description<!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"

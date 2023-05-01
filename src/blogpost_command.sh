@@ -8,6 +8,7 @@ ag1=${args[--ag1]}
 fullPostTitle="LEP#$postNumber - $postTitle"
 
 title=$(echo "${slug#*_}")
+name=$(echo $title | sed 's/\([a-z]\)\([A-Z]\)/\1 \2/g')
 contentHtml="$title".html 
 image="$title".png
 
@@ -57,7 +58,7 @@ featureMedia=$(curl --silent \
     --header "authorization: Basic ${apiKey}" \
     --header 'content-type: multipart/form-data' \
     --form "file=@${image}" \
-    --form "title=${postId} image" \
+    --form "title=$name" \
     | jq -r '.id')
 
 
