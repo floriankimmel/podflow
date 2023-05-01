@@ -12,7 +12,7 @@ contentHtml="$title".html
 image="$title".png
 
 if  [[ -e $contentHtml ]]; then
-    description=$(sed -n '/<body/,/<\/body>/p' $contentHtml | sed '1d;$d' |  sed 's/"/''/g' | tr -d '\n' )
+    description=$(sed -n '/<body/,/<\/body>/p' $contentHtml | sed '1d;$d' |  sed 's/"/''/g' | tr '\n' ' ')
 else
     description=""
 fi
