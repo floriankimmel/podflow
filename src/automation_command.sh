@@ -16,6 +16,7 @@ add=$([ -n "$ag1" ] && echo "true" || echo "false")
 episode=${args[--m4a]}
 if [[ -z "$episode" ]]; then
     episode=$(basename "$(pwd)")
+    episode="$episode.m4a"
 fi
 
 if [[ -z "$skipYoutube" ]]; then

@@ -1,11 +1,11 @@
-tile=${args[--title]}
+title=${args[--title]}
 debug=${args[--debug]}
 noDefaultReleaseDate=${args[--no-default-releasedate]}
 noDefaultPostNumber=${args[--no-default-postnumber]}
 
-dataFile="$title".txt
-contentFile="$title".html
-sourceFile="$title".md
+dataFile="$title.txt"
+contentFile="$title.html"
+sourceFile="$title.md"
 
 if ! [[ -e $contentFile ]]; then
     pandoc -s -o $contentFile $sourceFile
