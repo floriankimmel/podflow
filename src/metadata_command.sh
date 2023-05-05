@@ -1,5 +1,7 @@
-title=${args[--title]}
+tile=${args[--title]}
 debug=${args[--debug]}
+noDefaultReleaseDate=${args[--no-default-releasedate]}
+noDefaultPostNumber=${args[--no-default-postnumber]}
 
 dataFile="$title".txt
 contentFile="$title".html
@@ -10,12 +12,19 @@ if ! [[ -e $contentFile ]]; then
 fi
 
 if ! [[ -e $dataFile ]]; then
-    postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
-    postNumber=$(expr $postNumber + 1)
 
-    if [[ -z "$debug" ]]; then
-        op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+    if [[ -n "$noDefaultPostNumber" ]] then
+        read -p "Release number: " postNumber
+    else
+        postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
+        postNumber=$(expr $postNumber + 1)
+
+        if [[ -z "$debug" ]]; then
+            op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+        fi
+
     fi
+
 
     echo "Title Template"
     echo "(1) Ein Gespräch mit "

@@ -5,6 +5,7 @@ skipDownload=${args[--skip-download]}
 skipBlogpost=${args[--skip-blogpost]}
 skipYoutube=${args[--skip-youtube]}
 noDefaultReleaseDate=${args[--no-default-releasedate]}
+noDefaultPostNumber=${args[--no-default-postnumber]}
 
 defaultAirTime="09:00:00"
 
@@ -52,9 +53,33 @@ if [[ -e "$title"_adfree.m4a ]] && [[ "$add" = "false" ]]; then
 fi
 
 if [[ -n "$debug" ]]; then
-    lep metadata --title $title --debug 
+    if [[ -n "$noDefaultReleaseDate" ]]; then
+        if [[ -n "$noDefaultPostNumber" ]]; then
+            lep metadata --title $title --debug --no-default-releasedate --no-default-postnumber  
+        else 
+            lep metadata --title $title --debug --no-default-releasedate 
+        fi
+    else 
+        if [[ -n "$noDefaultPostNumber" ]]; then
+            lep metadata --title $title --debug --no-default-postnumber  
+        else 
+            lep metadata --title $title --debug 
+        fi
+    fi
 else 
-    lep metadata --title $title 
+    if [[ -n "$noDefaultReleaseDate" ]]; then
+        if [[ -n "$noDefaultPostNumber" ]]; then
+            lep metadata --title $title --no-default-releasedate --no-default-postnumber  
+        else 
+            lep metadata --title $title --no-default-releasedate 
+        fi
+    else 
+        if [[ -n "$noDefaultPostNumber" ]]; then
+            lep metadata --title $title --no-default-postnumber  
+        else 
+            lep metadata --title $title 
+        fi
+    fi
 fi
 
 IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"

@@ -31,6 +31,12 @@ commands:
   - long: --debug
     help: Don't change any state in 1password 
 
+  - long: --no-default-releasedate
+    help: Change default release date 
+
+  - long: --no-default-postnumber
+    help: Change default post number
+
 - name: youtube
   help: Configure youtube video
 

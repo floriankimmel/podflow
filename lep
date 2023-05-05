@@ -155,6 +155,16 @@ lep_metadata_usage() {
     printf "    Don't change any state in 1password\n"
     echo
 
+    # :flag.usage
+    printf "  %s\n" "--no-default-releasedate"
+    printf "    Change default release date\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "--no-default-postnumber"
+    printf "    Change default post number\n"
+    echo
+
     # :command.usage_fixed_flags
     printf "  %s\n" "--help, -h"
     printf "    Show this help\n"
@@ -620,8 +630,10 @@ lep_check_command() {
 # :command.function
 lep_metadata_command() {
   # src/metadata_command.sh
-  title=${args[--title]}
+  tile=${args[--title]}
   debug=${args[--debug]}
+  noDefaultReleaseDate=${args[--no-default-releasedate]}
+  noDefaultPostNumber=${args[--no-default-postnumber]}
 
   dataFile="$title".txt
   contentFile="$title".html
@@ -632,11 +644,17 @@ lep_metadata_command() {
   fi
 
   if ! [[ -e $dataFile ]]; then
-      postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
-      postNumber=$(expr $postNumber + 1)
 
-      if [[ -z "$debug" ]]; then
-          op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+      if [[ -n "$noDefaultPostNumber" ]] then
+          read -p "Release number: " postNumber
+      else
+          postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
+          postNumber=$(expr $postNumber + 1)
+
+          if [[ -z "$debug" ]]; then
+              op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+          fi
+
       fi
 
       echo "Title Template"
@@ -797,6 +815,7 @@ lep_automation_command() {
   skipBlogpost=${args[--skip-blogpost]}
   skipYoutube=${args[--skip-youtube]}
   noDefaultReleaseDate=${args[--no-default-releasedate]}
+  noDefaultPostNumber=${args[--no-default-postnumber]}
 
   defaultAirTime="09:00:00"
 
@@ -845,12 +864,48 @@ lep_automation_command() {
   fi
 
   if [[ -n "$debug" ]]; then
-      lep metadata --title $title --debug
+      if [[ -n "$noDefaultReleaseDate" ]]; then
+          if [[ -n "$noDefaultPostNumber" ]]; then
+              lep metadata --title $title --debug --no-default-releasedate --no-default-postnumber
 
+          else
+
+              lep metadata --title $title --debug --no-default-releasedate
+
+          fi
+      else
+
+          if [[ -n "$noDefaultPostNumber" ]]; then
+              lep metadata --title $title --debug --no-default-postnumber
+
+          else
+
+              lep metadata --title $title --debug
+
+          fi
+      fi
   else
 
-      lep metadata --title $title
+      if [[ -n "$noDefaultReleaseDate" ]]; then
+          if [[ -n "$noDefaultPostNumber" ]]; then
+              lep metadata --title $title --no-default-releasedate --no-default-postnumber
 
+          else
+
+              lep metadata --title $title --no-default-releasedate
+
+          fi
+      else
+
+          if [[ -n "$noDefaultPostNumber" ]]; then
+              lep metadata --title $title --no-default-postnumber
+
+          else
+
+              lep metadata --title $title
+
+          fi
+      fi
   fi
 
   IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
@@ -1446,6 +1501,22 @@ lep_metadata_parse_requirements() {
 
         # :flag.case_no_arg
         args['--debug']=1
+        shift
+        ;;
+
+      # :flag.case
+      --no-default-releasedate)
+
+        # :flag.case_no_arg
+        args['--no-default-releasedate']=1
+        shift
+        ;;
+
+      # :flag.case
+      --no-default-postnumber)
+
+        # :flag.case_no_arg
+        args['--no-default-postnumber']=1
         shift
         ;;
 
