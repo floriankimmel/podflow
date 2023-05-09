@@ -25,7 +25,7 @@ done
 SCOPES="https://www.googleapis.com/auth/youtube.force-ssl"
 
 # Set your API key file path and application name
-API_KEY_FILE="/Users/fkimmel/Dropbox/Tresor/key.json"
+API_KEY_FILE="/Users/fkimmel/Dropbox/Resources/Tresor/key.json"
 APPLICATION_NAME="CLI"
 
 credentials="/Users/fkimmel/Library/Application Support/google-oauthlib-tool/credentials.json"
