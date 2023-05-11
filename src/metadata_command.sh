@@ -79,4 +79,4 @@ echo " Kopiere Titel in Clipboard"
 echo "LEP#$postNumber - $postTitle" | pbcopy -Prefer r 
 
 echo " Kopiere Content in Clipboard"
-pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | pbcopy -Prefer r
+pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | tr '\n' ' ' | pbcopy -Prefer r
