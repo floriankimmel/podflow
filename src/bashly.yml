@@ -18,6 +18,16 @@ commands:
   - long: --skip-youtube   
     help: Skip scheduling youtube video
 
+- name: download
+  help: Download file from ftp server
+
+  flags:
+  - long: --file
+    short: -f
+    arg: file    
+    required: true
+    help: File to download
+
 - name: metadata
   help: Generate episode metadata
 

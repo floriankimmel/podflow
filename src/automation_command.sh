@@ -195,7 +195,7 @@ fi
 if [[ -z "$skipDownload" ]]; then
     echo
     echo " Download adfree version again to be able to upload it to patroen/steady"
-    curl https://rssfeed.laufendentdecken-podcast.at/data/$slugAdFree.mp3 --output ~/Downloads/$slugAdFree.mp3
+    lep download --file "$slugAdFree.mp3" 
 fi
 
 if [ $? -ne 0 ]; then
