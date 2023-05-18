@@ -866,7 +866,6 @@ lep_automation_command() {
 
   ag1=${args[--ag1]}
   debug=${args[--debug]}
-  add=$([ -n "$ag1" ] && echo "true" || echo "false")
 
   episode=${args[--m4a]}
   if [[ -z "$episode" ]]; then
@@ -888,8 +887,9 @@ lep_automation_command() {
   echo "󰀂Start automatic workflow for file $episode"
 
   title=$(echo "$episode" | cut -d'.' -f 1)
+  ad=$([ -n "$ag1" ] && echo "true" || echo "false")
 
-  if [[ -e "$title"_adfree.m4a ]] && [[ "$add" = "false" ]]; then
+  if [[ -e "$title"_adfree.m4a ]] && [[ "$ad" = "false" ]]; then
       echo "Adfree version detected, but no advirtesement provided"
       echo "Supported Advirtesements:"
       echo "(1) ag1"
@@ -901,6 +901,7 @@ lep_automation_command() {
           case $option in
               1)
                   ag1="1"
+                  ad="true"
                   break
                   ;;
               *)
@@ -961,7 +962,7 @@ lep_automation_command() {
   chapters=$(<"$title".chapters.txt)
   cover="$title".png
 
-  if [[ "$add" = "true" ]]; then
+  if [[ "$ad" = "true" ]]; then
       episodeAdFree="$title"_adfree.m4a
       titleAdFree="$title"_adfree
   else
@@ -988,7 +989,7 @@ lep_automation_command() {
       echo "  Upload episode to FTP Server"
       lep ftp --file $episode --name $episodeWithPostNumber
 
-      if [[ "$add" = "true" ]]; then
+      if [[ "$ad" = "true" ]]; then
           echo "  Upload adfree episode to FTP Server"
           lep ftp --file $episodeAdFree --name $episodeAdFreeWithPostNumber
       fi
@@ -1014,7 +1015,7 @@ lep_automation_command() {
       aws s3 cp $episode s3://laufendentdecken-podcast/$episodeWithPostNumber
       aws s3 cp s3://laufendentdecken-podcast/$episodeWithPostNumber s3://laufendentdecken-podcast-backup/
 
-      if [[ "$add" = "true" ]]; then
+      if [[ "$ad" = "true" ]]; then
           aws s3 cp $episodeAdFree s3://laufendentdecken-podcast/$episodeAdFreeWithPostNumber
           aws s3 cp s3://laufendentdecken-podcast/$episodeAdFreeWithPostNumber s3://laufendentdecken-podcast-backup/
       fi
@@ -1048,7 +1049,7 @@ lep_automation_command() {
               --description "$youtubeDescription"
       fi
 
-      if [[ "$add" = "true" ]]; then
+      if [[ "$ad" = "true" ]]; then
           lep auphonic  \
               --production_name "$title (adfree)" \
               --preset $episodePreset \
@@ -1079,7 +1080,7 @@ lep_automation_command() {
       echo
       echo "󰜏Create Episode on Website"
 
-      if [[ "$add" = "false" ]]; then
+      if [[ "$ad" = "false" ]]; then
           lep blogpost \
               --number $postNumber \
               --title "$postTitle" \

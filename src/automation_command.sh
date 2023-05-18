@@ -11,7 +11,6 @@ defaultAirTime="09:00:00"
 
 ag1=${args[--ag1]}
 debug=${args[--debug]}
-add=$([ -n "$ag1" ] && echo "true" || echo "false")
 
 episode=${args[--m4a]}
 if [[ -z "$episode" ]]; then
@@ -32,8 +31,9 @@ fi
 echo "󰀂Start automatic workflow for file $episode"
 
 title=$(echo "$episode" | cut -d'.' -f 1)
+ad=$([ -n "$ag1" ] && echo "true" || echo "false")
 
-if [[ -e "$title"_adfree.m4a ]] && [[ "$add" = "false" ]]; then
+if [[ -e "$title"_adfree.m4a ]] && [[ "$ad" = "false" ]]; then
     echo "Adfree version detected, but no advirtesement provided"
     echo "Supported Advirtesements:"
     echo "(1) ag1"
@@ -45,6 +45,7 @@ if [[ -e "$title"_adfree.m4a ]] && [[ "$add" = "false" ]]; then
         case $option in
             1)
                 ag1="1"
+                ad="true"
                 break
                 ;;
             *)
@@ -52,6 +53,7 @@ if [[ -e "$title"_adfree.m4a ]] && [[ "$add" = "false" ]]; then
         esac
     done
 fi
+
 
 if [[ -n "$debug" ]]; then
     if [[ -n "$noDefaultReleaseDate" ]]; then
@@ -90,7 +92,7 @@ echo "  Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDa
 chapters=$(<"$title".chapters.txt)
 cover="$title".png
 
-if [[ "$add" = "true" ]]; then
+if [[ "$ad" = "true" ]]; then
     episodeAdFree="$title"_adfree.m4a
     titleAdFree="$title"_adfree
 else
@@ -117,7 +119,7 @@ if [[ -z "$skipFtp" ]]; then
     echo "  Upload episode to FTP Server"
     lep ftp --file $episode --name $episodeWithPostNumber
 
-    if [[ "$add" = "true" ]]; then
+    if [[ "$ad" = "true" ]]; then
         echo "  Upload adfree episode to FTP Server"
         lep ftp --file $episodeAdFree --name $episodeAdFreeWithPostNumber
     fi
@@ -142,7 +144,7 @@ if [[ -z "$skipAws" ]]; then
     aws s3 cp $episode s3://laufendentdecken-podcast/$episodeWithPostNumber
     aws s3 cp s3://laufendentdecken-podcast/$episodeWithPostNumber s3://laufendentdecken-podcast-backup/
 
-    if [[ "$add" = "true" ]]; then
+    if [[ "$ad" = "true" ]]; then
         aws s3 cp $episodeAdFree s3://laufendentdecken-podcast/$episodeAdFreeWithPostNumber
         aws s3 cp s3://laufendentdecken-podcast/$episodeAdFreeWithPostNumber s3://laufendentdecken-podcast-backup/
     fi
@@ -176,7 +178,7 @@ if [[ -z "$skipAuphonic" ]]; then
             --description "$youtubeDescription"
     fi
 
-    if [[ "$add" = "true" ]]; then
+    if [[ "$ad" = "true" ]]; then
         lep auphonic  \
             --production_name "$title (adfree)" \
             --preset $episodePreset \
@@ -206,7 +208,7 @@ if [[ -z "$skipBlogpost" ]]; then
     echo
     echo "󰜏Create Episode on Website"
 
-    if [[ "$add" = "false" ]]; then
+    if [[ "$ad" = "false" ]]; then
         lep blogpost \
             --number $postNumber \
             --title "$postTitle" \
