@@ -10,6 +10,7 @@ noDefaultPostNumber=${args[--no-default-postnumber]}
 defaultAirTime="09:00:00"
 
 ag1=${args[--ag1]}
+polestar=${args[--polestar]}
 debug=${args[--debug]}
 
 episode=${args[--m4a]}
@@ -37,6 +38,7 @@ if [[ -e "$title"_adfree.m4a ]] && [[ "$ad" = "false" ]]; then
     echo "Adfree version detected, but no advirtesement provided"
     echo "Supported Advirtesements:"
     echo "(1) ag1"
+    echo "(1) polestar"
 
     while true
     do
@@ -45,13 +47,17 @@ if [[ -e "$title"_adfree.m4a ]] && [[ "$ad" = "false" ]]; then
         case $option in
             1)
                 ag1="1"
-                ad="true"
+                break
+                ;;
+            1)
+                polestar="1"
                 break
                 ;;
             *)
                 ;;
         esac
     done
+    ad="true"
 fi
 
 
@@ -223,6 +229,15 @@ if [[ -z "$skipBlogpost" ]]; then
             --publish_date "$postDate $defaultAirTime" \
             --slug $slug \
             --ag1
+    fi
+
+    if [[ -n "$polestar" ]]; then
+        lep blogpost \
+            --number $postNumber \
+            --title "$postTitle" \
+            --publish_date "$postDate $defaultAirTime" \
+            --slug $slug \
+            --polestar
     fi
 
 fi

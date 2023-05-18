@@ -4,6 +4,7 @@ postDate=${args[--publish_date]}
 slug=${args[--slug]}
 
 ag1=${args[--ag1]}
+polestar=${args[--polestar]}
 
 fullPostTitle="LEP#$postNumber - $postTitle"
 
@@ -37,6 +38,10 @@ content="<b>Werbefrei</b><br><br>Zusätzlich habt ihr ab sofort die Möglichkeit
 
 if [[ -n "$ag1" ]]; then
     content="<b>Werbung</b><br><br>Informiere dich jetzt auf <a href='http://athleticgreens.com/laufendentdecken'>athleticgreens.com/laufendentdecken</a> , teste AG1 völlig risikofrei mit 90 Tagen Geld-zurück-Garantie und sichere dir bei deiner AG1 Erstbestellung einen kostenlosen Jahresvorrat an Vitamin D3+K2 zur Unterstützung des Immunsystems & 5 praktische Travel Packs! Gesundheitsbezogene Angaben zu AG1 und unser Angebot findest du auf: <a href='http://athleticgreens.com/laufendentdecken'>athleticgreens.com/laufendentdecken</a><br><br>Auf die Bedeutung einer abwechslungsreichen und ausgewogenen Ernährung und einer gesunden Lebensweise wird hingewiesen. Außer Reichweite von Kindern aufbewahren. Nicht geeignet für Kinder und Jugendliche unter 18 Jahren, schwangere oder stillende Frauen. Die angegebene empfohlene tägliche Verzehrmenge darf nicht überschritten werden.<br><br>$content"
+fi
+
+if [[ -n "$polestar" ]]; then
+    content="<b>Werbung</b><br><br>Alle Informationen zur Aktion von <a href='https://www.polestar.com/at/'>Polestar</a> findest du unter: <a href='https://www.polestar.com/at/polestar-2-2023/'>https://www.polestar.com/at/polestar-2-2023/</a><br>Das Leasingangebot ist gültig bis 30.06.2023<br><br>$content"
 fi
 
 apiKey=$(op item get "PodloveApiKey" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')

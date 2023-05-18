@@ -91,6 +91,9 @@ commands:
   - long: --ag1
     help: This episodes is supportd by AG1
 
+  - long: --polestar
+    help: This episodes is supportd by Polestar
+
   - long: --debug
     help: Dont change 
 
@@ -172,6 +175,9 @@ commands:
 
   - long: --ag1
     help: This episodes is supportd by AG1
+
+  - long: --polestar
+    help: This episodes is supportd by Polestar
 
   - long: --number
     short: -n

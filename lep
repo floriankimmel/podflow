@@ -322,6 +322,11 @@ lep_automation_usage() {
     echo
 
     # :flag.usage
+    printf "  %s\n" "--polestar"
+    printf "    This episodes is supportd by Polestar\n"
+    echo
+
+    # :flag.usage
     printf "  %s\n" "--debug"
     printf "    Dont change\n"
     echo
@@ -475,6 +480,11 @@ lep_blogpost_usage() {
     # :flag.usage
     printf "  %s\n" "--ag1"
     printf "    This episodes is supportd by AG1\n"
+    echo
+
+    # :flag.usage
+    printf "  %s\n" "--polestar"
+    printf "    This episodes is supportd by Polestar\n"
     echo
 
     # :flag.usage
@@ -865,6 +875,7 @@ lep_automation_command() {
   defaultAirTime="09:00:00"
 
   ag1=${args[--ag1]}
+  polestar=${args[--polestar]}
   debug=${args[--debug]}
 
   episode=${args[--m4a]}
@@ -893,6 +904,7 @@ lep_automation_command() {
       echo "Adfree version detected, but no advirtesement provided"
       echo "Supported Advirtesements:"
       echo "(1) ag1"
+      echo "(1) polestar"
 
       while true
       do
@@ -901,13 +913,17 @@ lep_automation_command() {
           case $option in
               1)
                   ag1="1"
-                  ad="true"
+                  break
+                  ;;
+              1)
+                  polestar="1"
                   break
                   ;;
               *)
                   ;;
           esac
       done
+      ad="true"
   fi
 
   if [[ -n "$debug" ]]; then
@@ -1097,6 +1113,15 @@ lep_automation_command() {
               --ag1
       fi
 
+      if [[ -n "$polestar" ]]; then
+          lep blogpost \
+              --number $postNumber \
+              --title "$postTitle" \
+              --publish_date "$postDate $defaultAirTime" \
+              --slug $slug \
+              --polestar
+      fi
+
   fi
 
   if [[ -z "$skipYoutube" ]]; then
@@ -1185,6 +1210,7 @@ lep_blogpost_command() {
   slug=${args[--slug]}
 
   ag1=${args[--ag1]}
+  polestar=${args[--polestar]}
 
   fullPostTitle="LEP#$postNumber - $postTitle"
 
@@ -1219,6 +1245,10 @@ lep_blogpost_command() {
 
   if [[ -n "$ag1" ]]; then
       content="<b>Werbung</b><br><br>Informiere dich jetzt auf <a href='http://athleticgreens.com/laufendentdecken'>athleticgreens.com/laufendentdecken</a> , teste AG1 völlig risikofrei mit 90 Tagen Geld-zurück-Garantie und sichere dir bei deiner AG1 Erstbestellung einen kostenlosen Jahresvorrat an Vitamin D3+K2 zur Unterstützung des Immunsystems & 5 praktische Travel Packs! Gesundheitsbezogene Angaben zu AG1 und unser Angebot findest du auf: <a href='http://athleticgreens.com/laufendentdecken'>athleticgreens.com/laufendentdecken</a><br><br>Auf die Bedeutung einer abwechslungsreichen und ausgewogenen Ernährung und einer gesunden Lebensweise wird hingewiesen. Außer Reichweite von Kindern aufbewahren. Nicht geeignet für Kinder und Jugendliche unter 18 Jahren, schwangere oder stillende Frauen. Die angegebene empfohlene tägliche Verzehrmenge darf nicht überschritten werden.<br><br>$content"
+  fi
+
+  if [[ -n "$polestar" ]]; then
+      content="<b>Werbung</b><br><br>Alle Informationen zur Aktion von <a href='https://www.polestar.com/at/'>Polestar</a> findest du unter: <a href='https://www.polestar.com/at/polestar-2-2023/'>https://www.polestar.com/at/polestar-2-2023/</a><br>Das Leasingangebot ist gültig bis 30.06.2023<br><br>$content"
   fi
 
   apiKey=$(op item get "PodloveApiKey" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
@@ -1881,6 +1911,14 @@ lep_automation_parse_requirements() {
         ;;
 
       # :flag.case
+      --polestar)
+
+        # :flag.case_no_arg
+        args['--polestar']=1
+        shift
+        ;;
+
+      # :flag.case
       --debug)
 
         # :flag.case_no_arg
@@ -2155,6 +2193,14 @@ lep_blogpost_parse_requirements() {
 
         # :flag.case_no_arg
         args['--ag1']=1
+        shift
+        ;;
+
+      # :flag.case
+      --polestar)
+
+        # :flag.case_no_arg
+        args['--polestar']=1
         shift
         ;;
 
