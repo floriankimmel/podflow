@@ -35,13 +35,13 @@ fi
 echo "󰀂Start automatic workflow for file $episode"
 
 title=$(echo "$episode" | cut -d'.' -f 1)
-ad=$([ -n "$ag1" ] && echo "true" || echo "false")
+ad=$(([ -n "$ag1" ] || [ -n "$polestar" ]) && echo "true" || echo "false")
 
 if [[ -e "$title"_adfree.m4a ]] && [[ "$ad" = "false" ]]; then
     echo "Adfree version detected, but no advirtesement provided"
     echo "Supported Advirtesements:"
     echo "(1) ag1"
-    echo "(1) polestar"
+    echo "(2) polestar"
 
     while true
     do
@@ -52,7 +52,7 @@ if [[ -e "$title"_adfree.m4a ]] && [[ "$ad" = "false" ]]; then
                 ag1="1"
                 break
                 ;;
-            1)
+            2)
                 polestar="1"
                 break
                 ;;
@@ -62,7 +62,6 @@ if [[ -e "$title"_adfree.m4a ]] && [[ "$ad" = "false" ]]; then
     done
     ad="true"
 fi
-
 
 if [[ -n "$debug" ]]; then
     if [[ -n "$noDefaultReleaseDate" ]]; then
