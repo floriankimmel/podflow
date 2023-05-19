@@ -317,6 +317,11 @@ lep_automation_usage() {
     echo
 
     # :flag.usage
+    printf "  %s\n" "--force"
+    printf "    No sanity check before automation starts\n"
+    echo
+
+    # :flag.usage
     printf "  %s\n" "--ag1"
     printf "    This episodes is supportd by AG1\n"
     echo
@@ -869,6 +874,7 @@ lep_automation_command() {
   skipDownload=${args[--skip-download]}
   skipBlogpost=${args[--skip-blogpost]}
   skipYoutube=${args[--skip-youtube]}
+  force=${args[--force]}
   noDefaultReleaseDate=${args[--no-default-releasedate]}
   noDefaultPostNumber=${args[--no-default-postnumber]}
 
@@ -884,11 +890,13 @@ lep_automation_command() {
       episode="$episode.m4a"
   fi
 
-  if [[ -z "$skipYoutube" ]]; then
-      lep check
-  else
+  if [[ -z "$force" ]]; then
+      if [[ -z "$skipYoutube" ]]; then
+          lep check
+      else
 
-      lep check --skip-youtube
+          lep check --skip-youtube
+      fi
   fi
 
   if [ $? -ne 0 ]; then

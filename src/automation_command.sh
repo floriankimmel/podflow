@@ -4,6 +4,7 @@ skipAuphonic=${args[--skip-auphonic]}
 skipDownload=${args[--skip-download]}
 skipBlogpost=${args[--skip-blogpost]}
 skipYoutube=${args[--skip-youtube]}
+force=${args[--force]}
 noDefaultReleaseDate=${args[--no-default-releasedate]}
 noDefaultPostNumber=${args[--no-default-postnumber]}
 
@@ -19,10 +20,12 @@ if [[ -z "$episode" ]]; then
     episode="$episode.m4a"
 fi
 
-if [[ -z "$skipYoutube" ]]; then
-    lep check
-else 
-    lep check --skip-youtube
+if [[ -z "$force" ]]; then
+    if [[ -z "$skipYoutube" ]]; then
+        lep check
+    else 
+        lep check --skip-youtube
+    fi
 fi
 
 if [ $? -ne 0 ]; then

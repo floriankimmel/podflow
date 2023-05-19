@@ -88,6 +88,10 @@ commands:
     help: Episode as m4a
     validate: file_exists
 
+
+  - long: --force
+    help: No sanity check before automation starts
+
   - long: --ag1
     help: This episodes is supportd by AG1
 
