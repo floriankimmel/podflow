@@ -59,10 +59,10 @@ echo "The video ID is: $VIDEO_ID"
 REQUEST_BODY=$(jq -n --arg videoId "$VIDEO_ID" --arg date $PUBLISH_DATE '{ id: $videoId, status: { privacyStatus: "private", "publishAt": $date , "license": "youtube", "publicStatsViewable": true } }')
 
 # Make the API request to update the video
-curl -s -X PUT "https://youtube.googleapis.com/youtube/v3/videos?part=status" \
+SCHEDULE_RESPONSE = $(curl -s -X PUT "https://youtube.googleapis.com/youtube/v3/videos?part=status" \
     --header "Authorization: Bearer $ACCESS_TOKEN" \
     --header 'Accept: application/json' \
     --header 'Content-Type: application/json' \
-    --data "$REQUEST_BODY"
+    --data "$REQUEST_BODY")
 
 echo " Youtube Video has been scheduled"
