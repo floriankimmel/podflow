@@ -1351,7 +1351,7 @@ parse_requirements() {
     deps['pandoc']="$(command -v pandoc | head -n1)"
   else
     printf "missing dependency: pandoc\n" >&2
-    printf "%s\n" "install by running: 'brew install pandoc'" >&2
+    printf "%s\n" "install by running: 'brew install jq'" >&2
     exit 1
   fi
 

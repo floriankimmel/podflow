@@ -7,7 +7,7 @@ dependencies:
   op: "install by running: 'brew install 1password-cli'"
   jq: "install by running: 'brew install jq'"
   curl: "Please install curl"
-  pandoc: "install by running: 'brew install pandoc'"
+  pandoc: "install by running: 'brew install jq'"
 
 commands:
 - name: init
