@@ -60,7 +60,7 @@ if ! [[ -e $dataFile ]]; then
 
     if [[ -n "$noDefaultReleaseDate" ]] then
         while true; do
-            read -p "Release Date: " postDate
+            read -p "Release Date:  " postDate
 
             if [[ "$postDate" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
                 break 
