@@ -89,6 +89,10 @@ commands:
     help: Episode as m4a
     validate: file_exists
 
+  - long: --time
+    arg: time
+    default: "09:00:00"
+    help: Start time of the episode
 
   - long: --force
     help: No sanity check before automation starts

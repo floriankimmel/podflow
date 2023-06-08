@@ -317,6 +317,12 @@ lep_automation_usage() {
     echo
 
     # :flag.usage
+    printf "  %s\n" "--time TIME"
+    printf "    Start time of the episode\n"
+    printf "    Default: 09:00:00\n"
+    echo
+
+    # :flag.usage
     printf "  %s\n" "--force"
     printf "    No sanity check before automation starts\n"
     echo
@@ -878,7 +884,7 @@ lep_automation_command() {
   noDefaultReleaseDate=${args[--no-default-releasedate]}
   noDefaultPostNumber=${args[--no-default-postnumber]}
 
-  defaultAirTime="09:00:00"
+  defaultAirTime=${args[--time]}
 
   ag1=${args[--ag1]}
   polestar=${args[--polestar]}
@@ -1919,6 +1925,21 @@ lep_automation_parse_requirements() {
         ;;
 
       # :flag.case
+      --time)
+
+        # :flag.case_arg
+        if [[ -n ${2+x} ]]; then
+
+          args['--time']="$2"
+          shift
+          shift
+        else
+          printf "%s\n" "--time requires an argument: --time TIME" >&2
+          exit 1
+        fi
+        ;;
+
+      # :flag.case
       --force)
 
         # :flag.case_no_arg
@@ -2021,6 +2042,9 @@ lep_automation_parse_requirements() {
 
     esac
   done
+
+  # :command.default_assignments
+  [[ -n ${args['--time']:-} ]] || args['--time']="09:00:00"
 
 }
 

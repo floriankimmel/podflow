@@ -8,7 +8,7 @@ force=${args[--force]}
 noDefaultReleaseDate=${args[--no-default-releasedate]}
 noDefaultPostNumber=${args[--no-default-postnumber]}
 
-defaultAirTime="09:00:00"
+defaultAirTime=${args[--time]}
 
 ag1=${args[--ag1]}
 polestar=${args[--polestar]}
