@@ -10,6 +10,11 @@ dependencies:
   pandoc: "install by running: 'brew install jq'"
 
 commands:
+- name: completions
+  help: |-
+    Generate bash completions
+    Usage: eval "\$(lep completions)"
+
 - name: init
   help: Initialise episode
 
