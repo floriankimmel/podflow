@@ -16,11 +16,11 @@ if ! [[ -e $dataFile ]]; then
     if [[ -n "$noDefaultPostNumber" ]] then
         read -p "Release number: " postNumber
     else
-        postNumber=$(op item get "Podcast" --format json | jq -r '. | .fields | .[] | select(.label=="Episode") | .value')
+        postNumber=$(op item get --vault Podcast "Podcast" --fields label=Episode)
         postNumber=$(expr $postNumber + 1)
 
         if [[ -z "$debug" ]]; then
-            op item edit 'Podcast' 'Episode='$postNumber > /dev/null
+            op item edit --vault Podcast 'Podcast' 'Episode='$postNumber > /dev/null
         fi
 
     fi

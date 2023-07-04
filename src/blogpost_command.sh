@@ -44,7 +44,7 @@ if [[ -n "$polestar" ]]; then
     content="<b>Werbung</b><br><br>Alle Informationen zur Aktion von <a href='https://www.polestar.com/at/'>Polestar</a> findest du unter: <a href='https://www.polestar.com/at/polestar-2-2023/'>https://www.polestar.com/at/polestar-2-2023/</a><br>Das Leasingangebot ist gültig bis 30.06.2023<br><br>$content"
 fi
 
-apiKey=$(op item get "PodloveApiKey" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
+apiKey=$(op item get --vault Podcast "Podlove" --fields label=credential)
 
 json=$(curl  -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes --header "Authorization: Basic $apiKey")
 

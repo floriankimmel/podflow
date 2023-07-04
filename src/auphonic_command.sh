@@ -9,8 +9,8 @@ description=${args[--description]}
 name=$(echo "${title#*_}")
 chapters=$(<"$name".chapters.txt)
 
-auphonic_pwd=$(op item get "Auphonic" --format json | jq -r '. | .fields | .[] | select(.label=="password") | .value')
-auphonic_username=$( op item get "Auphonic" --format json | jq -r '. | .fields | .[] | select(.purpose=="USERNAME") | .value')
+auphonic_pwd=$(op item get --vault Podcast "Auphonic Api" --fields label=credential) 
+auphonic_username=$(op item get --vault Podcast "Auphonic Api" --fields label=username)
 
 
 action="start"
