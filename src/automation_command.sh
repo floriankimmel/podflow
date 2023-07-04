@@ -38,8 +38,8 @@ title=$(echo "$episode" | cut -d'.' -f 1)
 ad=$(([ -n "$ag1" ] || [ -n "$polestar" ]) && echo "true" || echo "false")
 
 if [[ -e "$title"_adfree.m4a ]] && [[ "$ad" = "false" ]]; then
-    echo "Adfree version detected, but no advirtesement provided"
-    echo "Supported Advirtesements:"
+    echo "Adfree version detected, but no advertisement provided"
+    echo "Supported Advertisements:"
     echo "(1) ag1"
     echo "(2) polestar"
 
