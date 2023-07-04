@@ -22,19 +22,19 @@ fi
 case $postTitle in
     "Ein Gespräch mit "*)
         guest=${postTitle#"Ein Gespräch mit "}
-        guest="Mehr Informationen zu $guest: Instagram | Facebook <br><br>"
+        guest="<b>Links zum weiterlesen</b><br><br>Mehr Informationen zu $guest: Instagram | Facebook <br><br>"
         ;;
 
     "Ein Wiedersehen mit "*)
         guest=${postTitle#"Ein Wiedersehen mit "}
-        guest="Mehr Informationen zu $guest: Instagram | Facebook <br><br>"
+        guest="<b>Links zum weiterlesen</b><br><br>Mehr Informationen zu $guest: Instagram | Facebook <br><br>"
         ;;
     *)
         guest=""
         ;;
 esac
 
-content="<b>Werbefrei</b><br><br>Zusätzlich habt ihr ab sofort die Möglichkeit euch das exklusive <a href='https://www.patreon.com/laufendentdecken'>Patreonfeed</a> zu sichern – werbefrei und liebevoll exportiert.<br><br>Am besten direkt mitmachen und unterstützen: <a href='https://www.patreon.com/laufendentdecken'>Patreon</a><br><br><b>Links zum weiterlesen</b><br><br>$guest Wenn ihr den Podcast direkt ohne Installation hören möchtet, könnt ihr das hier tun: Laufend Entdecken auf Podbay<br><br>Florian: <a href='http://twitter.com/laufenentdecken'>Twitter</a>, <a href='https://www.strava.com/athletes/1651823'>Strava</a><br>Peter: <a href='https://twitter.com/redendentdecken'>Twitter</a>, <a href='https://www.instagram.com/redendentdecken'>Instagram</a>, <a href='https://www.strava.com/athletes/24464941'>Strava</a><br>Geordi: <a href='https://twitter.com/Geordi2504'>Twitter</a>, <a href='https://www.instagram.com/geordi2504/'>Instagram</a>, <a href='https://www.instagram.com/viennarunning/'>Vienna Running Instagram</a>, <a href='https://vienna-running.eu/'>Vienna Running</a><br><br><a href='http://facebook.com/laufendentdeckenblog/'>Facebook</a>, <a href='https://instagram.com/laufendentdeckenpodcast/'>Instagram</a>, <a href='https://www.strava.com/clubs/473847'>Strava Club</a>"
+content="<b>Werbefrei</b><br><br>Zusätzlich habt ihr ab sofort die Möglichkeit euch das exklusive <a href='https://www.patreon.com/laufendentdecken'>Patreonfeed</a> zu sichern – werbefrei und liebevoll exportiert.<br><br>Am besten direkt mitmachen und unterstützen: <a href='https://www.patreon.com/laufendentdecken'>Patreon</a><br><br>${guest}Wenn ihr den Podcast direkt ohne Installation hören möchtet, könnt ihr das hier tun: Laufend Entdecken auf Podbay<br><br>Florian: <a href='http://twitter.com/laufenentdecken'>Twitter</a>, <a href='https://www.strava.com/athletes/1651823'>Strava</a><br>Peter: <a href='https://twitter.com/redendentdecken'>Twitter</a>, <a href='https://www.instagram.com/redendentdecken'>Instagram</a>, <a href='https://www.strava.com/athletes/24464941'>Strava</a><br>Geordi: <a href='https://twitter.com/Geordi2504'>Twitter</a>, <a href='https://www.instagram.com/geordi2504/'>Instagram</a>, <a href='https://www.instagram.com/viennarunning/'>Vienna Running Instagram</a>, <a href='https://vienna-running.eu/'>Vienna Running</a><br><br><a href='http://facebook.com/laufendentdeckenblog/'>Facebook</a>, <a href='https://instagram.com/laufendentdeckenpodcast/'>Instagram</a>, <a href='https://www.strava.com/clubs/473847'>Strava Club</a>"
 
 if [[ -n "$ag1" ]]; then
     content="<b>Werbung</b><br><br>Informiere dich jetzt auf <a href='http://drinkag1.com/laufendentdecken'>drinkag1.com/laufendentdecken</a> , teste AG1 völlig risikofrei mit 90 Tagen Geld-zurück-Garantie und sichere dir bei deiner AG1 Erstbestellung einen kostenlosen Jahresvorrat an Vitamin D3+K2 zur Unterstützung des Immunsystems & 5 praktische Travel Packs! Gesundheitsbezogene Angaben zu AG1 und unser Angebot findest du auf: <a href='http://drinkag1.com/laufendentdecken'>drinkag1.com/laufendentdecken</a><br><br>Auf die Bedeutung einer abwechslungsreichen und ausgewogenen Ernährung und einer gesunden Lebensweise wird hingewiesen. Außer Reichweite von Kindern aufbewahren. Nicht geeignet für Kinder und Jugendliche unter 18 Jahren, schwangere oder stillende Frauen. Die angegebene empfohlene tägliche Verzehrmenge darf nicht überschritten werden.<br><br>$content"
