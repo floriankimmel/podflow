@@ -3,7 +3,7 @@
 PUBLISH_DATE=$(date -jf "%Y-%m-%d %H:%M:%S" "${args[--publish_date]}" "+%Y-%m-%dT%H:%M:%S%z")
 DESCRIPTION=${args[--title]}
 
-API_KEY=$(op item get --vault Podcast "Youtube" --fields label=password)
+API_KEY=$(op read "op://Podcast/Youtube/password")
 
 local length="${#DESCRIPTION}"
 local result=''

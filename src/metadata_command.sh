@@ -16,7 +16,7 @@ if ! [[ -e $dataFile ]]; then
     if [[ -n "$noDefaultPostNumber" ]] then
         read -p "Release number: " postNumber
     else
-        postNumber=$(op item get --vault Podcast "Podcast" --fields label=Episode)
+        postNumber=$(op read "op://Podcast/Podcast/Episode")
         postNumber=$(expr $postNumber + 1)
 
         if [[ -z "$debug" ]]; then
