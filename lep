@@ -1466,6 +1466,14 @@ parse_requirements() {
     exit 1
   fi
 
+  if command -v gum >/dev/null 2>&1; then
+    deps['gum']="$(command -v gum | head -n1)"
+  else
+    printf "missing dependency: gum\n" >&2
+    printf "%s\n" "install by running: 'brew install gum'" >&2
+    exit 1
+  fi
+
   if command -v curl >/dev/null 2>&1; then
     deps['curl']="$(command -v curl | head -n1)"
   else
