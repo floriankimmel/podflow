@@ -1,4 +1,4 @@
-# Laufent Entdecken CLI
+# Laufend Entdecken CLI
 
 A cli tool to automate everthing related to upload and manage the laufend entdecken podcast. A typical automation worklow does the following steps
 
@@ -14,17 +14,19 @@ A cli tool to automate everthing related to upload and manage the laufend entdec
 * Uploads adfree, non-adfree, cover thumbnail and youtube cover thumbnail to our own ftp server (command: `ftp`)
 * Backup all those file to 2 s3 buckets in 2 different regions 
 * Start auphonic productions for (command: `auphonic`)
-  * non-adfree version of the epsiode
+  * non-adfree version of the episode
   * youtube version of the episode
   * adfree version of the episode
-* Downloads the result of the adfree production to `~/Downloads` so I can create the Patreon/Steady HQ posts by hand
+* Downloads the result of the adfree production to `~/Downloads` so I can create
+  the Patreon/Steady HQ posts by hand (command: `download`)
 * Create Blogpost on our wordpress site (command: `blogpost`)
 * Schedule youtube video  (command: `youtube`)
 
-Everystep can be skipped with an approriate skip flag. 
+Every step can be skipped with an appropriate skip flag. 
 
 Certain ad partners are currently supported
 * ag1
+* polestar
 
 With providing a specified flag the content of the blogpost will be adapted accordingly.
 
