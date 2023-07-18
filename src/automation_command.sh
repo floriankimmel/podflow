@@ -38,28 +38,15 @@ title=$(echo "$episode" | cut -d'.' -f 1)
 ad=$(([ -n "$ag1" ] || [ -n "$polestar" ]) && echo "true" || echo "false")
 
 if [[ -e "$title"_adfree.m4a ]] && [[ "$ad" = "false" ]]; then
-    echo "Adfree version detected, but no advertisement provided"
-    echo "Supported Advertisements:"
-    echo "(1) ag1"
-    echo "(2) polestar"
-
-    while true
-    do
-        read -p "Please choose: " option
-
-        case $option in
-            1)
-                ag1="1"
-                break
-                ;;
-            2)
-                polestar="1"
-                break
-                ;;
-            *)
-                ;;
-        esac
-    done
+    option=$(gum choose --header "Adfree version detected, but no advertisement provided" "AG1" "Polestar")
+    case $option in
+        "AG1")
+            ag1="1"
+            ;;
+        "Polestar")
+            polestar="1"
+            ;;
+    esac
     ad="true"
 fi
 

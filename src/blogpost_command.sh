@@ -46,7 +46,8 @@ fi
 
 apiKey=$(op read "op://Podcast/Podlove/credential")
 
-json=$(curl  -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes --header "Authorization: Basic $apiKey")
+json=$(gum spin --show-output --spinner minidot --title " Creating episode" -- \
+    curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes --header "Authorization: Basic $apiKey")
 
 episodeId=$(echo $json | jq -r ' . | "\(.id)"')
 response=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId \
@@ -57,7 +58,8 @@ response=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v
 json=$(curl -s -X GET https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId --header "Authorization: Basic $apiKey")
 postId=$(echo $json | jq -r ' . | "\(.post_id)"')
 
-featureMedia=$(curl --silent \
+featureMedia=$(gum spin --show-output --spinner minidot --title " Uploading feature image" -- \
+    curl --silent \
     --request POST \
     --url https://laufendentdecken-podcast.at/wp-json/wp/v2/media \
     --header "authorization: Basic ${apiKey}" \
@@ -66,9 +68,9 @@ featureMedia=$(curl --silent \
     --form "title=$name" \
     | jq -r '.id')
 
-
 postData="{ \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph -->$description<!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"
-response=$(curl --silent -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
+response=$(gum spin --show-output --spinner minidot --title " Updating information" -- \
+    curl --silent -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
     --header "Authorization: Basic $apiKey" \
     --header 'Content-Type: application/json; charset=utf-8' \
     --data-raw "$postData")

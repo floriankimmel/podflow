@@ -26,30 +26,20 @@ if ! [[ -e $dataFile ]]; then
     fi
 
 
-    echo "Title Template"
-    echo "(1) Ein Gespräch mit "
-    echo "(2) Ein Wiedersehen mit "
-    echo "(*) Custom"
+    echo
+    option=$(gum choose --header "Title Template" "Gespräch" "Wiedersehen" "Custom")
 
-    while true
-    do
-        read -p "Please choose: " option
-
-        case $option in
-            1)
-                postTitle="Ein Gespräch mit "
-                break
-                ;;
-            2)
-                postTitle="Ein Wiedersehen mit "
-                break
-                ;;
-            *)
-                postTitle=""
-                break
-                ;;
-        esac
-    done
+    case $option in
+        "Gespräch")
+            postTitle="Ein Gespräch mit "
+            ;;
+        "Wiedersehen")
+            postTitle="Ein Wiedersehen mit "
+            ;;
+        "Custom")
+            postTitle=""
+            ;;
+    esac
 
     if [[ -n "$postTitle" ]]; then
         name=$(echo $title | sed 's/\([a-z]\)\([A-Z]\)/\1 \2/g')
