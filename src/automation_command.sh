@@ -20,6 +20,14 @@ if [[ -z "$episode" ]]; then
     episode="$episode.m4a"
 fi
 
+echo "██╗     ███████╗██████╗      ██████╗██╗     ██╗";
+echo "██║     ██╔════╝██╔══██╗    ██╔════╝██║     ██║";
+echo "██║     █████╗  ██████╔╝    ██║     ██║     ██║";
+echo "██║     ██╔══╝  ██╔═══╝     ██║     ██║     ██║";
+echo "███████╗███████╗██║         ╚██████╗███████╗██║";
+echo "╚══════╝╚══════╝╚═╝          ╚═════╝╚══════╝╚═╝";
+echo "                                               ";
+
 if [[ -z "$force" ]]; then
     if [[ -z "$skipYoutube" ]]; then
         lep check
@@ -82,7 +90,7 @@ fi
 
 IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
 
-echo "  Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
+echo " Automate episode 'LEP#$postNumber - $postTitle' scheduled for $postDate"
 
 chapters=$(<"$title".chapters.txt)
 cover="$title".png

@@ -74,5 +74,3 @@ response=$(gum spin --show-output --spinner minidot --title " Updating inform
     --header "Authorization: Basic $apiKey" \
     --header 'Content-Type: application/json; charset=utf-8' \
     --data-raw "$postData")
-
-echo "Blogpost erstellt"
