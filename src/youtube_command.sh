@@ -3,7 +3,7 @@
 PUBLISH_DATE=$(date -jf "%Y-%m-%d %H:%M:%S" "${args[--publish_date]}" "+%Y-%m-%dT%H:%M:%S%z")
 DESCRIPTION=${args[--title]}
 
-API_KEY=$(op read "op://Podcast/Youtube/password")
+API_KEY=$(op read "op://Podcast/Youtube/credential")
 
 local length="${#DESCRIPTION}"
 local result=''
@@ -24,19 +24,9 @@ done
 # Set the necessary scopes for the API request
 SCOPES="https://www.googleapis.com/auth/youtube.force-ssl"
 
-# Set your API key file path and application name
-API_KEY_FILE="/Users/fkimmel/Dropbox/Resources/Tresor/key.json"
-APPLICATION_NAME="CLI"
-
-credentials="/Users/fkimmel/Library/Application Support/google-oauthlib-tool/credentials.json"
-
-if ! [[ -e $credentials ]]; then
-    google-oauthlib-tool --client-secrets $API_KEY_FILE --scope $SCOPES --save 
-fi
-
-client_id=$(jq -r '.client_id' "$credentials")
-client_secret=$(jq -r '.client_secret' "$credentials")
-refresh_token=$(jq -r '.refresh_token' "$credentials")
+client_id=$(op read "op://Podcast/Youtube/client_id")
+client_secret=$(op read "op://Podcast/Youtube/client_secret")
+refresh_token=$(op read "op://Podcast/Youtube/refresh_token")
 
 # Get the access token
 ACCESS_TOKEN=$(curl -s -X POST "https://oauth2.googleapis.com/token" \
