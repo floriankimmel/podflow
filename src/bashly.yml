@@ -17,7 +17,10 @@ commands:
     Usage: eval "\$(lep completions)"
 
 - name: init
-  help: Initialise episode
+  help: Initialize episode
+
+- name: edit  
+  help: Edit current episode description
 
 - name: check
   help: Check if ready to start automation

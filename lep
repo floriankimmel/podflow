@@ -35,7 +35,8 @@ lep_usage() {
   # :command.usage_commands
   printf "%s\n" "Commands:"
   printf "  %s   Generate bash completions\n" "completions"
-  printf "  %s   Initialise episode\n" "init       "
+  printf "  %s   Initialize episode\n" "init       "
+  printf "  %s   Edit current episode description\n" "edit       "
   printf "  %s   Check if ready to start automation\n" "check      "
   printf "  %s   Download file from ftp server\n" "download   "
   printf "  %s   Generate episode metadata\n" "metadata   "
@@ -96,11 +97,11 @@ lep_completions_usage() {
 # :command.usage
 lep_init_usage() {
   if [[ -n $long_usage ]]; then
-    printf "lep init - Initialise episode\n"
+    printf "lep init - Initialize episode\n"
     echo
 
   else
-    printf "lep init - Initialise episode\n"
+    printf "lep init - Initialize episode\n"
     echo
 
   fi
@@ -108,6 +109,35 @@ lep_init_usage() {
   printf "%s\n" "Usage:"
   printf "  lep init\n"
   printf "  lep init --help | -h\n"
+  echo
+
+  # :command.long_usage
+  if [[ -n $long_usage ]]; then
+    printf "%s\n" "Options:"
+
+    # :command.usage_fixed_flags
+    printf "  %s\n" "--help, -h"
+    printf "    Show this help\n"
+    echo
+
+  fi
+}
+
+# :command.usage
+lep_edit_usage() {
+  if [[ -n $long_usage ]]; then
+    printf "lep edit - Edit current episode description\n"
+    echo
+
+  else
+    printf "lep edit - Edit current episode description\n"
+    echo
+
+  fi
+
+  printf "%s\n" "Usage:"
+  printf "  lep edit\n"
+  printf "  lep edit --help | -h\n"
   echo
 
   # :command.long_usage
@@ -752,6 +782,14 @@ lep_init_command() {
   window=$(tmux display-message -p '#I')
   tmux rename-window -t Aufnahmen:$window $folder
   fish -c "vim $folder.md"
+
+}
+
+# :command.function
+lep_edit_command() {
+  # src/edit_command.sh
+  folder=$(basename "$(pwd)")
+  nvim "$folder.md"
 
 }
 
@@ -1515,6 +1553,13 @@ parse_requirements() {
       shift $#
       ;;
 
+    edit)
+      action="edit"
+      shift
+      lep_edit_parse_requirements "$@"
+      shift $#
+      ;;
+
     check)
       action="check"
       shift
@@ -1671,6 +1716,50 @@ lep_init_parse_requirements() {
 
   # :command.command_filter
   action="init"
+
+  # :command.parse_requirements_while
+  while [[ $# -gt 0 ]]; do
+    key="$1"
+    case "$key" in
+
+      -?*)
+        printf "invalid option: %s\n" "$key" >&2
+        exit 1
+        ;;
+
+      *)
+        # :command.parse_requirements_case
+        # :command.parse_requirements_case_simple
+        printf "invalid argument: %s\n" "$key" >&2
+        exit 1
+
+        ;;
+
+    esac
+  done
+
+}
+
+# :command.parse_requirements
+lep_edit_parse_requirements() {
+  # :command.fixed_flags_filter
+  while [[ $# -gt 0 ]]; do
+    case "${1:-}" in
+      --help | -h)
+        long_usage=yes
+        lep_edit_usage
+        exit
+        ;;
+
+      *)
+        break
+        ;;
+
+    esac
+  done
+
+  # :command.command_filter
+  action="edit"
 
   # :command.parse_requirements_while
   while [[ $# -gt 0 ]]; do
@@ -2563,6 +2652,7 @@ run() {
   case "$action" in
     "completions") lep_completions_command ;;
     "init") lep_init_command ;;
+    "edit") lep_edit_command ;;
     "check") lep_check_command ;;
     "download") lep_download_command ;;
     "metadata") lep_metadata_command ;;
