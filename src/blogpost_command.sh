@@ -46,8 +46,8 @@ fi
 
 apiKey=$(op read "op://Podcast/Podlove/credential")
 
-json=$(gum spin --show-output --spinner minidot --title " Creating episode" -- \
-    curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes --header "Authorization: Basic $apiKey")
+echo " Initiaing episode" 
+json=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes --header "Authorization: Basic $apiKey")
 
 episodeId=$(echo $json | jq -r ' . | "\(.id)"')
 response=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId \
@@ -58,10 +58,10 @@ response=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v
 json=$(curl -s -X GET https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId --header "Authorization: Basic $apiKey")
 postId=$(echo $json | jq -r ' . | "\(.post_id)"')
 
-featureMedia=$(gum spin --show-output --spinner minidot --title " Uploading feature image" -- \
-    curl --silent \
-    --request POST \
+echo " Uploading feature image" 
+featureMedia=$(curl --request POST \
     --url https://laufendentdecken-podcast.at/wp-json/wp/v2/media \
+    --http1.1 \
     --header "authorization: Basic ${apiKey}" \
     --header 'content-type: multipart/form-data' \
     --form "file=@${image}" \
@@ -69,8 +69,9 @@ featureMedia=$(gum spin --show-output --spinner minidot --title " Uploading f
     | jq -r '.id')
 
 postData="{ \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph -->$description<!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"
-response=$(gum spin --show-output --spinner minidot --title " Updating information" -- \
-    curl --silent -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
+
+echo " Updating information" 
+response=$(curl --silent -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
     --header "Authorization: Basic $apiKey" \
     --header 'Content-Type: application/json; charset=utf-8' \
     --data-raw "$postData")
