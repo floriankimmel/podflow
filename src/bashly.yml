@@ -21,6 +21,9 @@ commands:
 
 - name: edit  
   help: Edit current episode description
+    
+- name: new  
+  help: Create a new iteration
 
 - name: check
   help: Check if ready to start automation
