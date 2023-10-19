@@ -8,7 +8,8 @@ contentFile="$title.html"
 sourceFile="$title.md"
 
 if ! [[ -e $contentFile ]]; then
-    pandoc -s -o $contentFile $sourceFile
+    echo " Generating html content file"
+    pandoc -s -o $contentFile $sourceFile > /dev/null
 fi
 
 if ! [[ -e $dataFile ]]; then
@@ -64,11 +65,3 @@ if ! [[ -e $dataFile ]]; then
 fi
 
 IFS=',' read -r postNumber postTitle postDate <<< "$(head -n 1 "$title"".txt")"
-
-gum spin \
-    --show-output --spinner minidot --title " Kopiere Titel in Clipboard" \
-    -- echo "LEP#$postNumber - $postTitle" | pbcopy -Prefer r 
-
-gum spin \
-    --show-output --spinner minidot --title " Kopiere Content in Clipboard" \
-    -- pandoc -s -f html -t plain $contentFile | sed -e '1,2d' | tr '\n' ' ' | pbcopy -Prefer r  

@@ -15,12 +15,10 @@ auphonic_username=$(op read "op://Podcast/Auphonic Api/username")
 
 action="start"
 
-# If no start is set, we just want to save the production
 if [[ -n "$noStart" ]]; then
     action="save"
 fi
 
-echo
 echo
 echo " Create $auphonicTitle Production"
 json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
@@ -35,7 +33,6 @@ json=$(curl -s -X POST https://auphonic.com/api/simple/productions.json \
      -F "summary=$description" \
      -F "action=$action")
 
-# Only query the status if we started the production
 if [[ -z "$noStart" ]]; then
     echo " Production started"
     content=$(echo $json | jq -r ' . | "\(.data.status_string):\(.data.uuid)"')

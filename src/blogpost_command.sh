@@ -46,8 +46,9 @@ fi
 
 apiKey=$(op read "op://Podcast/Podlove/credential")
 
-echo " Initiaing episode" 
-json=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes --header "Authorization: Basic $apiKey")
+echo " Initiating episode" 
+json=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes \
+    --header "Authorization: Basic $apiKey")
 
 episodeId=$(echo $json | jq -r ' . | "\(.id)"')
 response=$(curl -s -X POST https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId \

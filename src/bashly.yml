@@ -91,6 +91,9 @@ commands:
     required: true
     help: Name of file on server
 
+- name: upload-youtube
+  help: Upload latest episode to youtube and start automatic post processing workflow 
+
 - name: automation
   help: Upload latest episode and start automatic post processing workflow 
 
