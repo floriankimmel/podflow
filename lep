@@ -893,6 +893,13 @@ lep_check_command() {
 
   echo "Checking for $episode.m4a"
 
+  if [[ $episode =~ [öüäÖÜÄ] ]]; then
+    echo -e "\e[31m Episode title contains Umlaute \e[0m"
+    error=1
+  else
+    echo -e "\e[32m Episode title does not have Umlaute\e[0m"
+  fi
+
   if [[ -e "$episode.m4a" ]]; then
       echo -e "\e[32m Episode is already exported\e[0m"
   else
@@ -1600,6 +1607,33 @@ lep_blogpost_command() {
       --header "Authorization: Basic $apiKey" \
       --header 'Content-Type: application/json; charset=utf-8' \
       --data-raw "$postData")
+
+  echo " Setting Assets"
+  m4a=$(curl -s -X PUT https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId/media/2/enable --header "Authorization: Basic $apiKey")
+  mp3=$(curl -s -X PUT https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId/media/3/enable --header "Authorization: Basic $apiKey")
+
+  filename="$title.chapters.txt"
+  json="{ \"chapters\": ["
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+      start="${line%% *}"
+      start="${start%%.*}"
+
+      title="${line#* }"
+
+      json+="{\"start\": \"$start\", \"title\": \"$title\"},"
+  done < "$filename"
+
+  json=${json%?}
+
+  json+="]}"
+
+  echo " Chapter"
+  chapters=$(curl -s -X PUT https://laufendentdecken-podcast.at/wp-json/podlove/v2/chapters/$episodeId \
+      --header "Authorization: Basic $apiKey" \
+      --header 'accept: application/json' \
+      --header 'content-type: application/json; charset=utf-8' \
+      --data-raw "$json")
 
 }
 

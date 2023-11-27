@@ -12,6 +12,12 @@ done
 
 echo "Checking for $episode.m4a"
 
+if [[ $episode =~ [öüäÖÜÄ] ]]; then
+  echo -e "\e[31m Episode title contains Umlaute \e[0m"
+  error=1
+else
+  echo -e "\e[32m Episode title does not have Umlaute\e[0m"
+fi
 
 if [[ -e "$episode.m4a" ]]; then
     echo -e "\e[32m Episode is already exported\e[0m"

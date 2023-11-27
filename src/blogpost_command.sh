@@ -76,3 +76,31 @@ response=$(curl --silent -X POST https://laufendentdecken-podcast.at/wp-json/wp/
     --header "Authorization: Basic $apiKey" \
     --header 'Content-Type: application/json; charset=utf-8' \
     --data-raw "$postData")
+
+
+echo " Setting Assets"
+m4a=$(curl -s -X PUT https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId/media/2/enable --header "Authorization: Basic $apiKey")
+mp3=$(curl -s -X PUT https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId/media/3/enable --header "Authorization: Basic $apiKey")
+
+filename="$title.chapters.txt"
+json="{ \"chapters\": ["
+
+while IFS= read -r line || [[ -n "$line" ]]; do
+    start="${line%% *}"
+    start="${start%%.*}"
+
+    title="${line#* }"
+
+    json+="{\"start\": \"$start\", \"title\": \"$title\"},"
+done < "$filename"
+
+json=${json%?}
+
+json+="]}"
+
+echo " Chapter"
+chapters=$(curl -s -X PUT https://laufendentdecken-podcast.at/wp-json/podlove/v2/chapters/$episodeId \
+    --header "Authorization: Basic $apiKey" \
+    --header 'accept: application/json' \
+    --header 'content-type: application/json; charset=utf-8' \
+    --data-raw "$json")
