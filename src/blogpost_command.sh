@@ -21,7 +21,7 @@ fi
 
 while true; do
     seoMetaDescription=$(ollama run mistral "Act as an seo expert and assist me in writing an SEO meta-description. Please provide your answer in german, not english. What I need from you is exactly one sentence (not longer) that summarizes the input: $(cat $title.md). Please don't use more then 50 words'")
-    echo "Generated seo meta-description: $seoMetaDescription"
+    echo $seoMetaDescription
     gum confirm --selected.background=2 --selected.foreground=0 "Ok ?" 
 
     if [ $? -eq 0 ]; then
