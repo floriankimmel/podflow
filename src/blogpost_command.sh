@@ -19,6 +19,8 @@ else
     description=""
 fi
 
+seoMetaDescription=$(ollama run mistral "Act as an seo expert and assist me in writing an SEO metadescription. Please provide your answer in german, not english. What I need from you is exactly one sentence (not longer) that summarizes the input: $(cat $title.md). Please don't use more then 50 words'")
+
 case $postTitle in
     "Ein Gespräch mit "*)
         guest=${postTitle#"Ein Gespräch mit "}
@@ -69,7 +71,7 @@ featureMedia=$(curl --request POST \
     --form "title=$name" \
     | jq -r '.id')
 
-postData="{ \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph -->$description<!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"
+postData="{ \"yoast_wpseo_metadesc\": $seoMetaDescription, \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph -->$description<!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"
 
 echo " Updating information" 
 response=$(curl --silent -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
