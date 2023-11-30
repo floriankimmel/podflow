@@ -1,37 +1,33 @@
 # Laufend Entdecken CLI
 
-A cli tool to automate everthing related to upload and manage the laufend entdecken podcast. A typical automation worklow does the following steps
+A CLI tool to automate everything related to uploading and managing the "Laufend Entdecken" podcast. A typical automation workflow would include these steps:
 
-* Check if all preconditions are met (command: `check`)
-* Try to detect if adfree version is available and if not provided let user
-  choose which type of add should be used
-* Generate metadata like title, number and schedule date
-  * title: Choose a template and use title of file to determine guest
-    automatically
-  * number: store last episode number in 1password and use that to calculate
-    next episode number  
-  * schedule date: calculate date of next friday  
-* Uploads adfree, non-adfree, cover thumbnail and youtube cover thumbnail to our own ftp server (command: `ftp`)
-* Backup all those file to 2 s3 buckets in 2 different regions 
-* Start auphonic productions for (command: `auphonic`)
-  * non-adfree version of the episode
-  * youtube version of the episode
-  * adfree version of the episode
-* Downloads the result of the adfree production to `~/Downloads` so I can create
-  the Patreon/Steady HQ posts by hand (command: `download`)
-* Create Blogpost on our wordpress site (command: `blogpost`)
-* Schedule youtube video  (command: `youtube`)
+* Check if all preconditions are met (Command: `Check`)
+* Try to detect if an ad-free version is available, and if not, let the user choose which type of ad they want to use.
+* Generate metadata such as title, number, and schedule date.
+  * title: Choose a template and use the title of the file to determine the guest automatically.
+  * number: Store the last episode number in 1Password and use it to calculate the next episode number  
+  * schedule date: Calculate the date of the next Friday  
+* Upload ad-free, non-ad-free, cover thumbnail and YouTube cover thumbnail to our own FTP server using the command `ftp`.
+* Back up all those files to two S3 buckets in two different regions.s 
+* Start Auphonic Productions (Command: `auphonic`)
+  * The non-adfree version of the episode
+  * the YouTube version of the episode
+  * an ad-free version of the episode
+* Download the result of the ad-free production to recording folder so that I can create Patreon/Steady HQ posts manually (command: download))
+* Create a blog post on our WordPress site. (Command: `blogpost`))
+* Schedule YouTube video (command: `youtube`)
 
-Every step can be skipped with an appropriate skip flag. 
+Every step can be skipped using an appropriate skip flag. 
 
 Certain ad partners are currently supported
 * ag1
 * polestar
 
-With providing a specified flag the content of the blogpost will be adapted accordingly.
+By providing a specified flag, the content of the blog post will be adapted accordingly.
 
 ## Dependencies
-Bash script is written with the support of [Bashly](https://bashly.dannyb.co/). For more details on how to setup bashly look at the [Installation guide](https://bashly.dannyb.co/installation/)
+A Bash script is written with the support of Bashly. For more details on how to set up Bashly, please refer to the Installation guide.
 
 ## How To
 
