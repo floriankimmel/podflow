@@ -9,7 +9,7 @@ A CLI tool to automate everything related to uploading and managing the "Laufend
   * number: Store the last episode number in 1Password and use it to calculate the next episode number  
   * schedule date: Calculate the date of the next Friday  
 * Upload ad-free, non-ad-free, cover thumbnail and YouTube cover thumbnail to our own FTP server using the command `ftp`.
-* Back up all those files to two S3 buckets in two different regions.s 
+* Back up all those files to two S3 buckets in two different regions 
 * Start Auphonic Productions (Command: `auphonic`)
   * The non-adfree version of the episode
   * the YouTube version of the episode
