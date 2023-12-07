@@ -19,16 +19,6 @@ else
     description=""
 fi
 
-while true; do
-    seoMetaDescription=$(ollama run mistral "Act as an seo expert and assist me in writing an SEO meta-description. Please provide your answer in german, not english. What I need from you is exactly one sentence (not longer) that summarizes the input: $(cat $title.md). Please don't use more then 50 words'")
-    echo $seoMetaDescription
-    gum confirm --selected.background=2 --selected.foreground=0 "Ok ?" 
-
-    if [ $? -eq 0 ]; then
-        break
-    fi
-done
-
 case $postTitle in
     "Ein Gespräch mit "*)
         guest=${postTitle#"Ein Gespräch mit "}
@@ -79,14 +69,13 @@ featureMedia=$(curl --request POST \
     --form "title=$name" \
     | jq -r '.id')
 
-postData="{ \"yoast_wpseo_metadesc\": $seoMetaDescription, \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph -->$description<!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"
+postData="{ \"featured_media\": $featureMedia, \"title\":\"$fullPostTitle\", \"status\": \"future\", \"date\": \"$postDate\", \"slug\": \"$postNumber\", \"content\": \"<!-- wp:paragraph -->$description<!-- /wp:paragraph --> <!-- wp:paragraph -->$content<!-- /wp:paragraph -->\" }"
 
 echo " Updating information" 
 response=$(curl --silent -X POST https://laufendentdecken-podcast.at/wp-json/wp/v2/episodes/$postId \
     --header "Authorization: Basic $apiKey" \
     --header 'Content-Type: application/json; charset=utf-8' \
     --data-raw "$postData")
-
 
 echo " Setting Assets"
 m4a=$(curl -s -X PUT https://laufendentdecken-podcast.at/wp-json/podlove/v2/episodes/$episodeId/media/2/enable --header "Authorization: Basic $apiKey")
