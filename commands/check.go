@@ -3,9 +3,10 @@ package cmd
 import (
 	"errors"
 	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
+
+	"podflow/configuration"
 
 	"github.com/fatih/color"
 )
@@ -14,64 +15,46 @@ func Check(skipYoutube bool) error {
     ready := true
 
     dir, _ := os.Getwd()
-    folderName := filepath.Base(dir)
     files, _ := os.ReadDir(dir)
 
-    if match, _ := regexp.MatchString("[äöüÄÖÜ]", folderName); match {
-        color.Red(" Episode title contains Umlaute")
-        ready = false
-    } else {
-        color.Green(" Episode title does not have Umlaute")
+    config, err := config.Load()
+
+    if err != nil { 
+        return err
     }
 
-    if fileExists(files, folderName + ".m4a") {
-        color.Green(" Episode is already exported")
-    } else {
-        color.Red(" No Episode is exported to automate")
-        ready = false
-    }
+    pattern, _ := regexp.Compile("[äöüÄÖÜ]")
 
-    if fileExists(files, folderName + "_addfree.m4a") {
-        color.Green(" Adfree Episode is already exported")
-    } else {
-        color.Yellow(" No Adfree Episode")
-    }
-
-    if fileExists(files, folderName + ".md") {
-        color.Green(" Episode description exists")
-    } else {
-        color.Red(" No Episode description available")
-        ready = false
-    }
-
-    if isNotEmpty(files, folderName + ".md") {
-        color.Green(" Episode description is not empty")
-    } else {
-        color.Red(" Episode description is empty")
-        ready = false
-    }
-
-    if fileExists(files, folderName + ".png") {
-        color.Green(" Episode thumbnail exists")
-    } else {
-        color.Red(" No Episode thumbnail available")
-        ready = false
-    }
-
-    if !skipYoutube {
-        if fileExists(files, folderName + "_youtube.png") {
-            color.Green(" Episode youtube thumbnail exists")
+    for _, file := range config.Files {
+        if fileExists(files, file.FileName) {
+            color.Green(" " + file.Name + " is already exported")
         } else {
-            color.Red(" No Episode youtube thumbnail available")
-            ready = false
+            if file.Required {
+                color.Red(" No " + file.Name + " is exported")
+                ready = false
+            } else {
+                color.Yellow(" No " + file.Name)
+            }
         }
-    } 
 
-    if fileExists(files, folderName + ".chapters.txt") {
-        color.Green(" Episode chapters exists")
-    } else {
-        color.Red(" No Episode chapters available")
-        ready = false
+        if file.UmlauteNotAllowed {
+            if match := pattern.MatchString(file.FileName); match {
+                color.Red(" " + file.Name + " contains Umlaute")
+                ready = false
+            } else {
+                color.Green(" " + file.Name + " does not have Umlaute")
+            }
+        }
+
+        if file.NotEmpty {
+            if isNotEmpty(files, file.FileName) {
+                color.Green(" " + file.Name + " is not empty")
+            } else {
+                color.Red(" " + file.Name + " is empty")
+                ready = false
+            }
+
+        }
     }
 
     if !ready {
