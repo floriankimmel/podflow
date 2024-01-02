@@ -11,10 +11,10 @@ import (
 	"github.com/fatih/color"
 )
 
-func Check(skipYoutube bool) error {
+func Check() error {
     ready := true
 
-    dir, _ := os.Getwd()
+    dir := config.Dir()
     files, _ := os.ReadDir(dir)
 
     config, err := config.Load()

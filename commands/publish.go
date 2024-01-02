@@ -2,15 +2,10 @@ package cmd
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
+    "podflow/configuration"
 )
 
-func Publish(skipFtp bool, skipAws bool, skipAuphonic bool, skipDownload bool, skipBlogpost bool, skipYoutube bool) error {
-    dir, _ := os.Getwd()
-    folderName := filepath.Base(dir)
-    episode := folderName + ".m4a"
-
+func Publish() error {
     fmt.Println("")
     fmt.Println("██╗     ███████╗██████╗      ██████╗██╗     ██╗")
     fmt.Println("██║     ██╔════╝██╔══██╗    ██╔════╝██║     ██║")
@@ -20,10 +15,12 @@ func Publish(skipFtp bool, skipAws bool, skipAuphonic bool, skipDownload bool, s
     fmt.Println("╚══════╝╚══════╝╚═╝          ╚═════╝╚══════╝╚═╝")
     fmt.Println("")
 
-    err := Check(skipYoutube)
+    err := Check()
     if err != nil {
         return err
     }
+
+    episode := config.Episode()
 
     fmt.Println("")
     fmt.Printf(" Start automatic workflow for file %s \n", episode)

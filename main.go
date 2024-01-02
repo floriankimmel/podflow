@@ -34,11 +34,8 @@ func main() {
                 Name:  "check",
                 Aliases: []string{"c"},
                 Usage: "Check if all requirements are met",
-                Flags: []cli.Flag{
-                    &cli.BoolFlag{ Name: "skip-youtube" },
-                },
                 Action: func(c *cli.Context) error {
-                    err := cmd.Check(c.Bool("skip-youtube"))
+                    err := cmd.Check()
 
                     if err != nil {
                         return cli.Exit("", 1)
@@ -51,22 +48,8 @@ func main() {
                 Name:  "publish",
                 Aliases: []string{"p"},
                 Usage: "Start automated publishing process",
-                Flags: []cli.Flag{
-                    &cli.BoolFlag{ Name: "skip-ftp"},
-                    &cli.BoolFlag{ Name: "skip-aws"},
-                    &cli.BoolFlag{ Name: "skip-auphonic"},
-                    &cli.BoolFlag{ Name: "skip-download"},
-                    &cli.BoolFlag{ Name: "skip-blogpost"},
-                    &cli.BoolFlag{ Name: "skip-youtube"},
-                },
                 Action: func(c *cli.Context) error {
-                    skipFtp := c.Bool("skip-ftp")
-                    skipAws := c.Bool("skip-aws")
-                    skipAuphonic := c.Bool("skip-auphonic")
-                    skipDownload := c.Bool("skip-download")
-                    skipBlogpost := c.Bool("skip-blogpost")
-                    skipYoutube := c.Bool("skip-youtube")
-                    err := cmd.Publish(skipFtp, skipAws, skipAuphonic, skipDownload, skipBlogpost, skipYoutube)
+                    err := cmd.Publish()
 
                     if err != nil {
                         return cli.Exit("", 1)
