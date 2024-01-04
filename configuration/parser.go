@@ -20,6 +20,9 @@ type File struct {
 }
  
 type Configuration struct {
+    CurrentEpisode int `yaml:"currentEpisode"`
+    ReleaseDay string `yaml:"releaseDay"`
+    ReleaseTime string `yaml:"releaseTime"`
     Files       []File `yaml:"files"`
 }
 
@@ -65,3 +68,4 @@ func Load() (Configuration, error) {
 
     return config, nil
 }
+
