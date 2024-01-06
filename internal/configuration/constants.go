@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 )
 
-func Episode() string {
+func EpisodeSlug() string {
     dir, _ := os.Getwd()
     folderName := filepath.Base(dir)
     return folderName + ".m4a"

@@ -16,7 +16,12 @@ func GetMetadata() Metadata {
         EpisodeNumber: config.CurrentEpisode,
     }
     return metadata
+}
 
+func SetEpisodeNumber(episodeNumber int) error {
+    config, _ := Load()
+    config.CurrentEpisode = episodeNumber
+    return write(config)
 }
 
 func NextReleaseDate (releaseDay string, releaseTime string) string {

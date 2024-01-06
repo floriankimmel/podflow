@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"strings"
 
-	"podflow/configuration"
+	"podflow/internal/configuration"
 
 	"github.com/fatih/color"
 )

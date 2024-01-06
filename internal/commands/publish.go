@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
-	"podflow/configuration"
+	"podflow/internal/configuration"
 )
 
 func Publish() error {
@@ -22,10 +22,10 @@ func Publish() error {
         return err
     }
 
-    episode := config.Episode()
+    slug := config.EpisodeSlug()
 
     fmt.Println("")
-    fmt.Printf(" Start automatic workflow for file %s \n", episode)
+    fmt.Printf(" Start automatic workflow for file %s \n", slug)
     metadata := config.GetMetadata()
     episodeNumber := metadata.EpisodeNumber + 1
     nextReleaseDate := metadata.NextReleaseDate
@@ -38,6 +38,10 @@ func Publish() error {
     episodeTitle := scanner.Text()
     fmt.Printf(" Episode title: %s \n", episodeTitle)
  
+    nextEpisodeNumber := metadata.EpisodeNumber + 1
+    if err := config.SetEpisodeNumber(nextEpisodeNumber); err != nil {
+        return err
+    }
     return nil
 
 }

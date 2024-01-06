@@ -6,7 +6,7 @@ import (
 	"os"
     "time"
 
-	"podflow/commands"
+	"podflow/internal/commands"
 	"github.com/urfave/cli/v2"
 )
 
