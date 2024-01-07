@@ -4,18 +4,18 @@ import (
 	"time"
 )
 
-type Metadata struct {
+type ReleaseInformation struct {
     NextReleaseDate string
     EpisodeNumber int
 }
 
-func GetMetadata() Metadata {
+func GetReleaseInformation() ReleaseInformation {
     config, _ := Load()
-    metadata := Metadata{
+    releaseInfo := ReleaseInformation{
         NextReleaseDate: NextReleaseDate(config.ReleaseDay, config.ReleaseTime),
         EpisodeNumber: config.CurrentEpisode,
     }
-    return metadata
+    return releaseInfo
 }
 
 func SetEpisodeNumber(episodeNumber int) error {

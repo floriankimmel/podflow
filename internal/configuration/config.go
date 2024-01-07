@@ -12,18 +12,41 @@ const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
 const DEFAULT_CONFIG_DIRNAME = "podflow"
 
 type File struct {
-    Name                string `yaml:"name"`
-    FileName            string `yaml:"fileName"`
-    Required            bool `yaml:"required"`
-    NotEmpty            bool `yaml:"notEmpty"`
-    UmlauteNotAllowed      bool `yaml:"umlauteNotAllowed"`
+    Name                string      `yaml:"name"`
+    FileName            string      `yaml:"fileName"`
+    Required            bool        `yaml:"required"`
+    NotEmpty            bool        `yaml:"notEmpty"`
+    UmlauteNotAllowed   bool        `yaml:"umlauteNotAllowed"`
+}
+
+type FTP struct {
+    Host                string      `yaml:"host"`
+    Port                string      `yaml:"port"`
+    Username            string      `yaml:"username"`
+    Password            string      `yaml:"password"`
+}
+
+type Target struct {
+    FTP                 FTP         `yaml:"ftp"`
+}
+
+type FileUpload struct {
+    Source              string      `yaml:"source"`
+    Target              string      `yaml:"target"`
+}
+
+type Step struct {
+    Name                string      `yaml:"name"`
+    Target              Target      `yaml:"target"`
+    Files               []FileUpload    `yaml:"files"`
 }
  
 type Configuration struct {
-    CurrentEpisode int `yaml:"currentEpisode"`
-    ReleaseDay string `yaml:"releaseDay"`
-    ReleaseTime string `yaml:"releaseTime"`
-    Files       []File `yaml:"files"`
+    CurrentEpisode      int         `yaml:"currentEpisode"`
+    ReleaseDay          string      `yaml:"releaseDay"`
+    ReleaseTime         string      `yaml:"releaseTime"`
+    Files               []File      `yaml:"files"`
+    Steps               []Step      `yaml:"files"`
 }
 
 func Load() (Configuration, error) {

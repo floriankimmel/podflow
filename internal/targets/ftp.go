@@ -1,26 +1,41 @@
 package targets
 
 import (
+	"io"
 	"log"
+	"os"
+	config "podflow/internal/configuration"
 	"time"
-    "github.com/jlaffaye/ftp"
+
+	"github.com/jlaffaye/ftp"
 )
 
-func FtpUpload() {
-    c, err := ftp.Dial("ftp.example.org:21", ftp.DialWithTimeout(5*time.Second))
+func FtpUpload(ftpConfig config.FTP, filesToUpload []config.FileUpload) error {
+    c, err := ftp.Dial(ftpConfig.Host + ":" + ftpConfig.Port, ftp.DialWithTimeout(5*time.Second))
     if err != nil {
         log.Fatal(err)
     }
 
-    err = c.Login("anonymous", "anonymous")
+    err = c.Login(ftpConfig.Username, ftpConfig.Password)
     if err != nil {
-        log.Fatal(err)
+        return err
     }
 
-    // Do something with the FTP conn
-
+    for _, fileToUplaod := range filesToUpload {
+        file, err := os.Open(fileToUplaod.Source)
+        if err != nil {
+            return err
+        }
+        err = c.Stor(fileToUplaod.Target, file)
+        file.Close()
+    }
+    if err != nil {
+       return err
+    }
     if err := c.Quit(); err != nil {
-        log.Fatal(err)
+        return err
     }
+
+    return nil
 }
 
