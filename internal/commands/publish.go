@@ -72,6 +72,8 @@ func Publish() error {
             return err
         }
 
+        fmt.Println("")
+
     } else {
         fmt.Printf(" Episode number: %d \n", currentState.Metadata.EpisodeNumber)
         fmt.Printf(" Next release date: %s \n", currentState.Metadata.ReleaseDate)
