@@ -53,7 +53,7 @@ func Load(io ConfigurationReaderWriter) (Configuration, error) {
     }
 
     if io.IsNotExist(configFilePath) {
-		return Configuration{}, err
+		return Configuration{}, os.ErrNotExist
 
     }
     config, err := io.Read(configFilePath)
