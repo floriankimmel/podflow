@@ -2,8 +2,7 @@ package testData
 
 import config "podflow/internal/configuration"
 
-type ValidConfigurationFile struct {
-}
+type ValidConfigurationFile struct {}
 
 func (file ValidConfigurationFile) Read(path string) (config.Configuration, error) {
     podflowConfig := config.Configuration{
@@ -13,8 +12,22 @@ func (file ValidConfigurationFile) Read(path string) (config.Configuration, erro
         Files: []config.File{
             {
                 Name: "Podflow",
-                FileName: "podflow.mp3",
+                FileName: "{{folderName}}.mp3",
                 Required: true,
+            },
+        },
+        Steps: []config.Step{
+            {
+                Name: "FTP",
+                Target: config.Target{
+                    FTP: config.FTP{},
+                },
+                Files: []config.FileUpload{
+                    {
+                        Source: "{{episodeNumber}}_{{folderName}}.mp3",
+                        Target: "{{episodeNumber}}_{{folderName}}.mp3",
+                    },
+                },
             },
         },
 

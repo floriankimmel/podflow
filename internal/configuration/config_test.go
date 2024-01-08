@@ -23,4 +23,34 @@ var _ = Describe("The podflow configuration", func() {
         Expect(err).ShouldNot(BeNil())
     })
 
+    It("returns an error if path can not be determined", func() {
+        mockConfigurationFile := testData.InvalidPathConfigurationFile{}
+        _, err := config.Load(mockConfigurationFile)
+
+        Expect(err).ShouldNot(BeNil())
+    })
+
+    It("returns an error if config file is not readable", func() {
+        mockConfigurationFile := testData.NotReadableConfigurationFile{}
+        _, err := config.Load(mockConfigurationFile)
+
+        Expect(err).ShouldNot(BeNil())
+    })
+
+    It("replace folderName in list of files configuration", func() {
+        mockConfigurationFile := testData.ValidConfigurationFile{}
+        config, _ := config.LoadAndReplacePlaceholders(mockConfigurationFile)
+
+        Expect(config).ShouldNot(BeNil())
+        Expect(config.Files[0].FileName).Should(Equal("configuration.mp3"))
+    })
+
+    It("replace folderName & episodeNumber in list of files to use in a step", func() {
+        mockConfigurationFile := testData.ValidConfigurationFile{}
+        config, _ := config.LoadAndReplacePlaceholders(mockConfigurationFile)
+
+        Expect(config).ShouldNot(BeNil())
+        Expect(config.Steps[0].Files[0].Source).Should(Equal("1_configuration.mp3"))
+        Expect(config.Steps[0].Files[0].Target).Should(Equal("1_configuration.mp3"))
+    })
 })

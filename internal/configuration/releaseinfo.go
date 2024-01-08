@@ -12,7 +12,7 @@ type ReleaseInformation struct {
 func GetReleaseInformation(io ConfigurationReaderWriter) ReleaseInformation {
     config, _ := Load(io)
     releaseInfo := ReleaseInformation{
-        NextReleaseDate: NextReleaseDate(config.ReleaseDay, config.ReleaseTime),
+        NextReleaseDate: nextReleaseDate(config.ReleaseDay, config.ReleaseTime),
         EpisodeNumber: config.CurrentEpisode,
     }
     return releaseInfo
@@ -24,7 +24,7 @@ func SetEpisodeNumber(io ConfigurationReaderWriter, episodeNumber int) error {
     return io.Write(config)
 }
 
-func NextReleaseDate (releaseDay string, releaseTime string) string {
+func nextReleaseDate (releaseDay string, releaseTime string) string {
     today := time.Now()
     desiredWeekday := convertStringToWeekday(releaseDay) 
 

@@ -2,8 +2,7 @@ package testData
 
 import config "podflow/internal/configuration"
 
-type NonExistingConfigurationFile struct {
-}
+type NonExistingConfigurationFile struct {}
 
 func (file NonExistingConfigurationFile) Read(path string) (config.Configuration, error) {
     return config.Configuration{}, nil
