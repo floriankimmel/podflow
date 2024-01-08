@@ -5,12 +5,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-
-	"gopkg.in/yaml.v3"
 )
-
-const DEFAULT_XDG_CONFIG_DIRNAME = ".config"
-const DEFAULT_CONFIG_DIRNAME = "podflow"
 
 type File struct {
     Name                string      `yaml:"name"`
@@ -50,27 +45,28 @@ type Configuration struct {
     Steps               []Step      `yaml:"steps"`
 }
 
-func Load() (Configuration, error) {
-    configFilePath, err := getConfigPath()
+func Load(io ConfigurationReaderWriter) (Configuration, error) {
+    configFilePath, err := io.Path()
 
     if err != nil {
         return Configuration{}, err
     }
 
-    if _, err := os.Stat(configFilePath); os.IsNotExist(err) {
+    if io.IsNotExist(configFilePath) {
 		return Configuration{}, err
 
     }
-    config, err := parse(configFilePath)
+    config, err := io.Read(configFilePath)
     if err != nil {
-		return Configuration{}, err
+        return Configuration{}, err
     }
 
     return config, nil
 }
 
-func LoadAndReplacePlaceholders() (Configuration, error) {
-    config, err := Load()
+func LoadAndReplacePlaceholders(io ConfigurationReaderWriter) (Configuration, error) {
+    config, err := Load(io)
+
     if err != nil {
         return Configuration{}, err
     }
@@ -98,50 +94,3 @@ func replacePlaceholders(config Configuration) Configuration {
     return config
 }
 
-func parse(configFilePath string) (Configuration, error) {
-    data, err := os.ReadFile(configFilePath)
-    if err != nil {
-        return Configuration{}, err
-    }
-    
-    var configuration Configuration
-
-    if err := yaml.Unmarshal(data, &configuration); err != nil {
-        return Configuration{}, err
-    }
-
-    return configuration, nil
-
-}
-
-func write(configuration Configuration) error {
-    configFilePath, err := getConfigPath()
-
-    if err != nil {
-        return err
-    }
-    data, err := yaml.Marshal(configuration)
-
-    if err != nil {
-        return err
-    }
-
-    err = os.WriteFile(configFilePath, data, 0644)
-
-    if err != nil {
-        return err
-    }
-
-    return nil
-}
-
-func getConfigPath() (string, error) {
-    homeDir, err := os.UserHomeDir()
-    configFilePath := filepath.Join(homeDir, DEFAULT_XDG_CONFIG_DIRNAME, DEFAULT_CONFIG_DIRNAME, "config.yml")
-
-	if err != nil {
-		return "", err
-	}
-    return configFilePath, nil
-
-}

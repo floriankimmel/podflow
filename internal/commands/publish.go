@@ -23,9 +23,10 @@ func Publish() error {
         fmt.Println(" Error: " + err.Error())
         return err
     }
+    io := config.ConfigurationFile{}
 
     slug := config.EpisodeSlug()
-    podflowConfig, err := config.LoadAndReplacePlaceholders()
+    podflowConfig, err := config.LoadAndReplacePlaceholders(io)
 
     if err != nil {
         fmt.Println(" Error: " + err.Error())
@@ -34,7 +35,7 @@ func Publish() error {
 
     fmt.Println("")
     fmt.Printf(" Start automatic workflow for file %s \n", slug)
-    releaseInfo := config.GetReleaseInformation()
+    releaseInfo := config.GetReleaseInformation(io)
     episodeNumber := releaseInfo.EpisodeNumber + 1
     nextReleaseDate := releaseInfo.NextReleaseDate
 
@@ -57,7 +58,8 @@ func Publish() error {
     }
 
     nextEpisodeNumber := releaseInfo.EpisodeNumber + 1
-    if err := config.SetEpisodeNumber(nextEpisodeNumber); err != nil {
+    if err := config.SetEpisodeNumber(io, nextEpisodeNumber); err != nil {
+
         return err
     }
     return nil

@@ -9,8 +9,8 @@ type ReleaseInformation struct {
     EpisodeNumber int
 }
 
-func GetReleaseInformation() ReleaseInformation {
-    config, _ := Load()
+func GetReleaseInformation(io ConfigurationReaderWriter) ReleaseInformation {
+    config, _ := Load(io)
     releaseInfo := ReleaseInformation{
         NextReleaseDate: NextReleaseDate(config.ReleaseDay, config.ReleaseTime),
         EpisodeNumber: config.CurrentEpisode,
@@ -18,10 +18,10 @@ func GetReleaseInformation() ReleaseInformation {
     return releaseInfo
 }
 
-func SetEpisodeNumber(episodeNumber int) error {
-    config, _ := Load()
+func SetEpisodeNumber(io ConfigurationReaderWriter, episodeNumber int) error {
+    config, _ := Load(io)
     config.CurrentEpisode = episodeNumber
-    return write(config)
+    return io.Write(config)
 }
 
 func NextReleaseDate (releaseDay string, releaseTime string) string {
