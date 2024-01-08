@@ -10,7 +10,10 @@ import (
 	"github.com/jlaffaye/ftp"
 )
 
-func FtpUpload(ftpConfig config.FTP, filesToUpload []config.FileUpload) error {
+func FtpUpload(step config.Step) error {
+    ftpConfig := step.Target.FTP
+    filesToUpload := step.Files
+
     c, err := ftp.Dial(ftpConfig.Host + ":" + ftpConfig.Port, ftp.DialWithTimeout(5*time.Second))
     if err != nil {
         log.Fatal(err)

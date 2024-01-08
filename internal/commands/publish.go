@@ -50,7 +50,7 @@ func Publish() error {
     for i := range podflowConfig.Steps {
         step := podflowConfig.Steps[i]
         if step.Target.FTP != (config.FTP{}) {
-            err:= targets.FtpUpload(step.Target.FTP, step.Files)
+            err:= targets.FtpUpload(step)
             if err != nil {
                 return err
             }
