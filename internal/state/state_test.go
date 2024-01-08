@@ -28,6 +28,7 @@ var _ = Describe("The state of the current podflow", func() {
             Metadata: state.Metadata{
                 EpisodeNumber: 1,
                 ReleaseDate: "2021-01-01 09:00:00",
+                Title: "Podflow",
             },
             FTPUploaded: false,
         }
