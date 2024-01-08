@@ -70,10 +70,10 @@ func LoadAndReplacePlaceholders(io ConfigurationReaderWriter) (Configuration, er
     if err != nil {
         return Configuration{}, err
     }
-    return replacePlaceholders(config), nil
+    return ReplacePlaceholders(config), nil
 }
 
-func replacePlaceholders(config Configuration) Configuration {
+func ReplacePlaceholders(config Configuration) Configuration {
     dir, _ := os.Getwd()
     folder := filepath.Base(dir)
 
