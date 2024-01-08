@@ -17,7 +17,7 @@ func Check() error {
     dir := config.Dir()
     files, _ := os.ReadDir(dir)
 
-    config, err := config.Load()
+    config, err := config.LoadAndReplacePlaceholders()
 
     if err != nil { 
         return err

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"os"
 	"podflow/internal/configuration"
@@ -21,13 +20,15 @@ func Publish() error {
 
     err := Check()
     if err != nil {
+        fmt.Println(" Error: " + err.Error())
         return err
     }
 
     slug := config.EpisodeSlug()
-    podflowConfig, err := config.Load()
+    podflowConfig, err := config.LoadAndReplacePlaceholders()
 
     if err != nil {
+        fmt.Println(" Error: " + err.Error())
         return err
     }
 
@@ -43,11 +44,11 @@ func Publish() error {
     fmt.Print(" Enter episode title: ")
     scanner.Scan()
     episodeTitle := scanner.Text()
-    fmt.Printf(" Episode title: %s \n", episodeTitle)
+    fmt.Printf(" Episode title: %s \n\n", episodeTitle)
  
     for i := range podflowConfig.Steps {
         step := podflowConfig.Steps[i]
-        if step.Target.FTP == (config.FTP{}) {
+        if step.Target.FTP != (config.FTP{}) {
             err:= targets.FtpUpload(step.Target.FTP, step.Files)
             if err != nil {
                 return err
@@ -60,5 +61,4 @@ func Publish() error {
         return err
     }
     return nil
-
 }

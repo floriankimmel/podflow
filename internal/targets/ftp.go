@@ -1,7 +1,7 @@
 package targets
 
 import (
-	"io"
+	"fmt"
 	"log"
 	"os"
 	config "podflow/internal/configuration"
@@ -21,12 +21,16 @@ func FtpUpload(ftpConfig config.FTP, filesToUpload []config.FileUpload) error {
         return err
     }
 
-    for _, fileToUplaod := range filesToUpload {
-        file, err := os.Open(fileToUplaod.Source)
+    for _, fileToUpload := range filesToUpload {
+        fmt.Printf("  Uploading file %s to %s \n", fileToUpload.Source, fileToUpload.Target)
+        file, err := os.Open(fileToUpload.Source)
         if err != nil {
             return err
         }
-        err = c.Stor(fileToUplaod.Target, file)
+        err = c.Stor(fileToUpload.Target, file)
+        if err != nil {
+            return err
+        }
         file.Close()
     }
     if err != nil {
