@@ -36,9 +36,7 @@ func FtpUpload(step config.Step) error {
         }
         file.Close()
     }
-    if err != nil {
-       return err
-    }
+
     if err := c.Quit(); err != nil {
         return err
     }
