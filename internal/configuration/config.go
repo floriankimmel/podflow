@@ -64,17 +64,16 @@ func Load(io ConfigurationReaderWriter) (Configuration, error) {
     return config, nil
 }
 
-func LoadAndReplacePlaceholders(io ConfigurationReaderWriter) (Configuration, error) {
+func LoadAndReplacePlaceholders(io ConfigurationReaderWriter, dir string) (Configuration, error) {
     config, err := Load(io)
 
     if err != nil {
         return Configuration{}, err
     }
-    return ReplacePlaceholders(config), nil
+    return ReplacePlaceholders(config, dir), nil
 }
 
-func ReplacePlaceholders(config Configuration) Configuration {
-    dir, _ := os.Getwd()
+func ReplacePlaceholders(config Configuration, dir string) Configuration {
     folder := filepath.Base(dir)
 
     for i := range config.Files {

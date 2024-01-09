@@ -11,14 +11,11 @@ import (
 	"github.com/fatih/color"
 )
 
-func Check() error {
+func Check(io config.ConfigurationReaderWriter, dir string) error {
     ready := true
 
-    dir := config.Dir()
     files, _ := os.ReadDir(dir)
-    io := config.ConfigurationFile{}
-
-    config, err := config.LoadAndReplacePlaceholders(io)
+    config, err := config.LoadAndReplacePlaceholders(io, dir)
 
     if err != nil { 
         return err

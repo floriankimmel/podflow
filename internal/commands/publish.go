@@ -7,9 +7,10 @@ import (
 	"podflow/internal/configuration"
 	"podflow/internal/state"
 	"podflow/internal/targets"
+	"time"
 )
 
-func Publish() error {
+func Publish(io config.ConfigurationReaderWriter, dir string) error {
     fmt.Println("")
     fmt.Println("██╗     ███████╗██████╗      ██████╗██╗     ██╗")
     fmt.Println("██║     ██╔════╝██╔══██╗    ██╔════╝██║     ██║")
@@ -19,12 +20,11 @@ func Publish() error {
     fmt.Println("╚══════╝╚══════╝╚═╝          ╚═════╝╚══════╝╚═╝")
     fmt.Println("")
 
-    if err := Check(); err != nil {
+    if err := Check(io, dir); err != nil {
         fmt.Println(" Error: " + err.Error())
         return err
     }
 
-    io := config.ConfigurationFile{}
     stateFile := state.StateFile{}
     currentState, err := stateFile.Read()
 
@@ -43,7 +43,7 @@ func Publish() error {
     fmt.Printf(" Start automatic workflow for file %s \n", config.EpisodeSlug())
 
     if currentState.Metadata == (state.Metadata{}) {
-        releaseInfo := config.GetReleaseInformation(io)
+        releaseInfo := config.GetReleaseInformation(io, time.Now())
 
         episodeNumber := releaseInfo.EpisodeNumber + 1
         nextReleaseDate := releaseInfo.NextReleaseDate
@@ -82,7 +82,7 @@ func Publish() error {
         podflowConfig.CurrentEpisode = currentState.Metadata.EpisodeNumber
     }
 
-    replacedPodflowConfig := config.ReplacePlaceholders(podflowConfig)
+    replacedPodflowConfig := config.ReplacePlaceholders(podflowConfig, dir)
  
     for i := range replacedPodflowConfig.Steps {
         step := replacedPodflowConfig.Steps[i]

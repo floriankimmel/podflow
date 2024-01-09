@@ -4,9 +4,11 @@ import (
 	"fmt"
 	"log"
 	"os"
-    "time"
+	"time"
 
-	"podflow/internal/commands"
+	cmd "podflow/internal/commands"
+	config "podflow/internal/configuration"
+
 	"github.com/urfave/cli/v2"
 )
 
@@ -35,7 +37,7 @@ func main() {
                 Aliases: []string{"c"},
                 Usage: "Check if all requirements are met",
                 Action: func(c *cli.Context) error {
-                    err := cmd.Check()
+                    err := cmd.Check(config.ConfigurationFile{}, config.Dir())
 
                     if err != nil {
                         return cli.Exit("", 1)
@@ -49,7 +51,7 @@ func main() {
                 Aliases: []string{"p"},
                 Usage: "Start automated publishing process",
                 Action: func(c *cli.Context) error {
-                    err := cmd.Publish()
+                    err := cmd.Publish(config.ConfigurationFile{}, config.Dir())
 
                     if err != nil {
                         return cli.Exit("", 1)

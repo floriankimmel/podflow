@@ -14,6 +14,12 @@ func (file ValidConfigurationFile) Read(path string) (config.Configuration, erro
                 Name: "Podflow",
                 FileName: "{{folderName}}.mp3",
                 Required: true,
+                UmlauteNotAllowed: true,
+            },
+            {
+                Name: "Podflow",
+                FileName: "{{folderName}}.md",
+                NotEmpty: true,
             },
         },
         Steps: []config.Step{
