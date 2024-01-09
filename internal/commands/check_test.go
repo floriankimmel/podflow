@@ -124,10 +124,6 @@ var _ = Describe("Running the check command", func() {
         filePath := filepath.Join(workingDir, "ä.md")
         file, _ := os.Create(filePath)
 
-        if err := os.WriteFile(filePath, []byte("test"), 0644); err != nil {
-            panic(err)
-        }
-
         defer os.Remove(tempFile.Name())
         defer os.Remove(file.Name())
 
@@ -138,6 +134,67 @@ var _ = Describe("Running the check command", func() {
                     Name: "Podflow",
                     FileName: "ä.md",
                     UmlauteNotAllowed: true,
+                },
+            },
+        }); err != nil {
+            panic(err)
+        }
+
+        err := cmd.Check(io, workingDir)
+
+        Expect(err).ShouldNot(BeNil())
+
+    })
+
+    It("will detect that file is empty and return with error", func() {
+        if err := os.MkdirAll(workingDir, os.ModePerm); err != nil {
+            panic(err)
+        }
+        configFilePath := filepath.Join(workingDir, "podflow.yml")
+        tempFile, _ := os.Create(configFilePath)
+
+        filePath := filepath.Join(workingDir, "empty.md")
+        file, _ := os.Create(filePath)
+
+
+        defer os.Remove(tempFile.Name())
+        defer os.Remove(file.Name())
+
+        io := testData.TempConfigurationFile{}
+        if err := io.Write(config.Configuration{
+            Files: []config.File{
+                {
+                    Name: "Podflow",
+                    FileName: "empty.md",
+                    NotEmpty: true,
+                },
+            },
+        }); err != nil {
+            panic(err)
+        }
+
+        err := cmd.Check(io, workingDir)
+
+        Expect(err).ShouldNot(BeNil())
+
+    })
+    It("will detect that file is missing and return with error", func() {
+        if err := os.MkdirAll(workingDir, os.ModePerm); err != nil {
+            panic(err)
+        }
+        configFilePath := filepath.Join(workingDir, "podflow.yml")
+        tempFile, _ := os.Create(configFilePath)
+
+
+        defer os.Remove(tempFile.Name())
+
+        io := testData.TempConfigurationFile{}
+        if err := io.Write(config.Configuration{
+            Files: []config.File{
+                {
+                    Name: "Podflow",
+                    FileName: "missing.md",
+                    Required: true,
                 },
             },
         }); err != nil {
