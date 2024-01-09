@@ -8,6 +8,8 @@ import (
 
 	cmd "podflow/internal/commands"
 	config "podflow/internal/configuration"
+	input "podflow/internal/input"
+	"podflow/internal/state"
 
 	"github.com/urfave/cli/v2"
 )
@@ -51,7 +53,7 @@ func main() {
                 Aliases: []string{"p"},
                 Usage: "Start automated publishing process",
                 Action: func(c *cli.Context) error {
-                    err := cmd.Publish(config.ConfigurationFile{}, config.Dir())
+                    err := cmd.Publish(config.ConfigurationFile{}, state.StateFile{}, input.Stdin{}, config.Dir())
 
                     if err != nil {
                         return cli.Exit("", 1)

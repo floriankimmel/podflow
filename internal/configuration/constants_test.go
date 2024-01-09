@@ -9,7 +9,7 @@ import (
 
 var _ = Describe("Getting constant", func() {
     It("episode slug should work", func() {
-        slug := config.EpisodeSlug()
+        slug := config.EpisodeSlug(config.Dir())
         Expect(slug).Should(Equal("configuration.m4a"))
     })
     It("dir should work", func() {

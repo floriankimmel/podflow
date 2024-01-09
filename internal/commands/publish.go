@@ -1,16 +1,16 @@
 package cmd
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 	"podflow/internal/configuration"
+	"podflow/internal/input"
 	"podflow/internal/state"
 	"podflow/internal/targets"
 	"time"
 )
 
-func Publish(io config.ConfigurationReaderWriter, dir string) error {
+
+func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWriter, input input.Input, dir string) error {
     fmt.Println("")
     fmt.Println("██╗     ███████╗██████╗      ██████╗██╗     ██╗")
     fmt.Println("██║     ██╔════╝██╔══██╗    ██╔════╝██║     ██║")
@@ -25,8 +25,7 @@ func Publish(io config.ConfigurationReaderWriter, dir string) error {
         return err
     }
 
-    stateFile := state.StateFile{}
-    currentState, err := stateFile.Read()
+    currentState, err := stateIo.Read()
 
     if err != nil {
         return err
@@ -40,7 +39,7 @@ func Publish(io config.ConfigurationReaderWriter, dir string) error {
     }
 
     fmt.Println("")
-    fmt.Printf(" Start automatic workflow for file %s \n", config.EpisodeSlug())
+    fmt.Printf(" Start automatic workflow for file %s \n", config.EpisodeSlug(dir))
 
     if currentState.Metadata == (state.Metadata{}) {
         releaseInfo := config.GetReleaseInformation(io, time.Now())
@@ -51,10 +50,8 @@ func Publish(io config.ConfigurationReaderWriter, dir string) error {
         fmt.Printf(" Episode number: %d \n", episodeNumber)
         fmt.Printf(" Next release date: %s \n", nextReleaseDate)
 
-        scanner := bufio.NewScanner(os.Stdin)
         fmt.Print(" Enter episode title: ")
-        scanner.Scan()
-        episodeTitle := scanner.Text()
+        episodeTitle := input.Text()
 
         currentState.Metadata = state.Metadata{
             EpisodeNumber: episodeNumber,
@@ -62,7 +59,7 @@ func Publish(io config.ConfigurationReaderWriter, dir string) error {
             Title: episodeTitle,
         }
 
-        if err := stateFile.Write(currentState); err != nil {
+        if err := stateIo.Write(currentState); err != nil {
             return err
         }
 
@@ -94,7 +91,7 @@ func Publish(io config.ConfigurationReaderWriter, dir string) error {
                 }
 
                 currentState.FTPUploaded = true
-                if err := stateFile.Write(currentState); err != nil {
+                if err := stateIo.Write(currentState); err != nil {
                     return err
                 }
             } else {
