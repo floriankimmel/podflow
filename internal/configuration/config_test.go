@@ -132,7 +132,7 @@ var _ = Describe("The podflow configuration", func() {
             },
             Steps: []config.Step{
                 {
-                    Files: []config.FileUpload{
+                    Files: []config.StepFile{
                         {
                             Source: "{{episodeNumber}}_{{folderName}}.mp3",
                             Target: "{{episodeNumber}}_{{folderName}}.mp3",

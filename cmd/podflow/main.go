@@ -39,6 +39,7 @@ func main() {
                 Aliases: []string{"c"},
                 Usage: "Check if all requirements are met",
                 Action: func(c *cli.Context) error {
+                    printLogo()
                     err := cmd.Check(config.ConfigurationFile{}, config.Dir())
 
                     if err != nil {
@@ -53,6 +54,7 @@ func main() {
                 Aliases: []string{"p"},
                 Usage: "Start automated publishing process",
                 Action: func(c *cli.Context) error {
+                    printLogo()
                     err := cmd.Publish(config.ConfigurationFile{}, state.StateFile{}, input.Stdin{}, config.Dir())
 
                     if err != nil {
@@ -70,3 +72,13 @@ func main() {
     }
 }
 
+func printLogo() {
+    fmt.Println("")
+    fmt.Println("██╗     ███████╗██████╗      ██████╗██╗     ██╗")
+    fmt.Println("██║     ██╔════╝██╔══██╗    ██╔════╝██║     ██║")
+    fmt.Println("██║     █████╗  ██████╔╝    ██║     ██║     ██║")
+    fmt.Println("██║     ██╔══╝  ██╔═══╝     ██║     ██║     ██║")
+    fmt.Println("███████╗███████╗██║         ╚██████╗███████╗██║")
+    fmt.Println("╚══════╝╚══════╝╚═╝          ╚═════╝╚══════╝╚═╝")
+    fmt.Println("")
+}

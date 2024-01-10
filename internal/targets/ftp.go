@@ -2,6 +2,7 @@ package targets
 
 import (
 	"fmt"
+	"io"
 	"log"
 	"os"
 	config "podflow/internal/configuration"
@@ -10,8 +11,54 @@ import (
 	"github.com/jlaffaye/ftp"
 )
 
+func FtpDownload(step config.Step) error {
+    ftpConfig := step.Download
+    filesToDownload := step.Files
+
+    c, err := ftp.Dial(ftpConfig.Host + ":" + ftpConfig.Port, ftp.DialWithTimeout(5*time.Second))
+    if err != nil {
+        log.Fatal(err)
+    }
+
+    err = c.Login(ftpConfig.Username, ftpConfig.Password)
+    if err != nil {
+        return err
+    }
+
+    for _, fileToDownload := range filesToDownload {
+        fmt.Printf("  Downloading file %s to %s \n", fileToDownload.Source, fileToDownload.Target)
+        reader, err := c.Retr(fileToDownload.Source)
+        if err != nil {
+            return err
+        }
+        defer reader.Close()
+        buf, err := io.ReadAll(reader)
+
+        if err != nil {
+            return err
+        }
+
+        file, err := os.Create(fileToDownload.Target)
+
+        if err != nil {
+            return err
+        }
+
+        if _, err := file.WriteString(string(buf)); err != nil {
+            return err
+        }
+
+    }
+
+    if err := c.Quit(); err != nil {
+        return err
+    }
+
+    return nil
+}
+
 func FtpUpload(step config.Step) error {
-    ftpConfig := step.Target.FTP
+    ftpConfig := step.FTP
     filesToUpload := step.Files
 
     c, err := ftp.Dial(ftpConfig.Host + ":" + ftpConfig.Port, ftp.DialWithTimeout(5*time.Second))

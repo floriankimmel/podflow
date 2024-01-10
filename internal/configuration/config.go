@@ -22,19 +22,15 @@ type FTP struct {
     Password            string      `yaml:"password"`
 }
 
-type Target struct {
-    FTP                 FTP         `yaml:"ftp"`
-}
-
-type FileUpload struct {
+type StepFile struct {
     Source              string      `yaml:"source"`
     Target              string      `yaml:"target"`
 }
 
 type Step struct {
-    Name                string      `yaml:"name"`
-    Target              Target      `yaml:"target"`
-    Files               []FileUpload`yaml:"files"`
+    FTP                 FTP         `yaml:"ftp"`
+    Download            FTP         `yaml:"download"`
+    Files               []StepFile  `yaml:"files"`
 }
  
 type Configuration struct {

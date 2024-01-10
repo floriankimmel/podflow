@@ -24,11 +24,8 @@ func (file ValidConfigurationFile) Read(path string) (config.Configuration, erro
         },
         Steps: []config.Step{
             {
-                Name: "FTP",
-                Target: config.Target{
-                    FTP: config.FTP{},
-                },
-                Files: []config.FileUpload{
+                FTP: config.FTP{},
+                Files: []config.StepFile{
                     {
                         Source: "{{episodeNumber}}_{{folderName}}.mp3",
                         Target: "{{episodeNumber}}_{{folderName}}.mp3",

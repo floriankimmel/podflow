@@ -11,15 +11,6 @@ import (
 
 
 func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWriter, input input.Input, dir string) error {
-    fmt.Println("")
-    fmt.Println("██╗     ███████╗██████╗      ██████╗██╗     ██╗")
-    fmt.Println("██║     ██╔════╝██╔══██╗    ██╔════╝██║     ██║")
-    fmt.Println("██║     █████╗  ██████╔╝    ██║     ██║     ██║")
-    fmt.Println("██║     ██╔══╝  ██╔═══╝     ██║     ██║     ██║")
-    fmt.Println("███████╗███████╗██║         ╚██████╗███████╗██║")
-    fmt.Println("╚══════╝╚══════╝╚═╝          ╚═════╝╚══════╝╚═╝")
-    fmt.Println("")
-
     if err := Check(io, dir); err != nil {
         fmt.Println(" Error: " + err.Error())
         return err
@@ -83,7 +74,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
  
     for i := range replacedPodflowConfig.Steps {
         step := replacedPodflowConfig.Steps[i]
-        if step.Target.FTP != (config.FTP{}) {
+        if step.FTP != (config.FTP{}) {
             if !currentState.FTPUploaded {
                 err:= targets.FtpUpload(step)
                 if err != nil {
@@ -96,6 +87,22 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 }
             } else {
                 fmt.Println(" FTP upload skipped")
+            }
+        }
+
+        if step.Download != (config.FTP{}) {
+            if !currentState.Downloaded {
+                err:= targets.FtpDownload(step)
+                if err != nil {
+                    return err
+                }
+
+                currentState.Downloaded = true
+                if err := stateIo.Write(currentState); err != nil {
+                    return err
+                }
+            } else {
+                fmt.Println(" Download skipped")
             }
         }
     }

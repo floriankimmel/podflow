@@ -16,6 +16,7 @@ type Metadata struct {
 type State struct {
     Metadata            Metadata    `yaml:"metadata"`
     FTPUploaded         bool        `yaml:"ftpUploaded"`
+    Downloaded          bool        `yaml:"downloaded"`
 }
 
 type StateReaderWriter interface {
