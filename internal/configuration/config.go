@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -80,6 +81,18 @@ func LoadAndReplacePlaceholders(io ConfigurationReaderWriter, dir string) (Confi
         return Configuration{}, err
     }
     return ReplacePlaceholders(config, dir), nil
+}
+
+func ReplaceEnvVariable(replaceString string) string {
+    re := regexp.MustCompile("{{env.(.*?)}}")
+	res := re.FindAllStringSubmatch(replaceString, -1)
+
+	for _, match := range res {
+		envVar := match[1]
+		value := os.Getenv(envVar)
+		replaceString = re.ReplaceAllString(replaceString, value)
+	}
+    return replaceString
 }
 
 func ReplacePlaceholders(config Configuration, dir string) Configuration {

@@ -13,6 +13,14 @@ import (
 var workingDir = filepath.Join(os.TempDir(), "podflow")
 
 var _ = Describe("The podflow configuration", func() {
+    It("can replace environment variables", func() {
+        os.Setenv("HOME", "fun")
+
+        text := "This is a test with {{env.HOME}}"
+        text = config.ReplaceEnvVariable(text)
+        Expect(text).Should(Equal("This is a test with fun"))
+    })
+
     It("can be loaded if file is present", func() {
         mockConfigurationFile := testData.ValidConfigurationFile{}
         config, err := config.Load(mockConfigurationFile)
