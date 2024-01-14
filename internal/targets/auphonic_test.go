@@ -101,20 +101,10 @@ var _ = Describe("An auphonic production can be", func() {
                 Password: "password",
                 Preset: "preset",
                 Title: "Done",
-                Service: "service",
-                IncludeCover: true,
-                IncludeChapters: true,
-            },
-            Files: []config.StepFile{
-                {
-                    Source: "episode.mp3",
-                },
-                {
-                    Source: "episode.png",
-                },
-                {
-                    Source: "episode.chapters.txt",
-                },
+                FileServer: "http://localhost:8080/",
+                Image: "episode.png",
+                Chapters: "episode.chapters.txt",
+                Episode: "episode.mp3",
             },
         }
 

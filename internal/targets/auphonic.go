@@ -17,6 +17,7 @@ type Result struct {
 type Production struct {
     Result Result `json:"data"`
 }
+
 type Metadata struct {
     Title string `json:"title"`
 }
@@ -48,9 +49,9 @@ func StartAuphonicProduction(host string, step config.Step) error {
         MetaData: Metadata{
             Title: auphonicConfig.Title,
         },
-        Chapters: "http://rssfeed.laufendentdecken-podcast.at/data/" + step.Files[2].Source,
-        InputFile: "http://rssfeed.laufendentdecken-podcast.at/data/" + step.Files[0].Source,
-        Image: "http://rssfeed.laufendentdecken-podcast.at/data/" + step.Files[1].Source,
+        Chapters: auphonicConfig.FileServer + auphonicConfig.Chapters,
+        InputFile: auphonicConfig.FileServer + auphonicConfig.Episode,
+        Image: auphonicConfig.FileServer + auphonicConfig.Image,
         Action: "start",
     }
 

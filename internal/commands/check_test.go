@@ -30,7 +30,7 @@ var _ = Describe("Running the check command", func() {
 
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
-            Files: []config.File{
+            Files: []config.EpisodeFile{
                 {
                     Name: "Podflow",
                     FileName: "{{folderName}}.mp3",
@@ -65,7 +65,7 @@ var _ = Describe("Running the check command", func() {
 
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
-            Files: []config.File{
+            Files: []config.EpisodeFile{
                 {
                     Name: "Podflow",
                     FileName: "{{folderName}}.md",
@@ -99,7 +99,7 @@ var _ = Describe("Running the check command", func() {
 
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
-            Files: []config.File{
+            Files: []config.EpisodeFile{
                 {
                     Name: "Podflow",
                     FileName: "{{folderName}}.md",
@@ -129,7 +129,7 @@ var _ = Describe("Running the check command", func() {
 
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
-            Files: []config.File{
+            Files: []config.EpisodeFile{
                 {
                     Name: "Podflow",
                     FileName: "ä.md",
@@ -162,7 +162,7 @@ var _ = Describe("Running the check command", func() {
 
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
-            Files: []config.File{
+            Files: []config.EpisodeFile{
                 {
                     Name: "Podflow",
                     FileName: "empty.md",
@@ -190,7 +190,7 @@ var _ = Describe("Running the check command", func() {
 
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
-            Files: []config.File{
+            Files: []config.EpisodeFile{
                 {
                     Name: "Podflow",
                     FileName: "missing.md",

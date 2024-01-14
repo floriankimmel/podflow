@@ -7,50 +7,51 @@ import (
 	"strings"
 )
 
-type File struct {
-    Name                string      `yaml:"name"`
-    FileName            string      `yaml:"fileName"`
-    Required            bool        `yaml:"required"`
-    NotEmpty            bool        `yaml:"notEmpty"`
-    UmlauteNotAllowed   bool        `yaml:"umlauteNotAllowed"`
+type EpisodeFile struct {
+    Name                string          `yaml:"name"`
+    FileName            string          `yaml:"fileName"`
+    Required            bool            `yaml:"required"`
+    NotEmpty            bool            `yaml:"notEmpty"`
+    UmlauteNotAllowed   bool            `yaml:"umlauteNotAllowed"`
 }
 
 type Auphonic struct {
-    Username            string      `yaml:"username"`
-    Password            string      `yaml:"password"`
-    Preset              string      `yaml:"preset"`
-    Service             string      `yaml:"service"`
-    Title               string      `yaml:"title"`
-    IncludeCover        bool        `yaml:"includeCover"`
-    IncludeChapters     bool        `yaml:"includeChapters"`
+    Username            string          `yaml:"username"`
+    Password            string          `yaml:"password"`
+    Preset              string          `yaml:"preset"`
+    FileServer          string          `yaml:"fileServer"`
+    Title               string          `yaml:"title"`
+    Image               string          `yaml:"image"`
+    Chapters            string          `yaml:"chapters"`
+    Episode             string          `yaml:"episode"`
 
 }
 
 type FTP struct {
-    Host                string      `yaml:"host"`
-    Port                string      `yaml:"port"`
-    Username            string      `yaml:"username"`
-    Password            string      `yaml:"password"`
+    Host                string          `yaml:"host"`
+    Port                string          `yaml:"port"`
+    Username            string          `yaml:"username"`
+    Password            string          `yaml:"password"`
+    Files               []FtpFile       `yaml:"files"`
 }
 
-type StepFile struct {
-    Source              string      `yaml:"source"`
-    Target              string      `yaml:"target"`
+type FtpFile struct {
+    Source              string          `yaml:"source"`
+    Target              string          `yaml:"target"`
 }
 
 type Step struct {
-    FTP                 FTP         `yaml:"ftp"`
-    Download            FTP         `yaml:"download"`
-    Auphonic            Auphonic    `yaml:"auphonic"`
-    Files               []StepFile  `yaml:"files"`
+    FTP                 FTP             `yaml:"ftp"`
+    Download            FTP             `yaml:"download"`
+    Auphonic            Auphonic        `yaml:"auphonic"`
 }
  
 type Configuration struct {
-    CurrentEpisode      int         `yaml:"currentEpisode"`
-    ReleaseDay          string      `yaml:"releaseDay"`
-    ReleaseTime         string      `yaml:"releaseTime"`
-    Files               []File      `yaml:"files"`
-    Steps               []Step      `yaml:"steps"`
+    CurrentEpisode      int             `yaml:"currentEpisode"`
+    ReleaseDay          string          `yaml:"releaseDay"`
+    ReleaseTime         string          `yaml:"releaseTime"`
+    Files               []EpisodeFile   `yaml:"files"`
+    Steps               []Step          `yaml:"steps"`
 }
 
 func Load(io ConfigurationReaderWriter) (Configuration, error) {
@@ -90,14 +91,28 @@ func ReplacePlaceholders(config Configuration, dir string) Configuration {
 
     for i := range config.Steps {
         step := config.Steps[i]
-        for j := range config.Steps[i].Files {
-            episodeNumberAsString := strconv.Itoa(config.CurrentEpisode)
-            step.Files[j].Source = strings.Replace(step.Files[j].Source, "{{folderName}}", folder, -1)
-            step.Files[j].Target = strings.Replace(step.Files[j].Target, "{{folderName}}", folder, -1)
-            step.Files[j].Source = strings.Replace(step.Files[j].Source, "{{episodeNumber}}", episodeNumberAsString, -1)
-            step.Files[j].Target = strings.Replace(step.Files[j].Target, "{{episodeNumber}}", episodeNumberAsString, -1)
+        episodeNumberAsString := strconv.Itoa(config.CurrentEpisode)
+        for j := range config.Steps[i].FTP.Files {
+            replaceString(&config.Steps[i].FTP.Files[j].Source, folder, episodeNumberAsString)
+            replaceString(&config.Steps[i].FTP.Files[j].Target, folder, episodeNumberAsString)
         }  
+        for j := range config.Steps[i].Download.Files {
+            replaceString(&config.Steps[i].Download.Files[j].Source, folder, episodeNumberAsString)
+            replaceString(&config.Steps[i].Download.Files[j].Target, folder, episodeNumberAsString)
+        }  
+
+        if step.Auphonic != (Auphonic{}) {
+            replaceString(&config.Steps[i].Auphonic.Episode, folder, episodeNumberAsString)
+            replaceString(&config.Steps[i].Auphonic.Image, folder, episodeNumberAsString)
+            replaceString(&config.Steps[i].Auphonic.Chapters, folder, episodeNumberAsString)
+        }
     }
     return config
 }
+
+func replaceString(replaceString *string, folder string, episodeNumberAsString string) {
+    *replaceString = strings.Replace(*replaceString, "{{folderName}}", folder, -1)
+    *replaceString = strings.Replace(*replaceString, "{{episodeNumber}}", episodeNumberAsString, -1)
+}
+
 

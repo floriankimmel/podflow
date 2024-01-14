@@ -13,7 +13,7 @@ import (
 
 func FtpDownload(step config.Step) error {
     ftpConfig := step.Download
-    filesToDownload := step.Files
+    filesToDownload := ftpConfig.Files
 
     c, err := ftp.Dial(ftpConfig.Host + ":" + ftpConfig.Port, ftp.DialWithTimeout(5*time.Second))
     if err != nil {
@@ -59,7 +59,7 @@ func FtpDownload(step config.Step) error {
 
 func FtpUpload(step config.Step) error {
     ftpConfig := step.FTP
-    filesToUpload := step.Files
+    filesToUpload := ftpConfig.Files
 
     c, err := ftp.Dial(ftpConfig.Host + ":" + ftpConfig.Port, ftp.DialWithTimeout(5*time.Second))
     if err != nil {

@@ -20,7 +20,7 @@ func (input MockInput) Text() string {
 
 var testConfig = config.Configuration{
     CurrentEpisode: 7,
-    Files: []config.File{
+    Files: []config.EpisodeFile{
         {
             Name: "Podflow",
             FileName: "{{folderName}}.mp3",

@@ -55,8 +55,17 @@ var _ = Describe("The podflow configuration", func() {
         config, _ := config.LoadAndReplacePlaceholders(mockConfigurationFile, config.Dir())
 
         Expect(config).ShouldNot(BeNil())
-        Expect(config.Steps[0].Files[0].Source).Should(Equal("1_configuration.mp3"))
-        Expect(config.Steps[0].Files[0].Target).Should(Equal("1_configuration.mp3"))
+        Expect(config.Steps[0].FTP.Files[0].Source).Should(Equal("1_configuration.mp3"))
+        Expect(config.Steps[0].FTP.Files[0].Target).Should(Equal("1_configuration.mp3"))
+    })
+    It("replace folderName & episodeNumber in auphonic config", func() {
+        mockConfigurationFile := testData.ValidConfigurationFile{}
+        config, _ := config.LoadAndReplacePlaceholders(mockConfigurationFile, config.Dir())
+
+        Expect(config).ShouldNot(BeNil())
+        Expect(config.Steps[1].Auphonic.Episode).Should(Equal("1_configuration.mp3"))
+        Expect(config.Steps[1].Auphonic.Image).Should(Equal("1_configuration.png"))
+        Expect(config.Steps[1].Auphonic.Chapters).Should(Equal("1_configuration.chapters.txt"))
     })
 
     It("can be written and read successfully", func() {
@@ -123,7 +132,7 @@ var _ = Describe("The podflow configuration", func() {
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
             CurrentEpisode: 7,
-            Files: []config.File{
+            Files: []config.EpisodeFile{
                 {
                     Name: "Podflow",
                     FileName: "{{folderName}}.mp3",
@@ -132,10 +141,12 @@ var _ = Describe("The podflow configuration", func() {
             },
             Steps: []config.Step{
                 {
-                    Files: []config.StepFile{
-                        {
-                            Source: "{{episodeNumber}}_{{folderName}}.mp3",
-                            Target: "{{episodeNumber}}_{{folderName}}.mp3",
+                    FTP: config.FTP{
+                        Files: []config.FtpFile{
+                            {
+                                Source: "{{episodeNumber}}_{{folderName}}.mp3",
+                                Target: "{{episodeNumber}}_{{folderName}}.mp3",
+                            },
                         },
                     },
                 },
@@ -145,8 +156,8 @@ var _ = Describe("The podflow configuration", func() {
         }
         config, _ := config.LoadAndReplacePlaceholders(io, workingDir)
         Expect(config.Files[0].FileName).Should(Equal("podflow.mp3"))
-        Expect(config.Steps[0].Files[0].Source).Should(Equal("7_podflow.mp3"))
-        Expect(config.Steps[0].Files[0].Target).Should(Equal("7_podflow.mp3"))
+        Expect(config.Steps[0].FTP.Files[0].Source).Should(Equal("7_podflow.mp3"))
+        Expect(config.Steps[0].FTP.Files[0].Target).Should(Equal("7_podflow.mp3"))
 
     })
 })

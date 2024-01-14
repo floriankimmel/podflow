@@ -2,10 +2,11 @@ package cmd
 
 import (
 	"fmt"
-	"podflow/internal/configuration"
+	config "podflow/internal/configuration"
 	"podflow/internal/input"
 	"podflow/internal/state"
 	"podflow/internal/targets"
+	"strings"
 	"time"
 )
 
@@ -74,7 +75,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
  
     for i := range replacedPodflowConfig.Steps {
         step := replacedPodflowConfig.Steps[i]
-        if step.FTP != (config.FTP{}) {
+        if len(step.FTP.Files) > 0 {
             if !currentState.FTPUploaded {
                 err:= targets.FtpUpload(step)
                 if err != nil {
@@ -90,7 +91,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
             }
         }
 
-        if step.Download != (config.FTP{}) {
+        if len(step.Download.Files) > 0 {
             if !currentState.Downloaded {
                 err:= targets.FtpDownload(step)
                 if err != nil {
@@ -108,7 +109,9 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 
         if step.Auphonic != (config.Auphonic{}) {
             if !currentState.AuphonicProduction {
+                step.Auphonic.Title = strings.Replace(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title, -1)
                 err:= targets.StartAuphonicProduction("https://auphonic.com", step)
+
 
                 if err != nil {
                     return err

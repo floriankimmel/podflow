@@ -9,7 +9,7 @@ func (file ValidConfigurationFile) Read(path string) (config.Configuration, erro
         CurrentEpisode: 1,
         ReleaseDay: "Friday",
         ReleaseTime: "09:00:00",
-        Files: []config.File{
+        Files: []config.EpisodeFile{
             {
                 Name: "Podflow",
                 FileName: "{{folderName}}.mp3",
@@ -24,12 +24,21 @@ func (file ValidConfigurationFile) Read(path string) (config.Configuration, erro
         },
         Steps: []config.Step{
             {
-                FTP: config.FTP{},
-                Files: []config.StepFile{
-                    {
-                        Source: "{{episodeNumber}}_{{folderName}}.mp3",
-                        Target: "{{episodeNumber}}_{{folderName}}.mp3",
+                FTP: config.FTP{
+                    Files: []config.FtpFile{
+                        {
+                            Source: "{{episodeNumber}}_{{folderName}}.mp3",
+                            Target: "{{episodeNumber}}_{{folderName}}.mp3",
+                        },
                     },
+                },
+            }, 
+            {
+                Auphonic: config.Auphonic{
+                    Title: "{{episodeTitle}}",
+                    Chapters: "{{episodeNumber}}_{{folderName}}.chapters.txt",
+                    Image: "{{episodeNumber}}_{{folderName}}.png",
+                    Episode: "{{episodeNumber}}_{{folderName}}.mp3",
                 },
             },
         },
