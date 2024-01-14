@@ -16,6 +16,7 @@ type Metadata struct {
 type State struct {
     Metadata            Metadata    `yaml:"metadata"`
     FTPUploaded         bool        `yaml:"ftpUploaded"`
+    AuphonicProduction  bool        `yaml:"auphonicProduction"`
     Downloaded          bool        `yaml:"downloaded"`
 }
 

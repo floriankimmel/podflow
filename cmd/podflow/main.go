@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	cmd "podflow/internal/commands"
@@ -21,6 +22,20 @@ func init() {
 }
 
 func main() {
+
+    dir, _ := os.Getwd()
+    folderName := filepath.Base(dir)
+    logFile, err := os.OpenFile(filepath.Join(dir, folderName + ".log"), os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+
+    if err != nil {
+        log.Fatalf("Error opening file: %v", err)
+    }
+
+    defer logFile.Close()
+
+    log.SetFlags(log.LstdFlags | log.Lshortfile)
+    log.SetOutput(logFile)
+
     app := &cli.App{
         Name:  "podflow",
         Usage: " A CLI tool for automating everything related to your podcast",

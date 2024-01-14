@@ -15,6 +15,17 @@ type File struct {
     UmlauteNotAllowed   bool        `yaml:"umlauteNotAllowed"`
 }
 
+type Auphonic struct {
+    Username            string      `yaml:"username"`
+    Password            string      `yaml:"password"`
+    Preset              string      `yaml:"preset"`
+    Service             string      `yaml:"service"`
+    Title               string      `yaml:"title"`
+    IncludeCover        bool        `yaml:"includeCover"`
+    IncludeChapters     bool        `yaml:"includeChapters"`
+
+}
+
 type FTP struct {
     Host                string      `yaml:"host"`
     Port                string      `yaml:"port"`
@@ -30,6 +41,7 @@ type StepFile struct {
 type Step struct {
     FTP                 FTP         `yaml:"ftp"`
     Download            FTP         `yaml:"download"`
+    Auphonic            Auphonic    `yaml:"auphonic"`
     Files               []StepFile  `yaml:"files"`
 }
  

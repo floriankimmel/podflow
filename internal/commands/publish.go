@@ -105,6 +105,23 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 fmt.Println(" Download skipped")
             }
         }
+
+        if step.Auphonic != (config.Auphonic{}) {
+            if !currentState.AuphonicProduction {
+                err:= targets.StartAuphonicProduction("https://auphonic.com", step)
+
+                if err != nil {
+                    return err
+                }
+
+                currentState.AuphonicProduction = true
+                if err := stateIo.Write(currentState); err != nil {
+                    return err
+                }
+            } else {
+                fmt.Println(" Auphonic production skipped")
+            }
+        }
     }
 
     return nil
