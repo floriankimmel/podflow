@@ -6,7 +6,7 @@ import (
 
 type ReleaseInformation struct {
     NextReleaseDate string
-    EpisodeNumber int
+    EpisodeNumber   string
 }
 
 func GetReleaseInformation(io ConfigurationReaderWriter, time time.Time) ReleaseInformation {
@@ -18,7 +18,7 @@ func GetReleaseInformation(io ConfigurationReaderWriter, time time.Time) Release
     return releaseInfo
 }
 
-func SetEpisodeNumber(io ConfigurationReaderWriter, episodeNumber int) error {
+func SetEpisodeNumber(io ConfigurationReaderWriter, episodeNumber string) error {
     config, _ := Load(io)
     config.CurrentEpisode = episodeNumber
     return io.Write(config)

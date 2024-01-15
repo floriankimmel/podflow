@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -48,7 +47,7 @@ type Step struct {
 }
  
 type Configuration struct {
-    CurrentEpisode      int             `yaml:"currentEpisode"`
+    CurrentEpisode      string          `yaml:"currentEpisode"`
     ReleaseDay          string          `yaml:"releaseDay"`
     ReleaseTime         string          `yaml:"releaseTime"`
     Files               []EpisodeFile   `yaml:"files"`
@@ -74,58 +73,76 @@ func Load(io ConfigurationReaderWriter) (Configuration, error) {
     return config, nil
 }
 
+type ReplacementValues struct {
+    EpisodeNumber string
+    FolderName string
+}
+
 func LoadAndReplacePlaceholders(io ConfigurationReaderWriter, dir string) (Configuration, error) {
     config, err := Load(io)
 
     if err != nil {
         return Configuration{}, err
     }
-    return ReplacePlaceholders(config, dir), nil
+    replacementValues := ReplacementValues{
+        EpisodeNumber: config.CurrentEpisode,
+        FolderName: filepath.Base(dir),
+    }
+    return ReplacePlaceholders(config, replacementValues), nil
+
 }
 
-func ReplaceEnvVariable(replaceString string) string {
-    re := regexp.MustCompile("{{env.(.*?)}}")
-	res := re.FindAllStringSubmatch(replaceString, -1)
-
-	for _, match := range res {
-		envVar := match[1]
-		value := os.Getenv(envVar)
-		replaceString = re.ReplaceAllString(replaceString, value)
-	}
-    return replaceString
-}
-
-func ReplacePlaceholders(config Configuration, dir string) Configuration {
-    folder := filepath.Base(dir)
-
+func ReplacePlaceholders(config Configuration, replacementValues ReplacementValues) Configuration {
     for i := range config.Files {
-        config.Files[i].FileName = strings.Replace(config.Files[i].FileName, "{{folderName}}", folder, -1)
+        replace(&config.Files[i].FileName, replacementValues)
+        replace(&config.Files[i].Name, replacementValues)
     }
 
     for i := range config.Steps {
-        step := config.Steps[i]
-        episodeNumberAsString := strconv.Itoa(config.CurrentEpisode)
         for j := range config.Steps[i].FTP.Files {
-            replaceString(&config.Steps[i].FTP.Files[j].Source, folder, episodeNumberAsString)
-            replaceString(&config.Steps[i].FTP.Files[j].Target, folder, episodeNumberAsString)
+            replace(&config.Steps[i].FTP.Username, replacementValues)
+            replace(&config.Steps[i].FTP.Password, replacementValues)
+            replace(&config.Steps[i].FTP.Files[j].Source, replacementValues)
+            replace(&config.Steps[i].FTP.Files[j].Target, replacementValues)
+            replace(&config.Steps[i].FTP.Username, replacementValues)
+            replace(&config.Steps[i].FTP.Password, replacementValues)
         }  
         for j := range config.Steps[i].Download.Files {
-            replaceString(&config.Steps[i].Download.Files[j].Source, folder, episodeNumberAsString)
-            replaceString(&config.Steps[i].Download.Files[j].Target, folder, episodeNumberAsString)
+            replace(&config.Steps[i].Download.Files[j].Source, replacementValues)
+            replace(&config.Steps[i].Download.Files[j].Target, replacementValues)
+            replace(&config.Steps[i].Download.Username, replacementValues)
+            replace(&config.Steps[i].Download.Password, replacementValues)
         }  
 
-        if step.Auphonic != (Auphonic{}) {
-            replaceString(&config.Steps[i].Auphonic.Episode, folder, episodeNumberAsString)
-            replaceString(&config.Steps[i].Auphonic.Image, folder, episodeNumberAsString)
-            replaceString(&config.Steps[i].Auphonic.Chapters, folder, episodeNumberAsString)
+        if config.Steps[i].Auphonic != (Auphonic{}) {
+            replace(&config.Steps[i].Auphonic.Username, replacementValues)
+            replace(&config.Steps[i].Auphonic.Password, replacementValues)
+            replace(&config.Steps[i].Auphonic.Episode, replacementValues)
+            replace(&config.Steps[i].Auphonic.Image, replacementValues)
+            replace(&config.Steps[i].Auphonic.Chapters, replacementValues)
+            replace(&config.Steps[i].Auphonic.FileServer, replacementValues)
         }
     }
     return config
 }
 
-func replaceString(replaceString *string, folder string, episodeNumberAsString string) {
-    *replaceString = strings.Replace(*replaceString, "{{folderName}}", folder, -1)
-    *replaceString = strings.Replace(*replaceString, "{{episodeNumber}}", episodeNumberAsString, -1)
+func replace(replaceString *string, replacementValues ReplacementValues) {
+    *replaceString = strings.Replace(*replaceString, "{{folderName}}", replacementValues.FolderName, -1)
+    *replaceString = strings.Replace(*replaceString, "{{episodeNumber}}", replacementValues.EpisodeNumber, -1)
+
+    ReplaceEnvVariable(replaceString)
+
+}
+
+func ReplaceEnvVariable(replaceString *string) {
+    re := regexp.MustCompile("{{env.(.*?)}}")
+	res := re.FindAllStringSubmatch(*replaceString, -1)
+
+	for _, match := range res {
+		envVar := match[1]
+		value := os.Getenv(envVar)
+        *replaceString = re.ReplaceAllString(*replaceString, value)
+	}
 }
 
 

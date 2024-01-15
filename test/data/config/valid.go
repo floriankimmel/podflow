@@ -6,7 +6,7 @@ type ValidConfigurationFile struct {}
 
 func (file ValidConfigurationFile) Read(path string) (config.Configuration, error) {
     podflowConfig := config.Configuration{
-        CurrentEpisode: 1,
+        CurrentEpisode: "1",
         ReleaseDay: "Friday",
         ReleaseTime: "09:00:00",
         Files: []config.EpisodeFile{

@@ -17,7 +17,7 @@ var _ = Describe("The podflow configuration", func() {
         os.Setenv("HOME", "fun")
 
         text := "This is a test with {{env.HOME}}"
-        text = config.ReplaceEnvVariable(text)
+        config.ReplaceEnvVariable(&text)
         Expect(text).Should(Equal("This is a test with fun"))
     })
 
@@ -87,12 +87,12 @@ var _ = Describe("The podflow configuration", func() {
 
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
-            CurrentEpisode: 7,
+            CurrentEpisode: "7",
         }); err != nil {
             panic(err)
         }
         config, _ := io.Read(configFilePath)
-        Expect(config.CurrentEpisode).Should(Equal(7))
+        Expect(config.CurrentEpisode).Should(Equal("7"))
 
     })
 
@@ -107,12 +107,12 @@ var _ = Describe("The podflow configuration", func() {
 
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
-            CurrentEpisode: 7,
+            CurrentEpisode: "7",
         }); err != nil {
             panic(err)
         }
         config, _ := config.Load(io)
-        Expect(config.CurrentEpisode).Should(Equal(7))
+        Expect(config.CurrentEpisode).Should(Equal("7"))
 
     })
 
@@ -139,7 +139,7 @@ var _ = Describe("The podflow configuration", func() {
 
         io := testData.TempConfigurationFile{}
         if err := io.Write(config.Configuration{
-            CurrentEpisode: 7,
+            CurrentEpisode: "7",
             Files: []config.EpisodeFile{
                 {
                     Name: "Podflow",

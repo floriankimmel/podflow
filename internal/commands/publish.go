@@ -6,6 +6,7 @@ import (
 	"podflow/internal/input"
 	"podflow/internal/state"
 	"podflow/internal/targets"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -32,11 +33,16 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 
     fmt.Println("")
     fmt.Printf(" Start automatic workflow for file %s \n", config.EpisodeSlug(dir))
+    replacementValues := config.ReplacementValues{
+        FolderName: dir,
+    }
+
 
     if currentState.Metadata == (state.Metadata{}) {
         releaseInfo := config.GetReleaseInformation(io, time.Now())
 
-        episodeNumber := releaseInfo.EpisodeNumber + 1
+        number, _ := strconv.Atoi(releaseInfo.EpisodeNumber)
+        episodeNumber :=  number + 1
         nextReleaseDate := releaseInfo.NextReleaseDate
 
         fmt.Printf(" Episode number: %d \n", episodeNumber)
@@ -56,7 +62,9 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
         }
 
         nextEpisodeNumber := currentState.Metadata.EpisodeNumber + 1
-        if err := config.SetEpisodeNumber(io, nextEpisodeNumber); err != nil {
+        replacementValues.EpisodeNumber = strconv.Itoa(nextEpisodeNumber)
+
+        if err := config.SetEpisodeNumber(io, strconv.Itoa(nextEpisodeNumber)); err != nil {
 
             return err
         }
@@ -68,10 +76,10 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
         fmt.Printf(" Next release date: %s \n", currentState.Metadata.ReleaseDate)
         fmt.Printf(" Episode title: %s \n\n", currentState.Metadata.Title)
 
-        podflowConfig.CurrentEpisode = currentState.Metadata.EpisodeNumber
-    }
+        replacementValues.EpisodeNumber = strconv.Itoa(currentState.Metadata.EpisodeNumber)
 
-    replacedPodflowConfig := config.ReplacePlaceholders(podflowConfig, dir)
+    }
+    replacedPodflowConfig := config.ReplacePlaceholders(podflowConfig, replacementValues)
  
     for i := range replacedPodflowConfig.Steps {
         step := replacedPodflowConfig.Steps[i]
@@ -111,7 +119,6 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
             if !currentState.AuphonicProduction {
                 step.Auphonic.Title = strings.Replace(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title, -1)
                 err:= targets.StartAuphonicProduction("https://auphonic.com", step)
-
 
                 if err != nil {
                     return err

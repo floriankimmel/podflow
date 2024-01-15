@@ -15,7 +15,7 @@ var _ = Describe("The podflow release information", func() {
         releaseInformation := config.GetReleaseInformation(mockConfigurationFile, time.Now())
 
         Expect(releaseInformation).ShouldNot(BeNil())
-        Expect(releaseInformation.EpisodeNumber).Should(Equal(1))
+        Expect(releaseInformation.EpisodeNumber).Should(Equal("1"))
     })
 
     It("should return the next release date if today is tuesday", func() {
