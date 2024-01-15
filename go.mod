@@ -3,6 +3,7 @@ module podflow
 go 1.21.5
 
 require (
+	github.com/aws/aws-sdk-go v1.49.21
 	github.com/fatih/color v1.16.0
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/onsi/ginkgo/v2 v2.13.2
@@ -19,6 +20,7 @@ require (
 	github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"path/filepath"
 	config "podflow/internal/configuration"
 	"podflow/internal/input"
 	"podflow/internal/state"
@@ -34,7 +35,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
     fmt.Println("")
     fmt.Printf(" Start automatic workflow for file %s \n", config.EpisodeSlug(dir))
     replacementValues := config.ReplacementValues{
-        FolderName: dir,
+        FolderName: filepath.Base(dir),
     }
 
 
@@ -112,6 +113,22 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 }
             } else {
                 fmt.Println(" Download skipped")
+            }
+        }
+
+        if len(step.S3.Buckets) > 0 {
+            if !currentState.S3Uploaded {
+                err:= targets.S3Upload(step.S3)
+                if err != nil {
+                    return err
+                }
+
+                currentState.S3Uploaded = true
+                if err := stateIo.Write(currentState); err != nil {
+                    return err
+                }
+            } else {
+                fmt.Println(" S3 upload skipped")
             }
         }
 

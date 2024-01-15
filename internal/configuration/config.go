@@ -27,6 +27,16 @@ type Auphonic struct {
 
 }
 
+type S3Bucket struct {
+    Region              string          `yaml:"region"`
+    Name                string          `yaml:"name"`
+    Files               []FtpFile       `yaml:"files"`
+}
+
+type S3 struct {
+    Buckets             []S3Bucket      `yaml:"buckets"`
+}
+
 type FTP struct {
     Host                string          `yaml:"host"`
     Port                string          `yaml:"port"`
@@ -43,6 +53,7 @@ type FtpFile struct {
 type Step struct {
     FTP                 FTP             `yaml:"ftp"`
     Download            FTP             `yaml:"download"`
+    S3                  S3              `yaml:"s3"`
     Auphonic            Auphonic        `yaml:"auphonic"`
 }
  
@@ -112,6 +123,12 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
             replace(&config.Steps[i].Download.Files[j].Target, replacementValues)
             replace(&config.Steps[i].Download.Username, replacementValues)
             replace(&config.Steps[i].Download.Password, replacementValues)
+        }  
+        for j := range config.Steps[i].S3.Buckets {
+            for k := range config.Steps[i].S3.Buckets[j].Files {
+                replace(&config.Steps[i].S3.Buckets[j].Files[k].Source, replacementValues)
+                replace(&config.Steps[i].S3.Buckets[j].Files[k].Target, replacementValues)
+            }
         }  
 
         if config.Steps[i].Auphonic != (Auphonic{}) {
