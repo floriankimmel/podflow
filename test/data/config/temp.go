@@ -39,8 +39,8 @@ func (file TempConfigurationFile) Write(config config.Configuration) error {
     return nil
 }
 
-type TempStateFile struct {
-}
+type TempStateFile struct { }
+
 func (file TempStateFile) Read() (state.State, error) {
     stateFilePath := file.GetStateFilePath()
 
@@ -76,7 +76,6 @@ func (file TempStateFile) Write(state state.State) error {
 
     return nil
 }
-
 
 func (file TempStateFile) GetStateFilePath() string {
     return filepath.Join(os.TempDir(), "podflow", "podflow.state.yml")
