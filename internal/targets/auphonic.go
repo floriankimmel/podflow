@@ -24,9 +24,9 @@ type Metadata struct {
 
 type AuphonicRequest struct {
     Preset string `json:"preset"`
-    Chapters string `json:"chapters"`
-    InputFile string `json:"input_file"`
-    Image string `json:"image"`
+    Chapters string `json:"chapters,omitempty"`
+    InputFile string `json:"input_file,omitempty"`
+    Image string `json:"image,omitempty"`
     MetaData Metadata `json:"metadata"`
     Action string `json:"action"`
 }
@@ -49,10 +49,20 @@ func StartAuphonicProduction(host string, step config.Step) error {
         MetaData: Metadata{
             Title: auphonicConfig.Title,
         },
-        Chapters: auphonicConfig.FileServer + auphonicConfig.Chapters,
-        InputFile: auphonicConfig.FileServer + auphonicConfig.Episode,
-        Image: auphonicConfig.FileServer + auphonicConfig.Image,
         Action: "start",
+    }
+
+    if auphonicConfig.Chapters != "" {
+        body.Chapters = auphonicConfig.FileServer + auphonicConfig.Chapters
+    }
+
+    if auphonicConfig.Episode != "" {
+        body.InputFile = auphonicConfig.FileServer + auphonicConfig.Episode
+    }
+
+    if auphonicConfig.Image != "" {
+        body.Image = auphonicConfig.FileServer + auphonicConfig.Image
+
     }
 
     resp, err := SendHTTPRequest(method, url, headers, body)
