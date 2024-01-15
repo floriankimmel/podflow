@@ -106,16 +106,74 @@ var _ = Describe("An auphonic production can be", func() {
                     {
                         Image: "episode.png",
                         Chapters: "episode.chapters.txt",
-                        Episode: "episode.mp3",
+                        Episode: "auphonic.go",
                     },
                 },
             },
         }
 
 
-        err := targets.StartAuphonicProduction(testServer.URL, step)
+        successfulProductions, err := targets.StartAuphonicProduction(testServer.URL, step)
 
         Expect(err).Should(BeNil())
+        Expect(successfulProductions).Should(Equal(1))
+
+    })
+
+    It("not started if it doesn't exists", func() {
+        step := config.Step{
+            Auphonic: config.Auphonic{
+                Username: "username",
+                Password: "password",
+                Preset: "preset",
+                Title: "Done",
+                FileServer: "http://localhost:8080/",
+                Files: []config.AuphonicFiles{
+                    {
+                        Image: "episode.png",
+                        Chapters: "episode.chapters.txt",
+                        Episode: "not existing file",
+                    },
+                },
+            },
+        }
+
+
+        successfulProductions, err := targets.StartAuphonicProduction(testServer.URL, step)
+
+        Expect(err).Should(BeNil())
+        Expect(successfulProductions).Should(Equal(0))
+
+    })
+
+    It("started only once if just one does exist", func() {
+        step := config.Step{
+            Auphonic: config.Auphonic{
+                Username: "username",
+                Password: "password",
+                Preset: "preset",
+                Title: "Done",
+                FileServer: "http://localhost:8080/",
+                Files: []config.AuphonicFiles{
+                    {
+                        Image: "episode.png",
+                        Chapters: "episode.chapters.txt",
+                        Episode: "auphonic.go",
+                    },
+                    {
+                        Image: "episode.png",
+                        Chapters: "episode.chapters.txt",
+                        Episode: "not existing file",
+                    },
+                },
+            },
+        }
+
+
+        successfulProductions, err := targets.StartAuphonicProduction(testServer.URL, step)
+
+        Expect(err).Should(BeNil())
+        Expect(successfulProductions).Should(Equal(1))
 
     })
 
