@@ -8,6 +8,7 @@ require (
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/onsi/gomega v1.29.0
+	github.com/russross/blackfriday v1.6.0
 	github.com/urfave/cli/v2 v2.27.1
 	gopkg.in/yaml.v3 v3.0.1
 )
