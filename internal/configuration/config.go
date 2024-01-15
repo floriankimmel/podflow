@@ -15,15 +15,19 @@ type EpisodeFile struct {
     UmlauteNotAllowed   bool            `yaml:"umlauteNotAllowed"`
 }
 
+type AuphonicFiles struct {
+    Image               string          `yaml:"image"`
+    Chapters            string          `yaml:"chapters"`
+    Episode             string          `yaml:"episode"`
+}
+
 type Auphonic struct {
     Username            string          `yaml:"username"`
     Password            string          `yaml:"password"`
     Preset              string          `yaml:"preset"`
     FileServer          string          `yaml:"fileServer"`
     Title               string          `yaml:"title"`
-    Image               string          `yaml:"image"`
-    Chapters            string          `yaml:"chapters"`
-    Episode             string          `yaml:"episode"`
+    Files               []AuphonicFiles `yaml:"files"`
 
 }
 
@@ -110,20 +114,25 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
     }
 
     for i := range config.Steps {
-        for j := range config.Steps[i].FTP.Files {
+        if len(config.Steps[i].FTP.Files) > 0 {
             replace(&config.Steps[i].FTP.Username, replacementValues)
             replace(&config.Steps[i].FTP.Password, replacementValues)
-            replace(&config.Steps[i].FTP.Files[j].Source, replacementValues)
-            replace(&config.Steps[i].FTP.Files[j].Target, replacementValues)
-            replace(&config.Steps[i].FTP.Username, replacementValues)
-            replace(&config.Steps[i].FTP.Password, replacementValues)
-        }  
-        for j := range config.Steps[i].Download.Files {
-            replace(&config.Steps[i].Download.Files[j].Source, replacementValues)
-            replace(&config.Steps[i].Download.Files[j].Target, replacementValues)
+
+            for j := range config.Steps[i].FTP.Files {
+                replace(&config.Steps[i].FTP.Files[j].Source, replacementValues)
+                replace(&config.Steps[i].FTP.Files[j].Target, replacementValues)
+            }  
+        }
+
+        if len(config.Steps[i].Download.Files) > 0 {
             replace(&config.Steps[i].Download.Username, replacementValues)
             replace(&config.Steps[i].Download.Password, replacementValues)
-        }  
+
+            for j := range config.Steps[i].Download.Files {
+                replace(&config.Steps[i].Download.Files[j].Source, replacementValues)
+                replace(&config.Steps[i].Download.Files[j].Target, replacementValues)
+            }  
+        }
         for j := range config.Steps[i].S3.Buckets {
             for k := range config.Steps[i].S3.Buckets[j].Files {
                 replace(&config.Steps[i].S3.Buckets[j].Files[k].Source, replacementValues)
@@ -131,13 +140,16 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
             }
         }  
 
-        if config.Steps[i].Auphonic != (Auphonic{}) {
+        if len(config.Steps[i].Auphonic.Files) > 0 {
             replace(&config.Steps[i].Auphonic.Username, replacementValues)
             replace(&config.Steps[i].Auphonic.Password, replacementValues)
-            replace(&config.Steps[i].Auphonic.Episode, replacementValues)
-            replace(&config.Steps[i].Auphonic.Image, replacementValues)
-            replace(&config.Steps[i].Auphonic.Chapters, replacementValues)
             replace(&config.Steps[i].Auphonic.FileServer, replacementValues)
+
+            for j := range config.Steps[i].Auphonic.Files {
+                replace(&config.Steps[i].Auphonic.Files[j].Episode, replacementValues)
+                replace(&config.Steps[i].Auphonic.Files[j].Image, replacementValues)
+                replace(&config.Steps[i].Auphonic.Files[j].Chapters, replacementValues)
+            }
         }
     }
     return config

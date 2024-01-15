@@ -132,7 +132,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
             }
         }
 
-        if step.Auphonic != (config.Auphonic{}) {
+        if len(step.Auphonic.Title) > 0 {
             if !currentState.AuphonicProduction {
                 step.Auphonic.Title = strings.Replace(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title, -1)
                 err:= targets.StartAuphonicProduction("https://auphonic.com", step)

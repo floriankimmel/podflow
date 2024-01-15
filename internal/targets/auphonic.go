@@ -44,46 +44,45 @@ func StartAuphonicProduction(host string, step config.Step) error {
 		"Authorization": fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(auphonicConfig.Username+":"+auphonicConfig.Password))),
 	}
 
-    body := AuphonicRequest{
-        Preset: auphonicConfig.Preset,
-        MetaData: Metadata{
-            Title: auphonicConfig.Title,
-        },
-        Action: "start",
-    }
+    for _, file := range auphonicConfig.Files {
+        body := AuphonicRequest{
+            Preset: auphonicConfig.Preset,
+            MetaData: Metadata{
+                Title: auphonicConfig.Title,
+            },
+            InputFile: auphonicConfig.FileServer + file.Episode,
+            Action: "start",
+        }
 
-    if auphonicConfig.Chapters != "" {
-        body.Chapters = auphonicConfig.FileServer + auphonicConfig.Chapters
-    }
+        if file.Chapters != "" {
+            body.Chapters = auphonicConfig.FileServer + file.Chapters
+        }
 
-    if auphonicConfig.Episode != "" {
-        body.InputFile = auphonicConfig.FileServer + auphonicConfig.Episode
-    }
+        if file.Image != "" {
+            body.Image = auphonicConfig.FileServer + file.Image
 
-    if auphonicConfig.Image != "" {
-        body.Image = auphonicConfig.FileServer + auphonicConfig.Image
+        }
 
-    }
+        resp, err := SendHTTPRequest(method, url, headers, body)
 
-    resp, err := SendHTTPRequest(method, url, headers, body)
+        if err != nil {
+            return err
+        }
 
-	if err != nil {
-		return err
-	}
+        log.Printf("Antwort-Status: %d",resp.Status)
+        log.Printf("Antwort-Body: %s", string(resp.Body))
+        production := toProductionJson(resp.Body)
+        log.Printf("Production-UUID: %s", production.Result.UUID)
+        log.Printf("Production-Status: %s", production.Result.Status)
 
-    log.Printf("Antwort-Status: %d",resp.Status)
-    log.Printf("Antwort-Body: %s", string(resp.Body))
-    production := toProductionJson(resp.Body)
-    log.Printf("Production-UUID: %s", production.Result.UUID)
-    log.Printf("Production-Status: %s", production.Result.Status)
+        for production.Result.Status != "Done" {
+            output := fmt.Sprintf("\rAuphonic status: %s", production.Result.Status)
+            fmt.Print(strings.Repeat(" ", len(output))) 
+            fmt.Print(output)
 
-    for production.Result.Status != "Done" {
-        output := fmt.Sprintf("\rAuphonic status: %s", production.Result.Status)
-		fmt.Print(strings.Repeat(" ", len(output))) 
-		fmt.Print(output)
-
-        production.Result.Status = getCurrentStatus(host, auphonicConfig.Username, auphonicConfig.Password, production.Result.UUID)
-        time.Sleep(2 * time.Second)
+            production.Result.Status = getCurrentStatus(host, auphonicConfig.Username, auphonicConfig.Password, production.Result.UUID)
+            time.Sleep(2 * time.Second)
+        }
     }
 
 

@@ -36,9 +36,13 @@ func (file ValidConfigurationFile) Read(path string) (config.Configuration, erro
             {
                 Auphonic: config.Auphonic{
                     Title: "{{episodeTitle}}",
-                    Chapters: "{{episodeNumber}}_{{folderName}}.chapters.txt",
-                    Image: "{{episodeNumber}}_{{folderName}}.png",
-                    Episode: "{{episodeNumber}}_{{folderName}}.mp3",
+                    Files: []config.AuphonicFiles{
+                        {
+                            Chapters: "{{episodeNumber}}_{{folderName}}.chapters.txt",
+                            Image: "{{episodeNumber}}_{{folderName}}.png",
+                            Episode: "{{episodeNumber}}_{{folderName}}.mp3",
+                        },
+                    },
                 },
             },
         },

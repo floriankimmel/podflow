@@ -102,9 +102,13 @@ var _ = Describe("An auphonic production can be", func() {
                 Preset: "preset",
                 Title: "Done",
                 FileServer: "http://localhost:8080/",
-                Image: "episode.png",
-                Chapters: "episode.chapters.txt",
-                Episode: "episode.mp3",
+                Files: []config.AuphonicFiles{
+                    {
+                        Image: "episode.png",
+                        Chapters: "episode.chapters.txt",
+                        Episode: "episode.mp3",
+                    },
+                },
             },
         }
 

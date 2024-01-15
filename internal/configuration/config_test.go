@@ -71,9 +71,9 @@ var _ = Describe("The podflow configuration", func() {
         config, _ := config.LoadAndReplacePlaceholders(mockConfigurationFile, config.Dir())
 
         Expect(config).ShouldNot(BeNil())
-        Expect(config.Steps[1].Auphonic.Episode).Should(Equal("1_configuration.mp3"))
-        Expect(config.Steps[1].Auphonic.Image).Should(Equal("1_configuration.png"))
-        Expect(config.Steps[1].Auphonic.Chapters).Should(Equal("1_configuration.chapters.txt"))
+        Expect(config.Steps[1].Auphonic.Files[0].Episode).Should(Equal("1_configuration.mp3"))
+        Expect(config.Steps[1].Auphonic.Files[0].Image).Should(Equal("1_configuration.png"))
+        Expect(config.Steps[1].Auphonic.Files[0].Chapters).Should(Equal("1_configuration.chapters.txt"))
     })
 
     It("can be written and read successfully", func() {
