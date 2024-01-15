@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 	config "podflow/internal/configuration"
 	"strings"
 	"time"
@@ -47,7 +46,7 @@ func StartAuphonicProduction(host string, step config.Step) (int, error) {
 
     var successfulProductions = 0
     for _, file := range auphonicConfig.Files {
-        if _, err := os.Stat(file.Episode); !os.IsNotExist(err) {
+        if _, err := SendHTTPRequest("GET", auphonicConfig.FileServer + file.Episode, nil, nil); err == nil {
             body := AuphonicRequest{
                 Preset: auphonicConfig.Preset,
                 MetaData: Metadata{

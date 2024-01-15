@@ -85,6 +85,9 @@ var _ = BeforeSuite(func() {
         }
     })
 
+    mux.HandleFunc("/auphonic.go", func(w http.ResponseWriter, r *http.Request) {
+        w.WriteHeader(200)
+    })
     testServer = httptest.NewServer(mux)
 
 })
@@ -101,7 +104,7 @@ var _ = Describe("An auphonic production can be", func() {
                 Password: "password",
                 Preset: "preset",
                 Title: "Done",
-                FileServer: "http://localhost:8080/",
+                FileServer: testServer.URL + "/",
                 Files: []config.AuphonicFiles{
                     {
                         Image: "episode.png",
@@ -127,12 +130,12 @@ var _ = Describe("An auphonic production can be", func() {
                 Password: "password",
                 Preset: "preset",
                 Title: "Done",
-                FileServer: "http://localhost:8080/",
+                FileServer: testServer.URL + "/",
                 Files: []config.AuphonicFiles{
                     {
                         Image: "episode.png",
                         Chapters: "episode.chapters.txt",
-                        Episode: "not existing file",
+                        Episode: "unknown",
                     },
                 },
             },
@@ -153,7 +156,7 @@ var _ = Describe("An auphonic production can be", func() {
                 Password: "password",
                 Preset: "preset",
                 Title: "Done",
-                FileServer: "http://localhost:8080/",
+                FileServer: testServer.URL + "/",
                 Files: []config.AuphonicFiles{
                     {
                         Image: "episode.png",
@@ -163,7 +166,7 @@ var _ = Describe("An auphonic production can be", func() {
                     {
                         Image: "episode.png",
                         Chapters: "episode.chapters.txt",
-                        Episode: "not existing file",
+                        Episode: "unknown",
                     },
                 },
             },
