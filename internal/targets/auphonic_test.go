@@ -12,91 +12,92 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
-var testServer *httptest.Server
-var _ = BeforeSuite(func() {
-    mux := http.NewServeMux()
 
-    mux.HandleFunc("/api/productions.json", func(w http.ResponseWriter, r *http.Request) {
-        if r.Method != "POST" {
-            log.Println("Method not allowed")
-            w.WriteHeader(500)
-        }
+var _ = Describe("An auphonic production can be", Ordered, func() {
+    var auphonicTestServer *httptest.Server
 
-        if r.Header.Get("Content-type") != "application/json" {
-            log.Println("Content type not allowed")
-            w.WriteHeader(500)
-        }
+    BeforeAll(func() {
+        mux := http.NewServeMux()
 
-        body, err := io.ReadAll(r.Body)
-        if err != nil {
-            w.WriteHeader(500)
-            return
-        }
+        mux.HandleFunc("/api/productions.json", func(w http.ResponseWriter, r *http.Request) {
+            if r.Method != "POST" {
+                log.Println("Method not allowed")
+                w.WriteHeader(500)
+            }
 
-        defer r.Body.Close()
+            if r.Header.Get("Content-type") != "application/json" {
+                log.Println("Content type not allowed")
+                w.WriteHeader(500)
+            }
 
-        auphonicRequest := targets.AuphonicRequest{}
-        if err := json.Unmarshal(body, &auphonicRequest); err != nil {
-            w.WriteHeader(500)
-            return
-        }
+            body, err := io.ReadAll(r.Body)
+            if err != nil {
+                w.WriteHeader(500)
+                return
+            }
+
+            defer r.Body.Close()
+
+            auphonicRequest := targets.AuphonicRequest{}
+            if err := json.Unmarshal(body, &auphonicRequest); err != nil {
+                w.WriteHeader(500)
+                return
+            }
 
 
-        production := targets.Production{
-            Result: targets.Result{
-                UUID: "21757c63-1d4f-41a8-b385-4a153611f11a",
-                Status: "Started",
-            },
-        }
+            production := targets.Production{
+                Result: targets.Result{
+                    UUID: "21757c63-1d4f-41a8-b385-4a153611f11a",
+                    Status: "Started",
+                },
+            }
 
-        response, err := json.Marshal(production)
+            response, err := json.Marshal(production)
 
-        if err != nil {
-            w.WriteHeader(500)
-            return
-        }
+            if err != nil {
+                w.WriteHeader(500)
+                return
+            }
 
-        if _, err := w.Write(response); err != nil {
-            w.WriteHeader(500)
-        }
+            if _, err := w.Write(response); err != nil {
+                w.WriteHeader(500)
+            }
+        })
+        mux.HandleFunc("/api/production/21757c63-1d4f-41a8-b385-4a153611f11a.json", func(w http.ResponseWriter, r *http.Request) {
+            if r.Method != "GET" {
+                log.Println("Method not allowed")
+                w.WriteHeader(500)
+            }
+
+            production := targets.Production{
+                Result: targets.Result{
+                    UUID: "21757c63-1d4f-41a8-b385-4a153611f11a",
+                    Status: "Done",
+                },
+            }
+
+            response, err := json.Marshal(production)
+
+            if err != nil {
+                w.WriteHeader(500)
+                return
+            }
+
+            if _, err := w.Write(response); err != nil {
+                w.WriteHeader(500)
+            }
+        })
+
+        mux.HandleFunc("/auphonic.go", func(w http.ResponseWriter, r *http.Request) {
+            w.WriteHeader(200)
+        })
+        auphonicTestServer = httptest.NewServer(mux)
+
     })
-    mux.HandleFunc("/api/production/21757c63-1d4f-41a8-b385-4a153611f11a.json", func(w http.ResponseWriter, r *http.Request) {
-        if r.Method != "GET" {
-            log.Println("Method not allowed")
-            w.WriteHeader(500)
-        }
 
-        production := targets.Production{
-            Result: targets.Result{
-                UUID: "21757c63-1d4f-41a8-b385-4a153611f11a",
-                Status: "Done",
-            },
-        }
-
-        response, err := json.Marshal(production)
-
-        if err != nil {
-            w.WriteHeader(500)
-            return
-        }
-
-        if _, err := w.Write(response); err != nil {
-            w.WriteHeader(500)
-        }
+    AfterAll(func() {
+        auphonicTestServer.Close()
     })
-
-    mux.HandleFunc("/auphonic.go", func(w http.ResponseWriter, r *http.Request) {
-        w.WriteHeader(200)
-    })
-    testServer = httptest.NewServer(mux)
-
-})
-
-var _ = AfterSuite(func() {
-    testServer.Close()
-})
-
-var _ = Describe("An auphonic production can be", func() {
     It("started successfully", func() {
         step := config.Step{
             Auphonic: config.Auphonic{
@@ -104,7 +105,7 @@ var _ = Describe("An auphonic production can be", func() {
                 Password: "password",
                 Preset: "preset",
                 Title: "Done",
-                FileServer: testServer.URL + "/",
+                FileServer: auphonicTestServer.URL + "/",
                 Files: []config.AuphonicFiles{
                     {
                         Image: "episode.png",
@@ -116,7 +117,7 @@ var _ = Describe("An auphonic production can be", func() {
         }
 
 
-        successfulProductions, err := targets.StartAuphonicProduction(testServer.URL, step)
+        successfulProductions, err := targets.StartAuphonicProduction(auphonicTestServer.URL, step)
 
         Expect(err).Should(BeNil())
         Expect(successfulProductions).Should(Equal(1))
@@ -130,7 +131,7 @@ var _ = Describe("An auphonic production can be", func() {
                 Password: "password",
                 Preset: "preset",
                 Title: "Done",
-                FileServer: testServer.URL + "/",
+                FileServer: auphonicTestServer.URL + "/",
                 Files: []config.AuphonicFiles{
                     {
                         Image: "episode.png",
@@ -142,7 +143,7 @@ var _ = Describe("An auphonic production can be", func() {
         }
 
 
-        successfulProductions, err := targets.StartAuphonicProduction(testServer.URL, step)
+        successfulProductions, err := targets.StartAuphonicProduction(auphonicTestServer.URL, step)
 
         Expect(err).Should(BeNil())
         Expect(successfulProductions).Should(Equal(0))
@@ -156,7 +157,7 @@ var _ = Describe("An auphonic production can be", func() {
                 Password: "password",
                 Preset: "preset",
                 Title: "Done",
-                FileServer: testServer.URL + "/",
+                FileServer: auphonicTestServer.URL + "/",
                 Files: []config.AuphonicFiles{
                     {
                         Image: "episode.png",
@@ -173,7 +174,7 @@ var _ = Describe("An auphonic production can be", func() {
         }
 
 
-        successfulProductions, err := targets.StartAuphonicProduction(testServer.URL, step)
+        successfulProductions, err := targets.StartAuphonicProduction(auphonicTestServer.URL, step)
 
         Expect(err).Should(BeNil())
         Expect(successfulProductions).Should(Equal(1))

@@ -14,11 +14,12 @@ type Metadata struct {
     Title               string      `yaml:"title"`
 }
 type State struct {
-    Metadata            Metadata    `yaml:"metadata"`
-    FTPUploaded         bool        `yaml:"ftpUploaded"`
-    S3Uploaded          bool        `yaml:"s3Uploaded"`
-    AuphonicProduction  bool        `yaml:"auphonicProduction"`
-    Downloaded          bool        `yaml:"downloaded"`
+    Metadata                Metadata    `yaml:"metadata"`
+    FTPUploaded             bool        `yaml:"ftpUploaded"`
+    S3Uploaded              bool        `yaml:"s3Uploaded"`
+    AuphonicProduction      bool        `yaml:"auphonicProduction"`
+    WordpressBlogCreated    bool        `yaml:"wordpressBlogCreated"`
+    Downloaded              bool        `yaml:"downloaded"`
 }
 
 type StateReaderWriter interface {

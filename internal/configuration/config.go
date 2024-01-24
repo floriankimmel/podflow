@@ -54,11 +54,19 @@ type FtpFile struct {
     Target              string          `yaml:"target"`
 }
 
+type Wordpress struct {
+    ApiKey              string          `yaml:"apiKey"`
+    Server              string          `yaml:"server"`
+    Image               string          `yaml:"image"`
+    Episode             string          `yaml:"episode"`
+}
+
 type Step struct {
     FTP                 FTP             `yaml:"ftp"`
     Download            FTP             `yaml:"download"`
     S3                  S3              `yaml:"s3"`
     Auphonic            Auphonic        `yaml:"auphonic"`
+    Wordpress           Wordpress       `yaml:"wordpress"`
 }
  
 type Configuration struct {
@@ -140,6 +148,11 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
             }
         }  
 
+        if config.Steps[i].Wordpress != (Wordpress{}) {
+            replace(&config.Steps[i].Wordpress.Episode, replacementValues)
+            replace(&config.Steps[i].Wordpress.Image, replacementValues)
+            replace(&config.Steps[i].Wordpress.ApiKey, replacementValues)
+        }
         if len(config.Steps[i].Auphonic.Files) > 0 {
             replace(&config.Steps[i].Auphonic.Username, replacementValues)
             replace(&config.Steps[i].Auphonic.Password, replacementValues)

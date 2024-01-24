@@ -88,6 +88,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
             if !currentState.FTPUploaded {
                 err:= targets.FtpUpload(step)
                 if err != nil {
+                    fmt.Println(" Error: " + err.Error())
                     return err
                 }
 
@@ -104,6 +105,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
             if !currentState.Downloaded {
                 err:= targets.FtpDownload(step)
                 if err != nil {
+                    fmt.Println(" Error: " + err.Error())
                     return err
                 }
 
@@ -120,6 +122,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
             if !currentState.S3Uploaded {
                 err:= targets.S3Upload(step.S3)
                 if err != nil {
+                    fmt.Println(" Error: " + err.Error())
                     return err
                 }
 
@@ -131,6 +134,28 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 fmt.Println(" S3 upload skipped")
             }
         }
+        if step.Wordpress != (config.Wordpress{}) {
+            if !currentState.WordpressBlogCreated {
+                _, err:= targets.ScheduleEpisode(
+                    step, 
+                    currentState.Metadata.Title,
+                    strconv.Itoa(currentState.Metadata.EpisodeNumber),
+                    currentState.Metadata.ReleaseDate,
+                )
+
+                if err != nil {
+                    fmt.Println(" Error: " + err.Error())
+                    return err
+                }
+
+                currentState.WordpressBlogCreated = true
+                if err := stateIo.Write(currentState); err != nil {
+                    return err
+                }
+            } else {
+                fmt.Println(" Wordpress production skipped")
+            }
+        }
 
         if len(step.Auphonic.Title) > 0 {
             if !currentState.AuphonicProduction {
@@ -138,6 +163,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 _, err:= targets.StartAuphonicProduction("https://auphonic.com", step)
 
                 if err != nil {
+                    fmt.Println(" Error: " + err.Error())
                     return err
                 }
 
