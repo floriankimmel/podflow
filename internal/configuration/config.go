@@ -59,6 +59,7 @@ type Wordpress struct {
     Server              string          `yaml:"server"`
     Image               string          `yaml:"image"`
     Episode             string          `yaml:"episode"`
+    Chapter             string          `yaml:"chapter"`
 }
 
 type Step struct {
@@ -150,9 +151,11 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
 
         if config.Steps[i].Wordpress != (Wordpress{}) {
             replace(&config.Steps[i].Wordpress.Episode, replacementValues)
+            replace(&config.Steps[i].Wordpress.Chapter, replacementValues)
             replace(&config.Steps[i].Wordpress.Image, replacementValues)
             replace(&config.Steps[i].Wordpress.ApiKey, replacementValues)
         }
+
         if len(config.Steps[i].Auphonic.Files) > 0 {
             replace(&config.Steps[i].Auphonic.Username, replacementValues)
             replace(&config.Steps[i].Auphonic.Password, replacementValues)

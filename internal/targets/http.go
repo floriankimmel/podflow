@@ -72,8 +72,9 @@ func SendHTTPRequest(method, url string, headers map[string]string, body interfa
         log.Printf("Error sending request: %s\n", resp.Status)
         log.Printf("Response body: %s\n", apiResponse.Body)
         return nil, errors.New("Error sending request")
-
     }
+
+    log.Printf("Response body: %s\n", string(apiResponse.Body))
 
 
 	return apiResponse, nil
