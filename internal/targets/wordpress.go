@@ -47,7 +47,7 @@ func ScheduleEpisode(
     }
 
     fmt.Println(" Uploading feature image")
-    _ , err = uploadFeatureMedia(wordpressConfig, podloveEpisode.Id)
+    _ , err = uploadFeatureMedia(wordpressConfig, podloveEpisode.Id, title)
 
     if err != nil {
         return PodloveEpisode{}, err
@@ -110,7 +110,7 @@ func getPostId(wordpressConfig config.Wordpress, id string) (string, error) {
     return toPodloveEpisode(response.Body).PostId, nil
 }
 
-func uploadFeatureMedia(wordpressConfig config.Wordpress, episodeId string) (FeatureMediaResponse, error) {
+func uploadFeatureMedia(wordpressConfig config.Wordpress, episodeId string, title string) (FeatureMediaResponse, error) {
     featureMediaBody := &bytes.Buffer{}
 	writer := multipart.NewWriter(featureMediaBody)
 
@@ -119,6 +119,10 @@ func uploadFeatureMedia(wordpressConfig config.Wordpress, episodeId string) (Fea
 	if err != nil {
         return FeatureMediaResponse{}, err
 	}
+
+    err = writer.WriteField("title", title); if err != nil {
+        return FeatureMediaResponse{}, err
+    }
 
 	part, err := writer.CreateFormFile("file", wordpressConfig.Image)
 
@@ -137,6 +141,8 @@ func uploadFeatureMedia(wordpressConfig config.Wordpress, episodeId string) (Fea
         "Content-Type": writer.FormDataContentType(),
         "Content-Length": fmt.Sprintf("%d", featureMediaBody.Len()),
     }
+
+    writer.Close()
 
     resp, err := SendHTTPRequest("POST", wordpressConfig.Server + "/wp-json/wp/v2/media", headers, featureMediaBody)
     if err != nil {
