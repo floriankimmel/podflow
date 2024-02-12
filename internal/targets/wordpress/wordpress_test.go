@@ -1,11 +1,11 @@
-package targets_test
+package wordpress_test
 
 import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	config "podflow/internal/configuration"
-	"podflow/internal/targets"
+	"podflow/internal/targets/wordpress"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -28,7 +28,7 @@ var _ = Describe("An wordpress post can be", Ordered, func() {
         scheduledDate := "2021-07-10 00:00:00"
 
 
-        successfulProductions, err := targets.ScheduleEpisode(step, title, "1", scheduledDate)
+        successfulProductions, err := wordpress.ScheduleEpisode(step, title, "1", scheduledDate)
 
         Expect(err).Should(BeNil())
         Expect(successfulProductions.Id).Should(Equal("1"))
@@ -54,7 +54,7 @@ var _ = Describe("An wordpress post can be", Ordered, func() {
             }
 
             if r.Method == "GET" {
-                podloveEpisode := targets.PodloveEpisode{
+                podloveEpisode := wordpress.PodloveEpisode{
                     PostId: "11",
                 }
                 response, err := json.Marshal(podloveEpisode)
@@ -77,7 +77,7 @@ var _ = Describe("An wordpress post can be", Ordered, func() {
             }
 
             if r.Method == "POST" {
-                podloveEpisode := targets.PodloveEpisode{
+                podloveEpisode := wordpress.PodloveEpisode{
                     Id: "1",
                 }
                 response, err := json.Marshal(podloveEpisode)

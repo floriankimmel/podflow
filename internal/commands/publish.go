@@ -7,6 +7,7 @@ import (
 	"podflow/internal/input"
 	"podflow/internal/state"
 	"podflow/internal/targets"
+	"podflow/internal/targets/wordpress"
 	"strconv"
 	"strings"
 	"time"
@@ -136,7 +137,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
         }
         if step.Wordpress != (config.Wordpress{}) {
             if !currentState.WordpressBlogCreated {
-                _, err:= targets.ScheduleEpisode(
+                _, err:= wordpress.ScheduleEpisode(
                     step, 
                     currentState.Metadata.Title,
                     strconv.Itoa(currentState.Metadata.EpisodeNumber),
