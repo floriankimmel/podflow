@@ -10,6 +10,10 @@ highly configurable to your specific needs.
 
 ## 📦 Installation
 
+### Release
+
+Find all the release [here](https://github.com/floriankimmel/laufenentdecken-cli/releases)
+
 ### Go
 You can install podflow using Go's go install command
 ```bash
