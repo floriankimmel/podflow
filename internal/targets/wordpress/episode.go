@@ -3,6 +3,7 @@ package wordpress
 import (
 	"encoding/json"
 	"os"
+	"podflow/internal/markdown"
 	"podflow/internal/targets"
 	"strings"
 )
@@ -38,6 +39,27 @@ func (e* Episode) setSlug(slug string) error {
     _, err := targets.SendHTTPRequest(
         "POST",
         e.server + "/wp-json/podlove/v2/episodes/" + string(e.PodloveId),
+        headers(e.apiKey),
+        body,
+    )
+
+    return err
+}
+
+func (e* Episode) setContent(showNotesFile string) error {
+    content, showNotesErr := os.ReadFile(showNotesFile)
+
+    if showNotesErr != nil {
+        return showNotesErr
+    }
+
+    body := map[string]string{
+        "content": markdown.ToHtml(string(content)),
+    }
+
+    _, err := targets.SendHTTPRequest(
+        "POST",
+        e.server + "/wp-json/wp/v2/episodes/" + e.WordpressId,
         headers(e.apiKey),
         body,
     )

@@ -22,18 +22,27 @@ func ScheduleEpisode(
 
     fullTitle := fmt.Sprintf("LEP#%s - %s", currentEpisodeNumber, title)
 
+    fmt.Println(" Setting title")
     if err := episode.setTitle(fullTitle); err != nil {
         return Episode{}, err
     }
 
+    fmt.Println(" Setting slug")
     if err := episode.setSlug(wordpressConfig.Episode); err != nil {
         return Episode{}, err
     }
 
+    fmt.Println(" Setting episode number")
     if err := episode.setEpisodeNumber(currentEpisodeNumber); err != nil {
         return Episode{}, err
     }
 
+    fmt.Println(" Setting show notes")
+    if err := episode.setContent(wordpressConfig.ShowNotes); err != nil {
+        return Episode{}, err
+    }
+
+    fmt.Println(" Setting scheduled date")
     if err := episode.schedulePostFor(scheduledDate); err != nil {
         return Episode{}, err
     }
