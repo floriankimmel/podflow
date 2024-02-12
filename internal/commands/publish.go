@@ -11,6 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/fatih/color"
 )
 
 
@@ -76,7 +78,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
     } else {
         fmt.Printf(" Episode number: %d \n", currentState.Metadata.EpisodeNumber)
         fmt.Printf(" Next release date: %s \n", currentState.Metadata.ReleaseDate)
-        fmt.Printf(" Episode title: %s \n\n", currentState.Metadata.Title)
+        fmt.Printf(" Episode title: %s", currentState.Metadata.Title)
 
         replacementValues.EpisodeNumber = strconv.Itoa(currentState.Metadata.EpisodeNumber)
 
@@ -86,6 +88,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
     for i := range replacedPodflowConfig.Steps {
         step := replacedPodflowConfig.Steps[i]
         if len(step.FTP.Files) > 0 {
+            fmt.Printf("\n\n[%d/%d] FTP \n", (i+1), len(replacedPodflowConfig.Steps))
             if !currentState.FTPUploaded {
                 err:= targets.FtpUpload(step)
                 if err != nil {
@@ -97,12 +100,14 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 if err := stateIo.Write(currentState); err != nil {
                     return err
                 }
+                color.Green("  FTP upload done")
             } else {
-                fmt.Println(" FTP upload skipped")
+                color.Green("  FTP upload skipped")
             }
         }
 
         if len(step.Download.Files) > 0 {
+            fmt.Printf("\n\n[%d/%d] Download \n", (i+1), len(replacedPodflowConfig.Steps))
             if !currentState.Downloaded {
                 err:= targets.FtpDownload(step)
                 if err != nil {
@@ -114,12 +119,14 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 if err := stateIo.Write(currentState); err != nil {
                     return err
                 }
+                color.Green("  Download done")
             } else {
-                fmt.Println(" Download skipped")
+                color.Green("  Download skipped")
             }
         }
 
         if len(step.S3.Buckets) > 0 {
+            fmt.Printf("\n\n[%d/%d] Amazon S3 \n", (i+1), len(replacedPodflowConfig.Steps))
             if !currentState.S3Uploaded {
                 err:= targets.S3Upload(step.S3)
                 if err != nil {
@@ -131,11 +138,13 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 if err := stateIo.Write(currentState); err != nil {
                     return err
                 }
+                color.Green("  S3 upload done")
             } else {
-                fmt.Println(" S3 upload skipped")
+                color.Green("  S3 upload skipped")
             }
         }
         if step.Wordpress != (config.Wordpress{}) {
+            fmt.Printf("\n\n[%d/%d] Wordpress \n", (i+1), len(replacedPodflowConfig.Steps))
             if !currentState.WordpressBlogCreated {
                 _, err:= wordpress.ScheduleEpisode(
                     step, 
@@ -153,12 +162,14 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 if err := stateIo.Write(currentState); err != nil {
                     return err
                 }
+                color.Green("  Wordpress production done")
             } else {
-                fmt.Println(" Wordpress production skipped")
+                color.Green("  Wordpress production skipped")
             }
         }
 
         if len(step.Auphonic.Title) > 0 {
+            fmt.Printf("\n\n[%d/%d] Auphonic \n", (i+1), len(replacedPodflowConfig.Steps))
             if !currentState.AuphonicProduction {
                 step.Auphonic.Title = strings.Replace(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title, -1)
                 _, err:= targets.StartAuphonicProduction("https://auphonic.com", step)
@@ -172,8 +183,9 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 if err := stateIo.Write(currentState); err != nil {
                     return err
                 }
+                color.Green("  Auphonic production done")
             } else {
-                fmt.Println(" Auphonic production skipped")
+                color.Green("  Auphonic production skipped")
             }
         }
     }
