@@ -92,7 +92,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
             if !currentState.FTPUploaded {
                 err:= targets.FtpUpload(step)
                 if err != nil {
-                    fmt.Println(" Error: " + err.Error())
+                    color.Red(" Error: " + err.Error())
                     return err
                 }
 
@@ -111,7 +111,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
             if !currentState.Downloaded {
                 err:= targets.FtpDownload(step)
                 if err != nil {
-                    fmt.Println(" Error: " + err.Error())
+                    color.Red(" Error: " + err.Error())
                     return err
                 }
 
@@ -130,7 +130,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
             if !currentState.S3Uploaded {
                 err:= targets.S3Upload(step.S3)
                 if err != nil {
-                    fmt.Println(" Error: " + err.Error())
+                    color.Red(" Error: " + err.Error())
                     return err
                 }
 
@@ -154,7 +154,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 )
 
                 if err != nil {
-                    fmt.Println(" Error: " + err.Error())
+                    color.Red(" Error: " + err.Error())
                     return err
                 }
 
@@ -175,7 +175,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
                 _, err:= targets.StartAuphonicProduction("https://auphonic.com", step)
 
                 if err != nil {
-                    fmt.Println(" Error: " + err.Error())
+                    color.Red(" Error: " + err.Error())
                     return err
                 }
 
