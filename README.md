@@ -10,12 +10,6 @@ highly configurable to your specific needs.
 
 ## 📦 Installation
 
-### Homebrew
-
-```bash
-brew install floriankimmel/podflow/podflow
-```
-
 ### Go
 You can install podflow using Go's go install command
 ```bash
