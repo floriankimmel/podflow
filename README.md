@@ -327,3 +327,5 @@ steps:
         chapter: '{{folderName}}.chapters.txt'
 
 ```
+# ✍️ Author
+Florian Kimmel [florian@le-podcast.at](mailto:florian@le-podcast.at)
