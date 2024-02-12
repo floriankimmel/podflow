@@ -5,8 +5,6 @@ import (
 	config "podflow/internal/configuration"
 )
 
-
-
 func ScheduleEpisode(
     step config.Step,
     title string,
