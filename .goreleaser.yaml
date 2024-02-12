@@ -9,6 +9,9 @@
 version: 1
 project_name: podflow
 
+env_files:
+  github_token: ~/.config/goreleaser/github_token
+
 before:
   hooks:
     # You may remove this if you don't use go modules.
