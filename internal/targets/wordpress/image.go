@@ -12,59 +12,59 @@ import (
 )
 
 type Image struct {
-    Id      json.Number  `json:"id"`
-    title   string
-    path    string
+	ID    json.Number `json:"id"`
+	title string
+	path  string
 }
 
-func (i* Image) uploadTo(server string, apiKey string) error {
-    featureMediaBody := &bytes.Buffer{}
+func (i *Image) uploadTo(server string, apiKey string) error {
+	featureMediaBody := &bytes.Buffer{}
 	writer := multipart.NewWriter(featureMediaBody)
 
 	file, err := os.Open(i.path)
 
 	if err != nil {
-        return err
+		return err
 	}
 
-    if err := writer.WriteField("title", i.title); err != nil {
-        return err
-    }
+	if err := writer.WriteField("title", i.title); err != nil {
+		return err
+	}
 
 	part, err := writer.CreateFormFile("file", i.path)
 
 	if err != nil {
-        return err
+		return err
 	}
 
 	if _, err = io.Copy(part, file); err != nil {
-        return err
+		return err
 	}
 
-    headers := map[string]string{
-        "Authorization": "Basic " + apiKey,
-        "Content-Type": writer.FormDataContentType(),
-        "Content-Length": fmt.Sprintf("%d", featureMediaBody.Len()),
-    }
+	headers := map[string]string{
+		"Authorization":  "Basic " + apiKey,
+		"Content-Type":   writer.FormDataContentType(),
+		"Content-Length": fmt.Sprintf("%d", featureMediaBody.Len()),
+	}
 
-    writer.Close()
+	writer.Close()
 
-    resp, err := targets.SendHTTPRequest("POST", server + "/wp-json/wp/v2/media", headers, featureMediaBody)
-    if err != nil {
-        return err
-    }
+	resp, err := targets.SendHTTPRequest("POST", server+"/wp-json/wp/v2/media", headers, featureMediaBody)
+	if err != nil {
+		return err
+	}
 
-    i.Id = toImage(resp.Body).Id
-    return nil
+	i.ID = toImage(resp.Body).ID
+	return nil
 }
 
 func toImage(body []byte) Image {
-    image := Image{}
-    err := json.Unmarshal(body, &image)
+	image := Image{}
+	err := json.Unmarshal(body, &image)
 
-    if err != nil {
-        log.Println("Error unmarshalling feature media response:", err)
-        return Image{}
-    }
-    return image
+	if err != nil {
+		log.Println("Error unmarshalling feature media response:", err)
+		return Image{}
+	}
+	return image
 }

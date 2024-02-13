@@ -10,29 +10,29 @@ import (
 )
 
 var _ = Describe("Calling an http endpoint", func() {
-    It("will lead to a successfull response", func() {
-        mux := http.NewServeMux()
+	It("will lead to a successful response", func() {
+		mux := http.NewServeMux()
 
-        mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-            _, err := w.Write([]byte(`{}`))
+		mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+			_, err := w.Write([]byte(`{}`))
 
-            if err != nil {
-                w.WriteHeader(500)
-            }
-        })
+			if err != nil {
+				w.WriteHeader(500)
+			}
+		})
 
-        testServer := httptest.NewServer(mux)
+		testServer := httptest.NewServer(mux)
 
-        defer testServer.Close()
+		defer testServer.Close()
 
-        headers := map[string]string{
-            "Content-Type": "application/json",
-        }
-        response, err := targets.SendHTTPRequest("POST", testServer.URL, headers, nil)
+		headers := map[string]string{
+			"Content-Type": "application/json",
+		}
+		response, err := targets.SendHTTPRequest("POST", testServer.URL, headers, nil)
 
-        Expect(err).Should(BeNil())
-        Expect(response.Status).Should(Equal(200))
+		Expect(err).Should(BeNil())
+		Expect(response.Status).Should(Equal(200))
 
-    })
+	})
 
 })

@@ -8,183 +8,186 @@ import (
 	"strings"
 )
 
+const podloveURLPath = "/wp-json/podlove/v2/episodes/"
+const wpURLPath = "/wp-json/wp/v2/episodes/"
+
 type Episode struct {
-    PodloveId       json.Number  `json:"id,omitempty"`
-    WordpressId     string       `json:"post_id,omitempty"`
-    server          string
-    apiKey          string
+	PodloveID   json.Number `json:"id,omitempty"`
+	WordpressID string      `json:"post_id,omitempty"`
+	server      string
+	apiKey      string
 }
 
 type Chapter struct {
-	Start string    `json:"start"`
-	Title string    `json:"title"`
+	Start string `json:"start"`
+	Title string `json:"title"`
 }
 
 type Chapters struct {
-    Chapters []Chapter `json:"chapters"`
+	Chapters []Chapter `json:"chapters"`
 }
 
 func headers(apiKey string) map[string]string {
-    return map[string]string{
-        "Authorization": "Basic " + apiKey,
-        "Content-Type": "application/json",
-    }
+	return map[string]string{
+		"Authorization": "Basic " + apiKey,
+		"Content-Type":  "application/json",
+	}
 }
 
-func (e* Episode) setSlug(slug string) error {
-    body := map[string]string{
-        "slug": slug,
-    }
+func (e *Episode) setSlug(slug string) error {
+	body := map[string]string{
+		"slug": slug,
+	}
 
-    _, err := targets.SendHTTPRequest(
-        "POST",
-        e.server + "/wp-json/podlove/v2/episodes/" + string(e.PodloveId),
-        headers(e.apiKey),
-        body,
-    )
+	_, err := targets.SendHTTPRequest(
+		"POST",
+		e.server+podloveURLPath+string(e.PodloveID),
+		headers(e.apiKey),
+		body,
+	)
 
-    return err
+	return err
 }
 
-func (e* Episode) setContent(showNotesFile string) error {
-    content, showNotesErr := os.ReadFile(showNotesFile)
+func (e *Episode) setContent(showNotesFile string) error {
+	content, showNotesErr := os.ReadFile(showNotesFile)
 
-    if showNotesErr != nil {
-        return showNotesErr
-    }
+	if showNotesErr != nil {
+		return showNotesErr
+	}
 
-    body := map[string]string{
-        "content": markdown.ToHtml(string(content)),
-    }
+	body := map[string]string{
+		"content": markdown.ToHTML(string(content)),
+	}
 
-    _, err := targets.SendHTTPRequest(
-        "POST",
-        e.server + "/wp-json/wp/v2/episodes/" + e.WordpressId,
-        headers(e.apiKey),
-        body,
-    )
+	_, err := targets.SendHTTPRequest(
+		"POST",
+		e.server+wpURLPath+e.WordpressID,
+		headers(e.apiKey),
+		body,
+	)
 
-    return err
+	return err
 }
 
-func (e* Episode) setEpisodeNumber(episodeNumber string) error {
-    body := map[string]string{
-        "number": episodeNumber,
-    }
+func (e *Episode) setEpisodeNumber(episodeNumber string) error {
+	body := map[string]string{
+		"number": episodeNumber,
+	}
 
-    _, err := targets.SendHTTPRequest(
-        "POST",
-        e.server + "/wp-json/podlove/v2/episodes/" + string(e.PodloveId),
-        headers(e.apiKey),
-        body,
-    )
+	_, err := targets.SendHTTPRequest(
+		"POST",
+		e.server+podloveURLPath+string(e.PodloveID),
+		headers(e.apiKey),
+		body,
+	)
 
-    return err
+	return err
 }
 
-func (e* Episode) schedulePostFor(scheduledDate string) error {
-    body := map[string]string{
-        "status": "future",
-        "date": scheduledDate,
-    }
+func (e *Episode) schedulePostFor(scheduledDate string) error {
+	body := map[string]string{
+		"status": "future",
+		"date":   scheduledDate,
+	}
 
-    _, err := targets.SendHTTPRequest(
-        "POST",
-        e.server + "/wp-json/wp/v2/episodes/" + e.WordpressId,
-        headers(e.apiKey),
-        body,
-    )
+	_, err := targets.SendHTTPRequest(
+		"POST",
+		e.server+wpURLPath+e.WordpressID,
+		headers(e.apiKey),
+		body,
+	)
 
-    return err
+	return err
 }
 
-func (e* Episode) setFeaturedMedia(image Image) error {
-    body := map[string]string{
-        "featured_media": string(image.Id),
-    }
+func (e *Episode) setFeaturedMedia(image Image) error {
+	body := map[string]string{
+		"featured_media": string(image.ID),
+	}
 
-    _, err := targets.SendHTTPRequest(
-        "POST",
-        e.server + "/wp-json/wp/v2/episodes/" + e.WordpressId,
-        headers(e.apiKey),
-        body,
-    )
+	_, err := targets.SendHTTPRequest(
+		"POST",
+		e.server+wpURLPath+e.WordpressID,
+		headers(e.apiKey),
+		body,
+	)
 
-    return err
+	return err
 }
 
-func (e* Episode) setTitle(title string) error {
-    body := map[string]string{
-        "title": title,
-    }
+func (e *Episode) setTitle(title string) error {
+	body := map[string]string{
+		"title": title,
+	}
 
-    _, err := targets.SendHTTPRequest(
-        "POST",
-        e.server + "/wp-json/podlove/v2/episodes/" + string(e.PodloveId),
-        headers(e.apiKey),
-        body,
-    )
+	_, err := targets.SendHTTPRequest(
+		"POST",
+		e.server+podloveURLPath+string(e.PodloveID),
+		headers(e.apiKey),
+		body,
+	)
 
-    return err
+	return err
 }
 
-func (e* Episode) create(server string, apiKey string) {
-    createPodloveEpisodeResponse, podloveErr := targets.SendHTTPRequest("POST", server + "/wp-json/podlove/v2/episodes", headers(apiKey), nil)
+func (e *Episode) create(server string, apiKey string) {
+	createPodloveEpisodeResponse, podloveErr := targets.SendHTTPRequest("POST", server+podloveURLPath, headers(apiKey), nil)
 
-    if podloveErr != nil {
-        panic(podloveErr)
-    }
+	if podloveErr != nil {
+		panic(podloveErr)
+	}
 
-    create, marshalError := toEpisode(createPodloveEpisodeResponse.Body)
-    if marshalError != nil {
-        panic(marshalError)
-    }
+	create, marshalError := toEpisode(createPodloveEpisodeResponse.Body)
+	if marshalError != nil {
+		panic(marshalError)
+	}
 
-    e.PodloveId = create.PodloveId
+	e.PodloveID = create.PodloveID
 
-    getPodloveInfoResponse, podloveInfoErr := targets.SendHTTPRequest("GET", server + "/wp-json/podlove/v2/episodes/" + string(e.PodloveId), headers(apiKey), nil)
+	getPodloveInfoResponse, podloveInfoErr := targets.SendHTTPRequest("GET", server+podloveURLPath+string(e.PodloveID), headers(apiKey), nil)
 
-    if podloveInfoErr != nil {
-        panic(podloveErr)
-    }
+	if podloveInfoErr != nil {
+		panic(podloveErr)
+	}
 
-    info, marshalError := toEpisode(getPodloveInfoResponse.Body)
-    if marshalError != nil {
-        panic(marshalError)
-    }
+	info, marshalError := toEpisode(getPodloveInfoResponse.Body)
+	if marshalError != nil {
+		panic(marshalError)
+	}
 
-    e.WordpressId = info.WordpressId
-    e.apiKey = apiKey
-    e.server = server
+	e.WordpressID = info.WordpressID
+	e.apiKey = apiKey
+	e.server = server
 }
 
-func (e* Episode) enableAsset(assetId string) error {
-    _, err := targets.SendHTTPRequest("POST", e.server + "/wp-json/podlove/v2/episodes/" + string(e.PodloveId) + "/media/" + assetId + "/enable", headers(e.apiKey), nil)
+func (e *Episode) enableAsset(assetID string) error {
+	_, err := targets.SendHTTPRequest("POST", e.server+podloveURLPath+string(e.PodloveID)+"/media/"+assetID+"/enable", headers(e.apiKey), nil)
 
-    if err != nil {
-        return err
-    }
-    return nil
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (e* Episode) addChapters(chapterFile string) error {
-    chapters, chaptersErr := chaptersExportToJson(chapterFile)
+func (e *Episode) addChapters(chapterFile string) error {
+	chapters, chaptersErr := chaptersExportToJSON(chapterFile)
 
-    if chaptersErr != nil {
-        panic(chaptersErr)
-    }
+	if chaptersErr != nil {
+		panic(chaptersErr)
+	}
 
-    _, err := targets.SendHTTPRequest("PUT", e.server + "/wp-json/podlove/v2/chapters/" + string(e.PodloveId), headers(e.apiKey), chapters)
-    if err != nil {
-        return err
-    }
-    return nil
+	_, err := targets.SendHTTPRequest("PUT", e.server+podloveURLPath+string(e.PodloveID), headers(e.apiKey), chapters)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func chaptersExportToJson(chapterFile string) (Chapters, error) {
+func chaptersExportToJSON(chapterFile string) (Chapters, error) {
 	content, err := os.ReadFile(chapterFile)
 	if err != nil {
-        return Chapters{}, err
+		return Chapters{}, err
 	}
 
 	lines := strings.Split(string(content), "\n")
@@ -205,16 +208,16 @@ func chaptersExportToJson(chapterFile string) (Chapters, error) {
 		chapters = append(chapters, chapter)
 	}
 
-    return Chapters{chapters}, nil
+	return Chapters{chapters}, nil
 }
 
 func toEpisode(body []byte) (Episode, error) {
-    episode := Episode{}
-    err := json.Unmarshal(body, &episode)
+	episode := Episode{}
+	err := json.Unmarshal(body, &episode)
 
-    if err != nil {
-        return Episode{}, err
-    }
+	if err != nil {
+		return Episode{}, err
+	}
 
-    return episode, nil
+	return episode, nil
 }

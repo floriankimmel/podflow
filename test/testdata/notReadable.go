@@ -1,4 +1,4 @@
-package testData
+package testdata
 
 import (
 	"errors"
@@ -6,10 +6,9 @@ import (
 )
 
 type NotReadableConfigurationFile struct {
-    ValidConfigurationFile
-
+	ValidConfigurationFile
 }
 
 func (file NotReadableConfigurationFile) Read(path string) (config.Configuration, error) {
-    return config.Configuration{}, errors.New("Not readable")
+	return config.Configuration{}, errors.New("Not readable")
 }

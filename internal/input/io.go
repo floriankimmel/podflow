@@ -4,14 +4,16 @@ import (
 	"bufio"
 	"os"
 )
+
 type Input interface {
-    Text() string
+	Text() string
 }
 
 type Stdin struct {
 }
+
 func (stdin Stdin) Text() string {
-    scanner := bufio.NewScanner(os.Stdin)
-    scanner.Scan()
-    return scanner.Text()
+	scanner := bufio.NewScanner(os.Stdin)
+	scanner.Scan()
+	return scanner.Text()
 }

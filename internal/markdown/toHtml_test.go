@@ -8,9 +8,9 @@ import (
 )
 
 var _ = Describe("ToHtml", func() {
-    It("converts markdown to html", func() {
-        html := markdown.ToHtml("# Hello")
-        Expect(html).To(Equal("<h1>Hello</h1>\n"))
-    })
+	It("converts markdown to html", func() {
+		html := markdown.ToHTML("# Hello")
+		Expect(html).To(Equal("<h1>Hello</h1>\n"))
+	})
 
 })

@@ -1,13 +1,13 @@
-package testData
+package testdata
 
 import (
 	"errors"
 )
 
 type InvalidPathConfigurationFile struct {
-    ValidConfigurationFile
+	ValidConfigurationFile
 }
 
 func (file InvalidPathConfigurationFile) Path() (string, error) {
-    return "", errors.New("Invalid path")
+	return "", errors.New("Invalid path")
 }

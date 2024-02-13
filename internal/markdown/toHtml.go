@@ -4,7 +4,6 @@ import (
 	convert "github.com/russross/blackfriday/v2"
 )
 
-func ToHtml(markdown string) string {
-    return string(convert.Run([]byte(markdown)))
+func ToHTML(markdown string) string {
+	return string(convert.Run([]byte(markdown)))
 }
-
