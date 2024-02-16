@@ -9,6 +9,7 @@ import (
 )
 
 const podloveURLPath = "/wp-json/podlove/v2/episodes/"
+const podloveChaptersURLPath = "/wp-json/podlove/v2/chapters/"
 const wpURLPath = "/wp-json/wp/v2/episodes/"
 
 type Episode struct {
@@ -177,7 +178,7 @@ func (e *Episode) addChapters(chapterFile string) error {
 		panic(chaptersErr)
 	}
 
-	_, err := targets.SendHTTPRequest("PUT", e.server+podloveURLPath+string(e.PodloveID), headers(e.apiKey), chapters)
+	_, err := targets.SendHTTPRequest("PUT", e.server+podloveChaptersURLPath+string(e.PodloveID), headers(e.apiKey), chapters)
 	if err != nil {
 		return err
 	}
