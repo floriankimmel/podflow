@@ -35,6 +35,21 @@ func headers(apiKey string) map[string]string {
 	}
 }
 
+func (e *Episode) setURL(url string) error {
+	body := map[string]string{
+		"slug": url,
+	}
+
+	_, err := targets.SendHTTPRequest(
+		"POST",
+		e.server+wpURLPath+e.WordpressID,
+		headers(e.apiKey),
+		body,
+	)
+
+	return err
+}
+
 func (e *Episode) setSlug(slug string) error {
 	body := map[string]string{
 		"slug": slug,

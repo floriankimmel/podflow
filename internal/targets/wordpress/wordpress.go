@@ -25,6 +25,11 @@ func ScheduleEpisode(
 		return Episode{}, err
 	}
 
+	fmt.Println(" Setting URL")
+	if err := episode.setURL(currentEpisodeNumber); err != nil {
+		return Episode{}, err
+	}
+
 	fmt.Println(" Setting slug")
 	if err := episode.setSlug(wordpressConfig.Episode); err != nil {
 		return Episode{}, err
