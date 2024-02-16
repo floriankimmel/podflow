@@ -8,74 +8,74 @@ import (
 )
 
 type EpisodeFile struct {
-	Name              string `yaml:"name"`
-	FileName          string `yaml:"fileName"`
-	Required          bool   `yaml:"required"`
-	NotEmpty          bool   `yaml:"notEmpty"`
-	UmlauteNotAllowed bool   `yaml:"umlauteNotAllowed"`
+	Name              string `yaml:"name,omitempty"`
+	FileName          string `yaml:"fileName,omitempty"`
+	Required          bool   `yaml:"required,omitempty"`
+	NotEmpty          bool   `yaml:"notEmpty,omitempty"`
+	UmlauteNotAllowed bool   `yaml:"umlauteNotAllowed,omitempty"`
 }
 
 type AuphonicFiles struct {
-	Image    string `yaml:"image"`
-	Chapters string `yaml:"chapters"`
-	Episode  string `yaml:"episode"`
+	Image    string `yaml:"image,omitempty"`
+	Chapters string `yaml:"chapters,omitempty"`
+	Episode  string `yaml:"episode,omitempty"`
 }
 
 type Auphonic struct {
-	Username   string          `yaml:"username"`
-	Password   string          `yaml:"password"`
-	Preset     string          `yaml:"preset"`
-	FileServer string          `yaml:"fileServer"`
-	Title      string          `yaml:"title"`
-	Files      []AuphonicFiles `yaml:"files"`
+	Username   string          `yaml:"username,omitempty"`
+	Password   string          `yaml:"password,omitempty"`
+	Preset     string          `yaml:"preset,omitempty"`
+	FileServer string          `yaml:"fileServer,omitempty"`
+	Title      string          `yaml:"title,omitempty"`
+	Files      []AuphonicFiles `yaml:"files,omitempty"`
 }
 
 type S3Bucket struct {
-	Region string    `yaml:"region"`
-	Name   string    `yaml:"name"`
-	Files  []FtpFile `yaml:"files"`
+	Region string    `yaml:"region,omitempty"`
+	Name   string    `yaml:"name,omitempty"`
+	Files  []FtpFile `yaml:"files,omitempty"`
 }
 
 type S3 struct {
-	Buckets []S3Bucket `yaml:"buckets"`
+	Buckets []S3Bucket `yaml:"buckets,omitempty"`
 }
 
 type FTP struct {
-	Host     string    `yaml:"host"`
-	Port     string    `yaml:"port"`
-	Username string    `yaml:"username"`
-	Password string    `yaml:"password"`
-	Files    []FtpFile `yaml:"files"`
+	Host     string    `yaml:"host,omitempty"`
+	Port     string    `yaml:"port,omitempty"`
+	Username string    `yaml:"username,omitempty"`
+	Password string    `yaml:"password,omitempty"`
+	Files    []FtpFile `yaml:"files,omitempty"`
 }
 
 type FtpFile struct {
-	Source string `yaml:"source"`
-	Target string `yaml:"target"`
+	Source string `yaml:"source,omitempty"`
+	Target string `yaml:"target,omitempty"`
 }
 
 type Wordpress struct {
-	APIKey    string `yaml:"apiKey"`
-	Server    string `yaml:"server"`
-	Image     string `yaml:"image"`
-	Episode   string `yaml:"episode"`
-	ShowNotes string `yaml:"showNotes"`
-	Chapter   string `yaml:"chapter"`
+	APIKey    string `yaml:"apiKey,omitempty"`
+	Server    string `yaml:"server,omitempty"`
+	Image     string `yaml:"image,omitempty"`
+	Episode   string `yaml:"episode,omitempty"`
+	ShowNotes string `yaml:"showNotes,omitempty"`
+	Chapter   string `yaml:"chapter,omitempty"`
 }
 
 type Step struct {
-	FTP       FTP       `yaml:"ftp"`
-	Download  FTP       `yaml:"download"`
-	S3        S3        `yaml:"s3"`
-	Auphonic  Auphonic  `yaml:"auphonic"`
-	Wordpress Wordpress `yaml:"wordpress"`
+	FTP       FTP       `yaml:"ftp,omitempty"`
+	Download  FTP       `yaml:"download,omitempty"`
+	S3        S3        `yaml:"s3,omitempty"`
+	Auphonic  Auphonic  `yaml:"auphonic,omitempty"`
+	Wordpress Wordpress `yaml:"wordpress,omitempty"`
 }
 
 type Configuration struct {
-	CurrentEpisode string        `yaml:"currentEpisode"`
-	ReleaseDay     string        `yaml:"releaseDay"`
-	ReleaseTime    string        `yaml:"releaseTime"`
-	Files          []EpisodeFile `yaml:"files"`
-	Steps          []Step        `yaml:"steps"`
+	CurrentEpisode string        `yaml:"currentEpisode,omitempty"`
+	ReleaseDay     string        `yaml:"releaseDay,omitempty"`
+	ReleaseTime    string        `yaml:"releaseTime,omitempty"`
+	Files          []EpisodeFile `yaml:"files,omitempty"`
+	Steps          []Step        `yaml:"steps,omitempty"`
 }
 
 func Load(io ConfigurationReaderWriter) (Configuration, error) {
