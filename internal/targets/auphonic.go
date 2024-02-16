@@ -80,7 +80,7 @@ func StartAuphonicProduction(host string, step config.Step) (int, error) {
 
 			for production.Result.Status != "Done" {
 				output := fmt.Sprintf("\rAuphonic status: %s", production.Result.Status)
-				fmt.Print(strings.Repeat(" ", len(output)))
+				fmt.Print(strings.Repeat(" ", 100))
 				fmt.Print(output)
 
 				production.Result.Status = getCurrentStatus(host, auphonicConfig.Username, auphonicConfig.Password, production.Result.UUID)
@@ -103,8 +103,8 @@ func getCurrentStatus(host string, username string, password string, uuid string
 	}
 
 	resp, err := SendHTTPRequest(method, url, headers, nil)
-	if err != nil && resp.Status != 200 {
-		return "Error"
+	if err != nil || resp.Status != 200 {
+		return "Error getting status from Auphonic API."
 	}
 
 	return toProductionJSON(resp.Body).Result.Status
