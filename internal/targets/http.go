@@ -52,15 +52,16 @@ func SendHTTPRequest(method, url string, headers map[string]string, body interfa
 	client := &http.Client{}
 	resp, err := client.Do(req)
 
-	if err != nil {
-		return nil, err
-	}
-
-	defer resp.Body.Close()
-
 	apiResponse := &APIResponse{
 		Status: resp.StatusCode,
 	}
+
+	if err != nil {
+		log.Printf("Error sending request: %s\n", err)
+		return apiResponse, err
+	}
+
+	defer resp.Body.Close()
 
 	buf := new(bytes.Buffer)
 	if _, err := buf.ReadFrom(resp.Body); err != nil {
@@ -68,10 +69,11 @@ func SendHTTPRequest(method, url string, headers map[string]string, body interfa
 	}
 
 	apiResponse.Body = buf.Bytes()
+
 	if resp.StatusCode != 200 && resp.StatusCode != 201 {
 		log.Printf("Error sending request: %s\n", resp.Status)
 		log.Printf("Response body: %s\n", apiResponse.Body)
-		return nil, errors.New("error sending request")
+		return apiResponse, errors.New("error sending request")
 	}
 
 	log.Printf("Response body: %s\n", string(apiResponse.Body))
