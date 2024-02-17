@@ -15,37 +15,44 @@ type APIResponse struct {
 	Body   []byte
 }
 
-func SendHTTPRequest(method, url string, headers map[string]string, body interface{}) (*APIResponse, error) {
+type HTTPRequest struct {
+	Method  string
+	URL     string
+	Headers map[string]string
+	Body    interface{}
+}
+
+func SendHTTPRequest(request HTTPRequest) (*APIResponse, error) {
 	var payload io.Reader
 
-	log.Printf("Headers: %s\n", headers)
-	log.Printf("Method: %s\n", method)
+	log.Printf("Headers: %s\n", request.Headers)
+	log.Printf("Method: %s\n", request.Method)
 
-	if headers["Content-Type"] == "application/json" {
+	if request.Headers["Content-Type"] == "application/json" {
 		var jsonPayload []byte
-		if body != nil {
+		if request.Body != nil {
 			var err error
-			jsonPayload, err = json.Marshal(body)
+			jsonPayload, err = json.Marshal(request.Body)
 			if err != nil {
 				return nil, err
 			}
 		}
 
-		log.Printf("Sending request to %s with payload %s\n", url, string(jsonPayload))
+		log.Printf("Sending request to %s with payload %s\n", request.URL, string(jsonPayload))
 		payload = bytes.NewBuffer(jsonPayload)
 	}
 
-	if strings.Contains(headers["Content-Type"], "multipart/form-data") {
-		payload = body.(*bytes.Buffer)
-		log.Printf("Sending request to %s with payload %s\n", url, payload)
+	if strings.Contains(request.Headers["Content-Type"], "multipart/form-data") {
+		payload = request.Body.(*bytes.Buffer)
+		log.Printf("Sending request to %s with payload %s\n", request.URL, payload)
 	}
 
-	req, err := http.NewRequest(method, url, payload)
+	req, err := http.NewRequest(request.Method, request.URL, payload)
 	if err != nil {
 		return nil, err
 	}
 
-	for key, value := range headers {
+	for key, value := range request.Headers {
 		req.Header.Set(key, value)
 	}
 

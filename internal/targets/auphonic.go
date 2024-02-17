@@ -47,7 +47,12 @@ func StartAuphonicProduction(host string, step config.Step) (int, error) {
 
 	var successfulProductions = 0
 	for _, file := range auphonicConfig.Files {
-		if _, err := SendHTTPRequest("GET", auphonicConfig.FileServer+file.Episode, nil, nil); err == nil {
+		if _, err := SendHTTPRequest(HTTPRequest{
+			Method:  "GET",
+			URL:     auphonicConfig.FileServer + file.Episode,
+			Headers: nil,
+			Body:    nil,
+		}); err == nil {
 			body := AuphonicRequest{
 				Preset: auphonicConfig.Preset,
 				MetaData: Metadata{
@@ -66,7 +71,12 @@ func StartAuphonicProduction(host string, step config.Step) (int, error) {
 
 			}
 
-			resp, err := SendHTTPRequest(method, url, headers, body)
+			resp, err := SendHTTPRequest(HTTPRequest{
+				Method:  method,
+				URL:     url,
+				Headers: headers,
+				Body:    body,
+			})
 
 			if err != nil {
 				return successfulProductions, err
@@ -102,7 +112,13 @@ func getCurrentStatus(host string, username string, password string, uuid string
 		"Authorization": fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(username+":"+password))),
 	}
 
-	resp, err := SendHTTPRequest(method, url, headers, nil)
+	resp, err := SendHTTPRequest(HTTPRequest{
+		Method:  method,
+		URL:     url,
+		Headers: headers,
+		Body:    nil,
+	})
+
 	if err != nil || resp.Status != 200 {
 		return "Error getting status from Auphonic API."
 	}
