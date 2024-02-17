@@ -28,7 +28,12 @@ var _ = Describe("Calling an http endpoint", func() {
 		headers := map[string]string{
 			"Content-Type": "application/json",
 		}
-		response, err := targets.SendHTTPRequest("POST", testServer.URL, headers, nil)
+		response, err := targets.SendHTTPRequest(targets.HTTPRequest{
+			Method:  "POST",
+			URL:     testServer.URL,
+			Headers: headers,
+			Body:    nil,
+		})
 
 		Expect(err).Should(BeNil())
 		Expect(response.Status).Should(Equal(200))

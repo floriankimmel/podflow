@@ -40,12 +40,12 @@ func (e *Episode) setURL(url string) error {
 		"slug": url,
 	}
 
-	_, err := targets.SendHTTPRequest(
-		"POST",
-		e.server+wpURLPath+e.WordpressID,
-		headers(e.apiKey),
-		body,
-	)
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "POST",
+		URL:     e.server + wpURLPath + e.WordpressID,
+		Headers: headers(e.apiKey),
+		Body:    body,
+	})
 
 	return err
 }
@@ -55,12 +55,12 @@ func (e *Episode) setSlug(slug string) error {
 		"slug": slug,
 	}
 
-	_, err := targets.SendHTTPRequest(
-		"POST",
-		e.server+podloveURLPath+string(e.PodloveID),
-		headers(e.apiKey),
-		body,
-	)
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "POST",
+		URL:     e.server + podloveURLPath + string(e.PodloveID),
+		Headers: headers(e.apiKey),
+		Body:    body,
+	})
 
 	return err
 }
@@ -76,12 +76,12 @@ func (e *Episode) setContent(showNotesFile string) error {
 		"content": markdown.ToHTML(string(content)),
 	}
 
-	_, err := targets.SendHTTPRequest(
-		"POST",
-		e.server+wpURLPath+e.WordpressID,
-		headers(e.apiKey),
-		body,
-	)
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "POST",
+		URL:     e.server + wpURLPath + e.WordpressID,
+		Headers: headers(e.apiKey),
+		Body:    body,
+	})
 
 	return err
 }
@@ -91,12 +91,12 @@ func (e *Episode) setEpisodeNumber(episodeNumber string) error {
 		"number": episodeNumber,
 	}
 
-	_, err := targets.SendHTTPRequest(
-		"POST",
-		e.server+podloveURLPath+string(e.PodloveID),
-		headers(e.apiKey),
-		body,
-	)
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "POST",
+		URL:     e.server + podloveURLPath + string(e.PodloveID),
+		Headers: headers(e.apiKey),
+		Body:    body,
+	})
 
 	return err
 }
@@ -107,12 +107,12 @@ func (e *Episode) schedulePostFor(scheduledDate string) error {
 		"date":   scheduledDate,
 	}
 
-	_, err := targets.SendHTTPRequest(
-		"POST",
-		e.server+wpURLPath+e.WordpressID,
-		headers(e.apiKey),
-		body,
-	)
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "POST",
+		URL:     e.server + wpURLPath + e.WordpressID,
+		Headers: headers(e.apiKey),
+		Body:    body,
+	})
 
 	return err
 }
@@ -122,12 +122,12 @@ func (e *Episode) setFeaturedMedia(image Image) error {
 		"featured_media": string(image.ID),
 	}
 
-	_, err := targets.SendHTTPRequest(
-		"POST",
-		e.server+wpURLPath+e.WordpressID,
-		headers(e.apiKey),
-		body,
-	)
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "POST",
+		URL:     e.server + wpURLPath + e.WordpressID,
+		Headers: headers(e.apiKey),
+		Body:    body,
+	})
 
 	return err
 }
@@ -137,18 +137,23 @@ func (e *Episode) setTitle(title string) error {
 		"title": title,
 	}
 
-	_, err := targets.SendHTTPRequest(
-		"POST",
-		e.server+podloveURLPath+string(e.PodloveID),
-		headers(e.apiKey),
-		body,
-	)
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "POST",
+		URL:     e.server + podloveURLPath + string(e.PodloveID),
+		Headers: headers(e.apiKey),
+		Body:    body,
+	})
 
 	return err
 }
 
 func (e *Episode) create(server string, apiKey string) {
-	createPodloveEpisodeResponse, podloveErr := targets.SendHTTPRequest("POST", server+podloveURLPath, headers(apiKey), nil)
+	createPodloveEpisodeResponse, podloveErr := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "POST",
+		URL:     server + podloveURLPath,
+		Headers: headers(apiKey),
+		Body:    nil,
+	})
 
 	if podloveErr != nil {
 		panic(podloveErr)
@@ -161,7 +166,12 @@ func (e *Episode) create(server string, apiKey string) {
 
 	e.PodloveID = create.PodloveID
 
-	getPodloveInfoResponse, podloveInfoErr := targets.SendHTTPRequest("GET", server+podloveURLPath+string(e.PodloveID), headers(apiKey), nil)
+	getPodloveInfoResponse, podloveInfoErr := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "GET",
+		URL:     server + podloveURLPath + string(e.PodloveID),
+		Headers: headers(apiKey),
+		Body:    nil,
+	})
 
 	if podloveInfoErr != nil {
 		panic(podloveErr)
@@ -178,7 +188,12 @@ func (e *Episode) create(server string, apiKey string) {
 }
 
 func (e *Episode) enableAsset(assetID string) error {
-	_, err := targets.SendHTTPRequest("POST", e.server+podloveURLPath+string(e.PodloveID)+"/media/"+assetID+"/enable", headers(e.apiKey), nil)
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "POST",
+		URL:     e.server + podloveURLPath + string(e.PodloveID) + "/media/" + assetID + "/enable",
+		Headers: headers(e.apiKey),
+		Body:    nil,
+	})
 
 	if err != nil {
 		return err
@@ -193,7 +208,12 @@ func (e *Episode) addChapters(chapterFile string) error {
 		panic(chaptersErr)
 	}
 
-	_, err := targets.SendHTTPRequest("PUT", e.server+podloveChaptersURLPath+string(e.PodloveID), headers(e.apiKey), chapters)
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  "PUT",
+		URL:     e.server + podloveChaptersURLPath + string(e.PodloveID),
+		Headers: headers(e.apiKey),
+		Body:    chapters,
+	})
 	if err != nil {
 		return err
 	}
