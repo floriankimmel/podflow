@@ -8,3 +8,6 @@ build:
 	go mod tidy
 	go build -o bin/$(BINARY_NAME) ./cmd/podflow/
 	cp bin/$(BINARY_NAME) $(HOME)/go/bin/$(BINARY_NAME)
+
+test: build
+	go test -v -cover ./...
