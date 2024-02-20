@@ -22,23 +22,23 @@ type ChapterMark struct {
 	Time time.Time `yaml:"time"`
 }
 
-func EnterChapterMark(file StateFile) (ChapterMark, error) {
+func EnterChapterMark(file StateReaderWriter, input input.Input) (ChapterMark, error) {
 	fmt.Print("Enter chapter name: ")
-	mark := AddChapterMark(input.Stdin{})
+	mark := AddChapterMark(input)
 	return saveChapterMark(file, mark)
 }
 
-func StartEpisode(file StateFile) (ChapterMark, error) {
+func StartEpisode(file StateReaderWriter) (ChapterMark, error) {
 	mark := AddChapterMark(StringInput{Input: "Start"})
 	return saveChapterMark(file, mark)
 }
 
-func EndEpisode(file StateFile) (ChapterMark, error) {
+func EndEpisode(file StateReaderWriter) (ChapterMark, error) {
 	mark := AddChapterMark(StringInput{Input: "End"})
 	return saveChapterMark(file, mark)
 }
 
-func saveChapterMark(file StateFile, mark ChapterMark) (ChapterMark, error) {
+func saveChapterMark(file StateReaderWriter, mark ChapterMark) (ChapterMark, error) {
 	state, err := file.Read()
 
 	if err != nil {

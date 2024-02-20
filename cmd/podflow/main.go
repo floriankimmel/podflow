@@ -88,7 +88,7 @@ func main() {
 						Name:  "add",
 						Usage: "add a new chapter mark",
 						Action: func(cCtx *cli.Context) error {
-							chapter, err := state.EnterChapterMark(state.StateFile{})
+							chapter, err := state.EnterChapterMark(state.StateFile{}, input.Stdin{})
 
 							if chapter.Name != "" && err == nil {
 								fmt.Printf("Chapter name: %s, Time: %s", chapter.Name, chapter.Time)
