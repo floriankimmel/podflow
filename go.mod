@@ -5,6 +5,7 @@ go 1.21.5
 require (
 	github.com/aws/aws-sdk-go v1.49.21
 	github.com/fatih/color v1.16.0
+	github.com/iFaceless/godub v0.0.0-20200728093528-a30bb4d1a0f1
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/onsi/gomega v1.29.0
@@ -25,6 +26,7 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/stretchr/testify v1.8.4 // indirect
+	github.com/tink-ab/tempfile v0.0.0-20180226111222-33beb0518f1a // indirect
 	github.com/xrash/smetrics v0.0.0-20201216005158-039620a65673 // indirect
 	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect

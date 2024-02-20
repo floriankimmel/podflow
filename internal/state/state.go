@@ -14,12 +14,14 @@ type Metadata struct {
 	Title         string `yaml:"title"`
 }
 type State struct {
-	Metadata             Metadata `yaml:"metadata"`
-	FTPUploaded          bool     `yaml:"ftpUploaded"`
-	S3Uploaded           bool     `yaml:"s3Uploaded"`
-	AuphonicProduction   bool     `yaml:"auphonicProduction"`
-	WordpressBlogCreated bool     `yaml:"wordpressBlogCreated"`
-	Downloaded           bool     `yaml:"downloaded"`
+	Metadata               Metadata `yaml:"metadata"`
+	FTPUploaded            bool     `yaml:"ftpUploaded"`
+	S3Uploaded             bool     `yaml:"s3Uploaded"`
+	AuphonicProduction     bool     `yaml:"auphonicProduction"`
+	WordpressBlogCreated   bool     `yaml:"wordpressBlogCreated"`
+	TranscriptionGenerated bool     `yaml:"transcriptionGenerated"`
+	GPT4PostProcessed      bool     `yaml:"gpt4PostProcessed"`
+	Downloaded             bool     `yaml:"downloaded"`
 }
 
 type StateReaderWriter interface {
@@ -84,6 +86,7 @@ func createIfNotExists(stateFilePath string) error {
 	}
 	return nil
 }
+
 func (file StateFile) GetStateFilePath() string {
 	path := config.Dir()
 	return filepath.Join(path, filepath.Base(path)+".state.yml")
