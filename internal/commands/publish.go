@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
+	"podflow/internal/ai"
 	config "podflow/internal/configuration"
 	"podflow/internal/input"
 	"podflow/internal/state"
@@ -165,6 +166,54 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 				color.Green("  Wordpress production done")
 			} else {
 				color.Green("  Wordpress production skipped")
+			}
+		}
+
+		if step.OpenAi != (config.OpenAi{}) {
+			fmt.Printf("\n\n[%d/%d] OpenAi transcription \n", (i + 1), len(replacedPodflowConfig.Steps))
+			if !currentState.TranscriptionGenerated {
+				transcribed, err := ai.Transcribe(step.OpenAi.Episode, step.OpenAi.APIKey)
+				if err != nil {
+					color.Red(errorPrefix + err.Error())
+					return err
+				}
+
+				textFile := ai.TranscribedTextFile{}
+
+				if err := textFile.Write(transcribed); err != nil {
+					color.Red(errorPrefix + err.Error())
+					return err
+				}
+
+				currentState.TranscriptionGenerated = true
+				if err := stateIo.Write(currentState); err != nil {
+					return err
+				}
+				color.Green("  Audio file has been transcribed")
+			} else {
+				color.Green("  Audio file transcription skipped")
+			}
+			if !currentState.GPT4PostProcessed {
+				transcribed, err := ai.Transcribe(step.OpenAi.Episode, step.OpenAi.APIKey)
+				if err != nil {
+					color.Red(errorPrefix + err.Error())
+					return err
+				}
+
+				textFile := ai.TranscribedTextFile{}
+
+				if err := textFile.Write(transcribed); err != nil {
+					color.Red(errorPrefix + err.Error())
+					return err
+				}
+
+				currentState.GPT4PostProcessed = true
+				if err := stateIo.Write(currentState); err != nil {
+					return err
+				}
+				color.Green("  Audio has been post-processed")
+			} else {
+				color.Green("  Audio post-processing skipped")
 			}
 		}
 

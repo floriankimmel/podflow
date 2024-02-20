@@ -62,12 +62,18 @@ type Wordpress struct {
 	Chapter   string `yaml:"chapter,omitempty"`
 }
 
+type OpenAi struct {
+	APIKey  string `yaml:"apiKey,omitempty"`
+	Episode string `yaml:"episode,omitempty"`
+}
+
 type Step struct {
 	FTP       FTP       `yaml:"ftp,omitempty"`
 	Download  FTP       `yaml:"download,omitempty"`
 	S3        S3        `yaml:"s3,omitempty"`
 	Auphonic  Auphonic  `yaml:"auphonic,omitempty"`
 	Wordpress Wordpress `yaml:"wordpress,omitempty"`
+	OpenAi    OpenAi    `yaml:"openai,omitempty"`
 }
 
 type Configuration struct {
@@ -155,6 +161,11 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
 			replace(&config.Steps[i].Wordpress.Image, replacementValues)
 			replace(&config.Steps[i].Wordpress.ShowNotes, replacementValues)
 			replace(&config.Steps[i].Wordpress.APIKey, replacementValues)
+		}
+
+		if config.Steps[i].OpenAi != (OpenAi{}) {
+			replace(&config.Steps[i].OpenAi.Episode, replacementValues)
+			replace(&config.Steps[i].OpenAi.APIKey, replacementValues)
 		}
 
 		if len(config.Steps[i].Auphonic.Files) > 0 {
