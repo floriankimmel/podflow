@@ -22,7 +22,7 @@ var _ = Describe("The state of the current podflow", func() {
 		Expect(state).ShouldNot(BeNil())
 	})
 
-	It("can be writte", func() {
+	It("can be written", func() {
 		state := state.State{
 			Metadata: state.Metadata{
 				EpisodeNumber: 1,

@@ -4,6 +4,7 @@ go 1.21.5
 
 require (
 	github.com/aws/aws-sdk-go v1.49.21
+	github.com/chzyer/readline v1.5.1
 	github.com/fatih/color v1.16.0
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/onsi/ginkgo/v2 v2.13.2

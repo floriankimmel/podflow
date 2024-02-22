@@ -15,7 +15,7 @@ import (
 
 type MockInput struct{}
 
-func (input MockInput) Text() string {
+func (input MockInput) Text(prompt string) string {
 	return "Title"
 }
 

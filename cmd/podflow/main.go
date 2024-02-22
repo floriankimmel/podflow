@@ -79,6 +79,93 @@ func main() {
 					return nil
 				},
 			},
+			{
+				Name:    "chapter",
+				Aliases: []string{"se"},
+				Usage:   "Managing chapter marks during recording",
+				Subcommands: []*cli.Command{
+					{
+						Name:  "add",
+						Usage: "add a new chapter mark",
+						Action: func(cCtx *cli.Context) error {
+							chapter, err := state.EnterChapterMark(state.StateFile{}, input.Stdin{})
+
+							if chapter.Name != "" && err == nil {
+								fmt.Printf("Chapter name: %s, Time: %s", chapter.Name, chapter.Time)
+							}
+
+							if err != nil {
+								return cli.Exit("", 1)
+							}
+
+							return nil
+						},
+					},
+					{
+						Name:  "start",
+						Usage: "add start of recording",
+						Action: func(cCtx *cli.Context) error {
+							chapter, err := state.StartEpisode(state.StateFile{})
+
+							if chapter.Name != "" && err == nil {
+								fmt.Printf("Chapter name: %s, Time: %s", chapter.Name, chapter.Time)
+							}
+
+							if err != nil {
+								return cli.Exit("", 1)
+							}
+
+							return nil
+						},
+					},
+					{
+						Name:  "end",
+						Usage: "add end of recording",
+						Action: func(cCtx *cli.Context) error {
+							chapter, err := state.EndEpisode(state.StateFile{})
+
+							if chapter.Name != "" && err == nil {
+								fmt.Printf("Chapter name: %s, Time: %s", chapter.Name, chapter.Time)
+							}
+
+							if err != nil {
+								return cli.Exit("", 1)
+							}
+
+							return nil
+						},
+					},
+					{
+						Name:  "toggle-pause",
+						Usage: "toggle pause on/off",
+						Action: func(cCtx *cli.Context) error {
+							chapter, err := state.TogglePauseEpisode(state.StateFile{})
+
+							if chapter.Name != "" && err == nil {
+								fmt.Printf("Chapter name: %s, Time: %s", chapter.Name, chapter.Time)
+							}
+
+							if err != nil {
+								return cli.Exit("", 1)
+							}
+
+							return nil
+						},
+					},
+					{
+						Name:  "export",
+						Usage: "export chapter marks",
+						Action: func(cCtx *cli.Context) error {
+							err := state.Export(state.StateFile{})
+							if err != nil {
+								return cli.Exit("", 1)
+							}
+
+							return nil
+						},
+					},
+				},
+			},
 		},
 	}
 

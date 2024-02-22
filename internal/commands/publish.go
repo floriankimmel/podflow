@@ -42,7 +42,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 		FolderName: filepath.Base(dir),
 	}
 
-	if currentState.Metadata == (state.Metadata{}) {
+	if currentState.Metadata == (state.Metadata{}) || currentState.Metadata.EpisodeNumber == 0 {
 		releaseInfo := config.GetReleaseInformation(io, time.Now())
 
 		number, _ := strconv.Atoi(releaseInfo.EpisodeNumber)
@@ -52,8 +52,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 		fmt.Printf(" Episode number: %d \n", episodeNumber)
 		fmt.Printf(" Next release date: %s \n", nextReleaseDate)
 
-		fmt.Print(" Enter episode title: ")
-		episodeTitle := input.Text()
+		episodeTitle := input.Text(" Enter episode title: ")
 
 		currentState.Metadata = state.Metadata{
 			EpisodeNumber: episodeNumber,

@@ -9,17 +9,18 @@ import (
 )
 
 type Metadata struct {
-	EpisodeNumber int    `yaml:"episodeNumber"`
-	ReleaseDate   string `yaml:"releaseDate"`
-	Title         string `yaml:"title"`
+	EpisodeNumber int    `yaml:"episodeNumber,omitempty"`
+	ReleaseDate   string `yaml:"releaseDate,omitempty"`
+	Title         string `yaml:"title,omitempty"`
 }
 type State struct {
-	Metadata             Metadata `yaml:"metadata"`
-	FTPUploaded          bool     `yaml:"ftpUploaded"`
-	S3Uploaded           bool     `yaml:"s3Uploaded"`
-	AuphonicProduction   bool     `yaml:"auphonicProduction"`
-	WordpressBlogCreated bool     `yaml:"wordpressBlogCreated"`
-	Downloaded           bool     `yaml:"downloaded"`
+	Metadata             Metadata      `yaml:"metadata,omitempty"`
+	FTPUploaded          bool          `yaml:"ftpUploaded,omitempty"`
+	S3Uploaded           bool          `yaml:"s3Uploaded,omitempty"`
+	AuphonicProduction   bool          `yaml:"auphonicProduction,omitempty"`
+	WordpressBlogCreated bool          `yaml:"wordpressBlogCreated,omitempty"`
+	Downloaded           bool          `yaml:"downloaded,omitempty"`
+	ChapterMarks         []ChapterMark `yaml:"chapterMarks,omitempty"`
 }
 
 type StateReaderWriter interface {
