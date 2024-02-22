@@ -1,7 +1,6 @@
 package state_test
 
 import (
-	"os"
 	"podflow/internal/state"
 	"time"
 
@@ -11,11 +10,14 @@ import (
 
 type ChapterStateFile struct{}
 
+var testState = state.State{}
+
 func (file ChapterStateFile) Read() (state.State, error) {
-	return state.State{}, nil
+	return testState, nil
 }
 
 func (file ChapterStateFile) Write(state state.State) error {
+	testState = state
 	return nil
 }
 
@@ -24,11 +26,11 @@ func (file ChapterStateFile) GetStateFilePath() string {
 }
 
 var _ = AfterEach(func() {
-	os.Remove(stateReaderWriter.GetStateFilePath())
+	testState = state.State{}
 })
 
-var _ = Describe("A chapter mark can be", func() {
-	It("set at the start of the recording", func() {
+var _ = Describe("The time of", func() {
+	It("the episode start can be stored", func() {
 		mark, err := state.StartEpisode(ChapterStateFile{})
 
 		Expect(err).Should(BeNil())
@@ -36,7 +38,7 @@ var _ = Describe("A chapter mark can be", func() {
 		Expect(mark.Name).Should(Equal("Start"))
 	})
 
-	It("set at the start of the recording and returns old value when calling it twice", func() {
+	It("the episode start can only be stored once", func() {
 		mark, err := state.StartEpisode(ChapterStateFile{})
 
 		Expect(err).Should(BeNil())
@@ -47,8 +49,36 @@ var _ = Describe("A chapter mark can be", func() {
 		Expect(err).Should(BeNil())
 		Expect(mark2.Time.Round(time.Second)).Should(Equal(mark.Time.Round(time.Second)))
 	})
+	It("a pause can be storeds so that it will be subtracted from the chapter mark export", func() {
+		start, err := state.TogglePauseEpisode(ChapterStateFile{})
 
-	It("set at the end of the recording", func() {
+		Expect(err).Should(BeNil())
+		Expect(start).ShouldNot(BeNil())
+		Expect(start.Name).Should(Equal("PauseStart"))
+
+		end, err := state.TogglePauseEpisode(ChapterStateFile{})
+		Expect(err).Should(BeNil())
+		Expect(end.Name).Should(Equal("PauseEnd"))
+		Expect(end.Time.Round(time.Second)).Should(Equal(start.Time.Round(time.Second)))
+	})
+
+	It("a pause can be stored multiple times", func() {
+		start, err := state.TogglePauseEpisode(ChapterStateFile{})
+		Expect(start.Name).Should(Equal("PauseStart"))
+		Expect(err).Should(BeNil())
+
+		_, err = state.TogglePauseEpisode(ChapterStateFile{})
+		Expect(err).Should(BeNil())
+
+		time.Sleep(1 * time.Second)
+		secondStart, err := state.TogglePauseEpisode(ChapterStateFile{})
+		Expect(err).Should(BeNil())
+		Expect(secondStart.Name).Should(Equal("PauseStart"))
+
+		Expect(secondStart.Time.Round(time.Second)).ShouldNot(Equal(start.Time.Round(time.Second)))
+	})
+
+	It("the end of the recording can be stored", func() {
 		mark, err := state.EndEpisode(ChapterStateFile{})
 
 		Expect(err).Should(BeNil())
@@ -56,7 +86,7 @@ var _ = Describe("A chapter mark can be", func() {
 		Expect(mark.Name).Should(Equal("End"))
 	})
 
-	It("added at anytime", func() {
+	It("a chapter can be stored", func() {
 		mark, err := state.EnterChapterMark(ChapterStateFile{}, state.StringInput{Input: "Test"})
 
 		Expect(err).Should(BeNil())

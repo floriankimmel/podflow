@@ -9,6 +9,9 @@ import (
 	"time"
 )
 
+const pauseStart = "PauseStart"
+const pauseEnd = "PauseEnd"
+
 type StringInput struct {
 	Input string
 }
@@ -38,6 +41,27 @@ func EndEpisode(file StateReaderWriter) (ChapterMark, error) {
 	return saveChapterMark(file, mark)
 }
 
+func TogglePauseEpisode(file StateReaderWriter) (ChapterMark, error) {
+	state, err := file.Read()
+
+	if err != nil {
+		return ChapterMark{}, err
+	}
+
+	input := StringInput{Input: pauseStart}
+
+	if len(state.ChapterMarks) > 0 {
+		lastMark := state.ChapterMarks[len(state.ChapterMarks)-1]
+
+		if lastMark.Name == pauseStart {
+			input = StringInput{Input: pauseEnd}
+		}
+	}
+
+	mark := AddChapterMark(input)
+	return saveChapterMark(file, mark)
+}
+
 func saveChapterMark(file StateReaderWriter, mark ChapterMark) (ChapterMark, error) {
 	state, err := file.Read()
 
@@ -45,9 +69,11 @@ func saveChapterMark(file StateReaderWriter, mark ChapterMark) (ChapterMark, err
 		return mark, err
 	}
 
-	for _, existingMark := range state.ChapterMarks {
-		if existingMark.Name == mark.Name {
-			return existingMark, nil
+	if mark.Name != pauseStart && mark.Name != pauseEnd {
+		for _, existingMark := range state.ChapterMarks {
+			if existingMark.Name == mark.Name {
+				return existingMark, nil
+			}
 		}
 	}
 
@@ -101,8 +127,21 @@ func Export(stateFile StateFile) error {
 
 	defer file.Close()
 
+	start := chapters[0].Time
+	pauses := []time.Duration{}
+
 	for i := 1; i < len(chapters); i++ {
-		diff := chapters[i].Time.Sub(chapters[i-1].Time)
+		if chapters[i].Name == pauseStart {
+			pauses = append(pauses, chapters[i+1].Time.Sub(chapters[i].Time))
+			i++
+			continue
+		}
+
+		diff := chapters[i].Time.Sub(start)
+
+		for _, pause := range pauses {
+			diff -= pause
+		}
 
 		record := fmt.Sprintf("%s %s\n", formatDuration(diff), chapters[i].Name)
 

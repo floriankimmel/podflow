@@ -136,6 +136,23 @@ func main() {
 						},
 					},
 					{
+						Name:  "toggle-pause",
+						Usage: "toggle pause on/off",
+						Action: func(cCtx *cli.Context) error {
+							chapter, err := state.TogglePauseEpisode(state.StateFile{})
+
+							if chapter.Name != "" && err == nil {
+								fmt.Printf("Chapter name: %s, Time: %s", chapter.Name, chapter.Time)
+							}
+
+							if err != nil {
+								return cli.Exit("", 1)
+							}
+
+							return nil
+						},
+					},
+					{
 						Name:  "export",
 						Usage: "export chapter marks",
 						Action: func(cCtx *cli.Context) error {

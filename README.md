@@ -7,6 +7,7 @@ highly configurable to your specific needs.
 - 💡 Fully configurable - define your own workflow
 - 🧠 Statefull. Each successful step will not be executed again.
 - 🎖️ Choose from different services like FTP (Up- and Download), Amazon S3, Auphonic.
+- 🔖 Create chapter marks independent of audio recording tool.
 
 ## 📦 Installation
 
@@ -25,8 +26,15 @@ During recording you can create chapter marks independent of your recording soft
 state yml of the project
 
 ```bash
-podflow chapter start | end | add
+podflow chapter start | end | add | toggle-pause
 ```
+| Argument      | Description |
+| ------------- | -------------------------------
+| `start`| Mark the time the recording has started |
+| `add` | Add a new chapter mark|
+| `end` | Mark the time the recording has ended |
+| `toggle-pause` | Start/End a pause. This time will be substracted when exporting the chapter marks |
+
 To export chapter marks to a [Ultrashall](https://ultraschall.fm/), [Podlove](https://docs.podlove.org/) and [Auphonic](https://auphonic.com) compatible format use
 
 ```bash
