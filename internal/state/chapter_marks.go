@@ -119,7 +119,7 @@ func Export(stateFile StateFile) error {
 	chapters := state.ChapterMarks
 
 	path := config.Dir()
-	chapterFilePath := filepath.Join(path, "export_"+filepath.Base(path)+".chapters.txt")
+	chapterFilePath := filepath.Join(path, filepath.Base(path)+".chapters.txt")
 	file, err := os.Create(chapterFilePath)
 	if err != nil {
 		return err
