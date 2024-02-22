@@ -32,13 +32,13 @@ type AuphonicRequest struct {
 	Action    string   `json:"action"`
 }
 
-func StartAuphonicProduction(host string, step config.Step) (int, error) {
+func StartAuphonicProduction(host string, step config.Step, sleepBetweenRequests time.Duration) (int, error) {
 
 	auphonicConfig := step.Auphonic
 	method := "POST"
 	url := host + "/api/productions.json"
 
-	fmt.Printf("\n  Create " + auphonicConfig.Title + " Production\n")
+	fmt.Printf("\n Create " + auphonicConfig.Title + " Production\n")
 
 	headers := map[string]string{
 		"Content-Type":  "application/json",
@@ -94,12 +94,13 @@ func StartAuphonicProduction(host string, step config.Step) (int, error) {
 				fmt.Print(output)
 
 				production.Result.Status = getCurrentStatus(host, auphonicConfig.Username, auphonicConfig.Password, production.Result.UUID)
-				time.Sleep(2 * time.Second)
+				time.Sleep(sleepBetweenRequests * time.Second)
 			}
 
 			successfulProductions++
 		}
 	}
+	fmt.Println("")
 
 	return successfulProductions, nil
 }
@@ -120,7 +121,7 @@ func getCurrentStatus(host string, username string, password string, uuid string
 	})
 
 	if err != nil || resp.Status != 200 {
-		return "Error getting status from Auphonic API."
+		return "Error Auphonic API"
 	}
 
 	return toProductionJSON(resp.Body).Result.Status

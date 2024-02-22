@@ -15,7 +15,7 @@ import (
 func S3Upload(awsConfig config.S3) error {
 	fmt.Println("  Uploading files to S3")
 	for _, bucket := range awsConfig.Buckets {
-		fmt.Printf("\n   Uploading files to bucket %s \n", bucket.Name)
+		fmt.Printf("\n  Uploading files to bucket %s \n", bucket.Name)
 		sess, err := session.NewSession(&aws.Config{
 			Region: aws.String(bucket.Region),
 		})

@@ -64,10 +64,9 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 			return err
 		}
 
-		nextEpisodeNumber := currentState.Metadata.EpisodeNumber + 1
-		replacementValues.EpisodeNumber = strconv.Itoa(nextEpisodeNumber)
+		replacementValues.EpisodeNumber = strconv.Itoa(episodeNumber)
 
-		if err := config.SetEpisodeNumber(io, strconv.Itoa(nextEpisodeNumber)); err != nil {
+		if err := config.SetEpisodeNumber(io, strconv.Itoa(episodeNumber)); err != nil {
 
 			return err
 		}
@@ -171,7 +170,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 			fmt.Printf("\n\n[%d/%d] Auphonic \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.AuphonicProduction {
 				step.Auphonic.Title = strings.Replace(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title, -1)
-				_, err := targets.StartAuphonicProduction("https://auphonic.com", step)
+				_, err := targets.StartAuphonicProduction("https://auphonic.com", step, 20)
 
 				if err != nil {
 					color.Red(errorPrefix + err.Error())

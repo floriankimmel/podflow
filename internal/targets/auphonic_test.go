@@ -115,7 +115,7 @@ var _ = Describe("An auphonic production can be", Ordered, func() {
 			},
 		}
 
-		successfulProductions, err := targets.StartAuphonicProduction(auphonicTestServer.URL, step)
+		successfulProductions, err := targets.StartAuphonicProduction(auphonicTestServer.URL, step, 0)
 
 		Expect(err).Should(BeNil())
 		Expect(successfulProductions).Should(Equal(1))
@@ -140,7 +140,7 @@ var _ = Describe("An auphonic production can be", Ordered, func() {
 			},
 		}
 
-		successfulProductions, err := targets.StartAuphonicProduction(auphonicTestServer.URL, step)
+		successfulProductions, err := targets.StartAuphonicProduction(auphonicTestServer.URL, step, 0)
 
 		Expect(err).Should(BeNil())
 		Expect(successfulProductions).Should(Equal(0))
@@ -170,7 +170,7 @@ var _ = Describe("An auphonic production can be", Ordered, func() {
 			},
 		}
 
-		successfulProductions, err := targets.StartAuphonicProduction(auphonicTestServer.URL, step)
+		successfulProductions, err := targets.StartAuphonicProduction(auphonicTestServer.URL, step, 0)
 
 		Expect(err).Should(BeNil())
 		Expect(successfulProductions).Should(Equal(1))
