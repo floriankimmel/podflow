@@ -349,7 +349,7 @@ steps:
 
     - wordpress:
         apiKey: "{{env.WORDPRESS_API_KEY}}"
-        server: "https://laufendentdecken-podcast.at"
+        server: "https://your-wordpress-url.at"
         episode: '{{episodeNumber}}_{{folderName}}'
         image: '{{folderName}}.png'
         showNotes: '{{folderName}}.md'
