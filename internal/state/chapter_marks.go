@@ -87,11 +87,12 @@ func saveChapterMark(file StateReaderWriter, mark ChapterMark) (ChapterMark, err
 }
 
 func AddChapterMark(input input.Input) ChapterMark {
+	time := time.Now()
 	chapterName := input.Text("Chapter: ")
 
 	chapterMark := ChapterMark{
 		Name: chapterName,
-		Time: time.Now(),
+		Time: time,
 	}
 
 	return chapterMark
