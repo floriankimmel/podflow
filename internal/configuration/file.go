@@ -61,11 +61,18 @@ func (file ConfigurationFile) Write(config Configuration) error {
 
 	return nil
 }
+func GetConfigFileName() string {
+	podflowConfigFile, envFound := os.LookupEnv("PODFLOW_CONFIG_FILE")
+	if !envFound {
+		podflowConfigFile = "config.yml"
+	}
+	return podflowConfigFile
+}
 
 func (io ConfigurationFile) Path() (string, error) {
 	homeDir, err := os.UserHomeDir()
-	configFilePath := filepath.Join(homeDir, defaultConfigName, defaultConfigDir, "config.yml")
-
+	podflowConfigFile := GetConfigFileName()
+	configFilePath := filepath.Join(homeDir, defaultConfigName, defaultConfigDir, podflowConfigFile)
 	if err != nil {
 		return "", err
 	}

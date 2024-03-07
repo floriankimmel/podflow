@@ -99,6 +99,17 @@ If during recording chapter marks were added they are part of the state file rea
 
 ## ⚙️ Configuration
 
+### Loading configuration
+
+By default podflow looks for a configuration in the `$HOME\.config\config.yml` file. If there is a need for different configuration files
+the default name `config.yml` can be overwritten by using the environment variable `PODFLOW_CONFIG_FILE`. So by running
+
+```bash
+PODFLOW_CONFIG_FILE=test.yml podflow check
+```
+
+podflow will load `$HOME\.config\test.yml`.
+
 ### General meta information
 
 General information about the release of an episode
