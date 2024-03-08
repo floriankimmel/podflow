@@ -50,10 +50,11 @@ func (i *Image) uploadTo(server string, apiKey string) error {
 	writer.Close()
 
 	resp, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:  "POST",
-		URL:     server + "/wp-json/wp/v2/media",
-		Headers: headers,
-		Body:    featureMediaBody,
+		Method:      "POST",
+		URL:         server + "/wp-json/wp/v2/media",
+		Headers:     headers,
+		Body:        featureMediaBody,
+		ProgressBar: true,
 	})
 	if err != nil {
 		return err

@@ -16,14 +16,15 @@ type APIResponse struct {
 }
 
 type HTTPRequest struct {
-	Method  string
-	URL     string
-	Headers map[string]string
-	Body    interface{}
+	Method      string
+	URL         string
+	Headers     map[string]string
+	Body        interface{}
+	ProgressBar bool
 }
 
 func SendHTTPRequest(request HTTPRequest) (*APIResponse, error) {
-	var payload io.Reader
+	var payload bytes.Buffer
 
 	log.Printf("Headers: %s\n", request.Headers)
 	log.Printf("Method: %s\n", request.Method)
@@ -39,15 +40,28 @@ func SendHTTPRequest(request HTTPRequest) (*APIResponse, error) {
 		}
 
 		log.Printf("Sending request to %s with payload %s\n", request.URL, string(jsonPayload))
-		payload = bytes.NewBuffer(jsonPayload)
+		_, err := payload.Write(jsonPayload)
+		if err != nil {
+			return nil, err
+		}
+
 	}
 
 	if strings.Contains(request.Headers["Content-Type"], "multipart/form-data") {
-		payload = request.Body.(*bytes.Buffer)
-		log.Printf("Sending request to %s with payload %s\n", request.URL, payload)
+		payload = *request.Body.(*bytes.Buffer)
 	}
 
-	req, err := http.NewRequest(request.Method, request.URL, payload)
+	var reader io.Reader = &payload
+
+	if request.ProgressBar {
+		reader = &ProgressReader{
+			reader: bytes.NewReader(payload.Bytes()),
+			total:  int64(payload.Len()),
+		}
+	}
+
+	req, err := http.NewRequest(request.Method, request.URL, reader)
+
 	if err != nil {
 		return nil, err
 	}
