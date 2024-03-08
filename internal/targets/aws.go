@@ -15,7 +15,7 @@ import (
 func S3Upload(awsConfig config.S3) error {
 	fmt.Println("  Uploading files to S3")
 	for _, bucket := range awsConfig.Buckets {
-		fmt.Printf("\n  Uploading files to bucket %s \n", bucket.Name)
+		fmt.Printf("\n  Uploading files to bucket %s", bucket.Name)
 		sess, err := session.NewSession(&aws.Config{
 			Region: aws.String(bucket.Region),
 		})
@@ -25,10 +25,16 @@ func S3Upload(awsConfig config.S3) error {
 		svc := s3.New(sess)
 
 		for _, s3File := range bucket.Files {
-			fmt.Printf("  Uploading file %s to %s \n", s3File.Source, s3File.Target)
+			fmt.Printf("\n  Uploading file %s to %s \n", s3File.Source, s3File.Target)
 			file, err := os.Open(s3File.Source)
 
 			if err != nil {
+				return err
+			}
+
+			fi, err := file.Stat()
+			if err != nil {
+				fmt.Println(err)
 				return err
 			}
 
@@ -42,7 +48,10 @@ func S3Upload(awsConfig config.S3) error {
 			_, err = svc.PutObject(&s3.PutObjectInput{
 				Bucket: aws.String(bucket.Name),
 				Key:    aws.String(s3File.Target),
-				Body:   bytes.NewReader(buf.Bytes()),
+				Body: &ProgressReader{
+					reader: bytes.NewReader(buf.Bytes()),
+					total:  fi.Size(),
+				},
 			})
 
 			if err != nil {
@@ -50,6 +59,8 @@ func S3Upload(awsConfig config.S3) error {
 			}
 		}
 	}
+
+	fmt.Printf("\n")
 
 	return nil
 }

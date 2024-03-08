@@ -66,23 +66,33 @@ func FtpUpload(step config.Step) error {
 		log.Fatal(err)
 	}
 
+	fmt.Printf("  Uploading to %s", ftpConfig.Host)
 	err = c.Login(ftpConfig.Username, ftpConfig.Password)
 	if err != nil {
 		return err
 	}
 
 	for _, fileToUpload := range filesToUpload {
-		fmt.Printf("  Uploading file %s to %s \n", fileToUpload.Source, fileToUpload.Target)
+		fmt.Printf("\n  Uploading file %s to %s \n", fileToUpload.Source, fileToUpload.Target)
 		file, err := os.Open(fileToUpload.Source)
 		if err != nil {
 			return err
 		}
-		err = c.Stor(fileToUpload.Target, file)
+		fi, err := file.Stat()
+		if err != nil {
+			fmt.Println(err)
+			return err
+		}
+		err = c.Stor(fileToUpload.Target, &ProgressReader{
+			reader: file,
+			total:  fi.Size(),
+		})
 		if err != nil {
 			return err
 		}
 		file.Close()
 	}
+	fmt.Printf("\n")
 
 	if err := c.Quit(); err != nil {
 		return err

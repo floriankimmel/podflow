@@ -50,7 +50,7 @@ func ScheduleEpisode(
 		return Episode{}, err
 	}
 
-	fmt.Println(" Setting featured image")
+	fmt.Println(" Uploading featured image")
 	image := Image{
 		title: title,
 		path:  wordpressConfig.Image,
@@ -60,6 +60,8 @@ func ScheduleEpisode(
 		return Episode{}, err
 	}
 
+	fmt.Printf("\n")
+	fmt.Println(" Set featured image")
 	if err := episode.setFeaturedMedia(image); err != nil {
 		return Episode{}, err
 	}
