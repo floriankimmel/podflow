@@ -58,6 +58,13 @@ podflow check
 
 ## 💻 State
 
+```bash
+podflow state
+```
+The state command shows you the current state of the episode in a human readable way.
+
+### How does it work?
+
 Sometimes services are not available and errors can happen. Therefore podflow is statefull and
 makes executing the command again and again very easy. Everyting that already happened successfully
 will be remember in `{{folderName}}.state.yml` which makes it possible for podflow to continue where it left off.

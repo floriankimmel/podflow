@@ -50,6 +50,21 @@ func main() {
 		EnableBashCompletion: true,
 		Commands: []*cli.Command{
 			{
+				Name:    "state",
+				Aliases: []string{"s"},
+				Usage:   "Display current state of the episode",
+				Action: func(c *cli.Context) error {
+					printLogo()
+					err := cmd.State(state.StateFile{}, config.Dir())
+
+					if err != nil {
+						return cli.Exit("", 1)
+					}
+
+					return nil
+				},
+			},
+			{
 				Name:    "check",
 				Aliases: []string{"c"},
 				Usage:   "Check if all requirements are met",
