@@ -6,6 +6,7 @@ import (
 	"podflow/internal/markdown"
 	"podflow/internal/targets"
 	"strings"
+	"unicode"
 )
 
 const podloveURLPath = "/wp-json/podlove/v2/episodes/"
@@ -89,9 +90,19 @@ func (e *Episode) setContent(showNotesFile string) error {
 	return err
 }
 
+func removeLetters(s string) string {
+	var result strings.Builder
+	for _, r := range s {
+		if !unicode.IsLetter(r) {
+			result.WriteRune(r)
+		}
+	}
+	return result.String()
+}
+
 func (e *Episode) setEpisodeNumber(episodeNumber string) error {
 	body := map[string]string{
-		"number": episodeNumber,
+		"number": removeLetters(episodeNumber),
 	}
 
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{

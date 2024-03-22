@@ -60,7 +60,7 @@ var _ = Describe("Running the publish command", func() {
 
 		state, _ := stateIo.Read()
 		Expect(state.Metadata.Title).Should(Equal("Title"))
-		Expect(state.Metadata.EpisodeNumber).Should(Equal(8))
+		Expect(state.Metadata.EpisodeNumber).Should(Equal("8"))
 	})
 
 	It("do not recalculate metadata if state is persisted", func() {
@@ -89,7 +89,7 @@ var _ = Describe("Running the publish command", func() {
 		if err := stateIo.Write(state.State{
 			Metadata: state.Metadata{
 				Title:         "Persisted Title",
-				EpisodeNumber: 9,
+				EpisodeNumber: "9",
 			},
 		}); err != nil {
 			panic(err)
@@ -99,6 +99,6 @@ var _ = Describe("Running the publish command", func() {
 
 		state, _ := stateIo.Read()
 		Expect(state.Metadata.Title).Should(Equal("Persisted Title"))
-		Expect(state.Metadata.EpisodeNumber).Should(Equal(9))
+		Expect(state.Metadata.EpisodeNumber).Should(Equal("9"))
 	})
 })

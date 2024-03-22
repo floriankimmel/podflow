@@ -25,7 +25,7 @@ var _ = Describe("The state of the current podflow", func() {
 	It("can be written", func() {
 		state := state.State{
 			Metadata: state.Metadata{
-				EpisodeNumber: 1,
+				EpisodeNumber: "1",
 				ReleaseDate:   "2021-01-01 09:00:00",
 				Title:         "Podflow",
 			},
@@ -37,7 +37,7 @@ var _ = Describe("The state of the current podflow", func() {
 		stateFile, _ := stateReaderWriter.Read()
 
 		Expect(stateFile.FTPUploaded).Should(Equal(false))
-		Expect(stateFile.Metadata.EpisodeNumber).Should(Equal(1))
+		Expect(stateFile.Metadata.EpisodeNumber).Should(Equal("1"))
 	})
 
 })

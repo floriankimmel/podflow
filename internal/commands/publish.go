@@ -42,7 +42,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 		FolderName: filepath.Base(dir),
 	}
 
-	if currentState.Metadata == (state.Metadata{}) || currentState.Metadata.EpisodeNumber == 0 {
+	if currentState.Metadata == (state.Metadata{}) || currentState.Metadata.EpisodeNumber == "" {
 		releaseInfo := config.GetReleaseInformation(io, time.Now())
 
 		number, _ := strconv.Atoi(releaseInfo.EpisodeNumber)
@@ -55,7 +55,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 		episodeTitle := input.Text(" Enter episode title: ")
 
 		currentState.Metadata = state.Metadata{
-			EpisodeNumber: episodeNumber,
+			EpisodeNumber: strconv.Itoa(episodeNumber),
 			ReleaseDate:   nextReleaseDate,
 			Title:         episodeTitle,
 		}
@@ -74,11 +74,11 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 		fmt.Println("")
 
 	} else {
-		fmt.Printf(" Episode number: %d \n", currentState.Metadata.EpisodeNumber)
+		fmt.Printf(" Episode number: %s \n", currentState.Metadata.EpisodeNumber)
 		fmt.Printf(" Next release date: %s \n", currentState.Metadata.ReleaseDate)
 		fmt.Printf(" Episode title: %s", currentState.Metadata.Title)
 
-		replacementValues.EpisodeNumber = strconv.Itoa(currentState.Metadata.EpisodeNumber)
+		replacementValues.EpisodeNumber = currentState.Metadata.EpisodeNumber
 
 	}
 	replacedPodflowConfig := config.ReplacePlaceholders(podflowConfig, replacementValues)
@@ -147,7 +147,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 				_, err := wordpress.ScheduleEpisode(
 					step,
 					currentState.Metadata.Title,
-					strconv.Itoa(currentState.Metadata.EpisodeNumber),
+					currentState.Metadata.EpisodeNumber,
 					currentState.Metadata.ReleaseDate,
 				)
 

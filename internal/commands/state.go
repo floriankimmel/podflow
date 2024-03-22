@@ -12,7 +12,7 @@ import (
 func State(stateIo state.StateReaderWriter, dir string) error {
 	currentState, _ := stateIo.Read()
 
-	fmt.Printf(" Episode number: %d \n", currentState.Metadata.EpisodeNumber)
+	fmt.Printf(" Episode number: %s \n", currentState.Metadata.EpisodeNumber)
 	fmt.Printf(" Next release date: %s \n", currentState.Metadata.ReleaseDate)
 	fmt.Printf(" Episode title: %s\n\n", currentState.Metadata.Title)
 

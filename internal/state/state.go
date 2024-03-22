@@ -9,7 +9,7 @@ import (
 )
 
 type Metadata struct {
-	EpisodeNumber int    `yaml:"episodeNumber,omitempty"`
+	EpisodeNumber string `yaml:"episodeNumber,omitempty"`
 	ReleaseDate   string `yaml:"releaseDate,omitempty"`
 	Title         string `yaml:"title,omitempty"`
 }
