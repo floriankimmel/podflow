@@ -69,16 +69,26 @@ Sometimes services are not available and errors can happen. Therefore podflow is
 makes executing the command again and again very easy. Everyting that already happened successfully
 will be remember in `{{folderName}}.state.yml` which makes it possible for podflow to continue where it left off.
 
+### 🧑‍💻 Wordpress
+```yml
+- metadata:
+    wordpressID: "1"
+    podloveID: "2"
+    featuredMediaID: "3"
+```
+We do store everyting related to the wordpress article to make sure there are no unwanted side effect when rerunning
+the schedule task.
+
 ### 🧑‍💻 Metadata
 ```yml
 - metadata:
-    episodeNumber: 239
+    episodeNumber: "239"
     releaseDate: "2025-01-12 09:00:00"
     title: Test
 ```
 | Argument      | Description |
 | ------------- | -------------------------------
-| `episodeNumber` | Episode number taken from the configuration and increased by 1|
+| `episodeNumber` | Episode number taken from the configuration and increased by 1. Can also be a string|
 | `releaseDate` | The actualy spefic datetime when this episode should be release to the public |
 | `title` | Title provided by the user |
 
