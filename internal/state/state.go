@@ -1,6 +1,7 @@
 package state
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	config "podflow/internal/configuration"
@@ -15,12 +16,18 @@ type Metadata struct {
 }
 type State struct {
 	Metadata             Metadata      `yaml:"metadata,omitempty"`
+	Wordpress            Wordpress     `yaml:"wordpress,omitempty"`
 	FTPUploaded          bool          `yaml:"ftpUploaded,omitempty"`
 	S3Uploaded           bool          `yaml:"s3Uploaded,omitempty"`
 	AuphonicProduction   bool          `yaml:"auphonicProduction,omitempty"`
 	WordpressBlogCreated bool          `yaml:"wordpressBlogCreated,omitempty"`
 	Downloaded           bool          `yaml:"downloaded,omitempty"`
 	ChapterMarks         []ChapterMark `yaml:"chapterMarks,omitempty"`
+}
+type Wordpress struct {
+	WordpressID     string      `yaml:"wordpressID,omitempty"`
+	PodloveID       json.Number `yaml:"podloveID,omitempty"`
+	FeaturedMediaID string      `yaml:"featuredMediaID,omitempty"`
 }
 
 type StateReaderWriter interface {

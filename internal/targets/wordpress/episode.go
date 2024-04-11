@@ -16,8 +16,8 @@ const wpURLPath = "/wp-json/wp/v2/episodes/"
 type Episode struct {
 	PodloveID   json.Number `json:"id,omitempty"`
 	WordpressID string      `json:"post_id,omitempty"`
-	server      string
-	apiKey      string
+	Server      string
+	APIKey      string
 }
 
 type Chapter struct {
@@ -43,8 +43,8 @@ func (e *Episode) setURL(url string) error {
 
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
 		Method:      "POST",
-		URL:         e.server + wpURLPath + e.WordpressID,
-		Headers:     headers(e.apiKey),
+		URL:         e.Server + wpURLPath + e.WordpressID,
+		Headers:     headers(e.APIKey),
 		Body:        body,
 		ProgressBar: false,
 	})
@@ -59,8 +59,8 @@ func (e *Episode) setSlug(slug string) error {
 
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
 		Method:      "POST",
-		URL:         e.server + podloveURLPath + string(e.PodloveID),
-		Headers:     headers(e.apiKey),
+		URL:         e.Server + podloveURLPath + string(e.PodloveID),
+		Headers:     headers(e.APIKey),
 		Body:        body,
 		ProgressBar: false,
 	})
@@ -81,8 +81,8 @@ func (e *Episode) setContent(showNotesFile string) error {
 
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
 		Method:      "POST",
-		URL:         e.server + wpURLPath + e.WordpressID,
-		Headers:     headers(e.apiKey),
+		URL:         e.Server + wpURLPath + e.WordpressID,
+		Headers:     headers(e.APIKey),
 		Body:        body,
 		ProgressBar: false,
 	})
@@ -107,8 +107,8 @@ func (e *Episode) setEpisodeNumber(episodeNumber string) error {
 
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
 		Method:      "POST",
-		URL:         e.server + podloveURLPath + string(e.PodloveID),
-		Headers:     headers(e.apiKey),
+		URL:         e.Server + podloveURLPath + string(e.PodloveID),
+		Headers:     headers(e.APIKey),
 		Body:        body,
 		ProgressBar: false,
 	})
@@ -124,8 +124,8 @@ func (e *Episode) schedulePostFor(scheduledDate string) error {
 
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
 		Method:      "POST",
-		URL:         e.server + wpURLPath + e.WordpressID,
-		Headers:     headers(e.apiKey),
+		URL:         e.Server + wpURLPath + e.WordpressID,
+		Headers:     headers(e.APIKey),
 		Body:        body,
 		ProgressBar: false,
 	})
@@ -140,8 +140,8 @@ func (e *Episode) setFeaturedMedia(image Image) error {
 
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
 		Method:      "POST",
-		URL:         e.server + wpURLPath + e.WordpressID,
-		Headers:     headers(e.apiKey),
+		URL:         e.Server + wpURLPath + e.WordpressID,
+		Headers:     headers(e.APIKey),
 		Body:        body,
 		ProgressBar: false,
 	})
@@ -156,8 +156,8 @@ func (e *Episode) setTitle(title string) error {
 
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
 		Method:      "POST",
-		URL:         e.server + podloveURLPath + string(e.PodloveID),
-		Headers:     headers(e.apiKey),
+		URL:         e.Server + podloveURLPath + string(e.PodloveID),
+		Headers:     headers(e.APIKey),
 		Body:        body,
 		ProgressBar: false,
 	})
@@ -203,15 +203,15 @@ func (e *Episode) create(server string, apiKey string) {
 	}
 
 	e.WordpressID = info.WordpressID
-	e.apiKey = apiKey
-	e.server = server
+	e.APIKey = apiKey
+	e.Server = server
 }
 
 func (e *Episode) enableAsset(assetID string) error {
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
 		Method:      "POST",
-		URL:         e.server + podloveURLPath + string(e.PodloveID) + "/media/" + assetID + "/enable",
-		Headers:     headers(e.apiKey),
+		URL:         e.Server + podloveURLPath + string(e.PodloveID) + "/media/" + assetID + "/enable",
+		Headers:     headers(e.APIKey),
 		Body:        nil,
 		ProgressBar: false,
 	})
@@ -231,8 +231,8 @@ func (e *Episode) addChapters(chapterFile string) error {
 
 	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
 		Method:      "PUT",
-		URL:         e.server + podloveChaptersURLPath + string(e.PodloveID),
-		Headers:     headers(e.apiKey),
+		URL:         e.Server + podloveChaptersURLPath + string(e.PodloveID),
+		Headers:     headers(e.APIKey),
 		Body:        chapters,
 		ProgressBar: false,
 	})

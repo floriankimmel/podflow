@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	config "podflow/internal/configuration"
 	"podflow/internal/targets/wordpress"
+	testData "podflow/test/testdata"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
@@ -27,7 +28,8 @@ var _ = Describe("An wordpress post can be", Ordered, func() {
 		title := "title"
 		scheduledDate := "2021-07-10 00:00:00"
 
-		successfulProductions, err := wordpress.ScheduleEpisode(step, title, "1", scheduledDate)
+		stateIo := testData.TempStateFile{}
+		successfulProductions, err := wordpress.ScheduleEpisode(step, stateIo, title, "1", scheduledDate)
 
 		Expect(err).Should(BeNil())
 		Expect(successfulProductions.PodloveID).Should(Equal("1"))

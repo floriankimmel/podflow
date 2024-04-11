@@ -146,6 +146,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 			if !currentState.WordpressBlogCreated {
 				_, err := wordpress.ScheduleEpisode(
 					step,
+					stateIo,
 					currentState.Metadata.Title,
 					currentState.Metadata.EpisodeNumber,
 					currentState.Metadata.ReleaseDate,
@@ -156,6 +157,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 					return err
 				}
 
+				currentState, _ = stateIo.Read()
 				currentState.WordpressBlogCreated = true
 				if err := stateIo.Write(currentState); err != nil {
 					return err
