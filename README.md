@@ -71,7 +71,7 @@ will be remember in `{{folderName}}.state.yml` which makes it possible for podfl
 
 ### 🧑‍💻 Wordpress
 ```yml
-- metadata:
+- wordpress:
     wordpressID: "1"
     podloveID: "2"
     featuredMediaID: "3"
