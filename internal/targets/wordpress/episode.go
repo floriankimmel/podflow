@@ -52,6 +52,23 @@ func (e *Episode) setURL(url string) error {
 	return err
 }
 
+func (e *Episode) setPoster(poster string) error {
+	body := map[string]string{
+		"poster":         poster,
+		"episode_poster": poster,
+	}
+
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:      "POST",
+		URL:         e.Server + podloveURLPath + string(e.PodloveID),
+		Headers:     headers(e.APIKey),
+		Body:        body,
+		ProgressBar: false,
+	})
+
+	return err
+}
+
 func (e *Episode) setSlug(slug string) error {
 	body := map[string]string{
 		"slug": slug,

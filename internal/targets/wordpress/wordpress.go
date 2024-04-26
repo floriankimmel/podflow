@@ -106,6 +106,11 @@ func ScheduleEpisode(
 		return Episode{}, err
 	}
 
+	fmt.Println(" Set poster")
+	if err := episode.setPoster(wordpressConfig.Poster); err != nil {
+		return Episode{}, err
+	}
+
 	fmt.Println(" Setting Assets")
 	if err := episode.enableAsset("2"); err != nil {
 		return Episode{}, err

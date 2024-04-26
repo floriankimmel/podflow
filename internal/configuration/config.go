@@ -57,6 +57,7 @@ type Wordpress struct {
 	APIKey    string `yaml:"apiKey,omitempty"`
 	Server    string `yaml:"server,omitempty"`
 	Image     string `yaml:"image,omitempty"`
+	Poster    string `yaml:"poster,omitempty"`
 	Episode   string `yaml:"episode,omitempty"`
 	ShowNotes string `yaml:"showNotes,omitempty"`
 	Chapter   string `yaml:"chapter,omitempty"`
@@ -153,6 +154,7 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
 			replace(&config.Steps[i].Wordpress.Episode, replacementValues)
 			replace(&config.Steps[i].Wordpress.Chapter, replacementValues)
 			replace(&config.Steps[i].Wordpress.Image, replacementValues)
+			replace(&config.Steps[i].Wordpress.Poster, replacementValues)
 			replace(&config.Steps[i].Wordpress.ShowNotes, replacementValues)
 			replace(&config.Steps[i].Wordpress.APIKey, replacementValues)
 		}
