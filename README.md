@@ -56,6 +56,13 @@ To just check if all requirements are met before starting the upload run:
 podflow check
 ```
 
+## 📂 Open
+```bash
+podflow open
+```
+
+The open command opens the current episode in wordpress in your browser
+
 ## 💻 State
 
 ```bash
