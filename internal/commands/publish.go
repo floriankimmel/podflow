@@ -17,8 +17,13 @@ import (
 
 const errorPrefix = " Error: "
 
-func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWriter, input input.Input, dir string) error {
-	if err := Check(io, dir); err != nil {
+func Publish(
+	io config.ConfigurationReaderWriter,
+	stateIo state.StateReaderWriter,
+	userInput input.Input,
+	workingDir string,
+) error {
+	if err := Check(io, workingDir); err != nil {
 		fmt.Println(" Error: " + err.Error())
 		return err
 	}
@@ -37,9 +42,9 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 	}
 
 	fmt.Println("")
-	fmt.Printf(" Start automatic workflow for file %s \n", config.EpisodeSlug(dir))
+	fmt.Printf(" Start automatic workflow for file %s \n", config.EpisodeSlug(workingDir))
 	replacementValues := config.ReplacementValues{
-		FolderName: filepath.Base(dir),
+		FolderName: filepath.Base(workingDir),
 	}
 
 	if currentState.Metadata == (state.Metadata{}) || currentState.Metadata.EpisodeNumber == "" {
@@ -52,7 +57,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 		fmt.Printf(" Episode number: %d \n", episodeNumber)
 		fmt.Printf(" Next release date: %s \n", nextReleaseDate)
 
-		episodeTitle := input.Text(" Enter episode title: ")
+		episodeTitle := userInput.Text(" Enter episode title: ")
 
 		currentState.Metadata = state.Metadata{
 			EpisodeNumber: strconv.Itoa(episodeNumber),
@@ -67,7 +72,6 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 		replacementValues.EpisodeNumber = strconv.Itoa(episodeNumber)
 
 		if err := config.SetEpisodeNumber(io, strconv.Itoa(episodeNumber)); err != nil {
-
 			return err
 		}
 
