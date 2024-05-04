@@ -9,6 +9,7 @@ require (
 	github.com/jlaffaye/ftp v0.2.0
 	github.com/onsi/ginkgo/v2 v2.13.2
 	github.com/onsi/gomega v1.29.0
+	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/russross/blackfriday/v2 v2.1.0
 	github.com/urfave/cli/v2 v2.27.1
 	golang.org/x/term v0.18.0

@@ -50,12 +50,26 @@ func main() {
 		EnableBashCompletion: true,
 		Commands: []*cli.Command{
 			{
+				Name:    "open",
+				Aliases: []string{"o"},
+				Usage:   "Open the current episode in the browser",
+				Action: func(c *cli.Context) error {
+					err := cmd.Open(state.StateFile{}, config.Dir(), config.ConfigurationFile{})
+
+					if err != nil {
+						return cli.Exit("", 1)
+					}
+
+					return nil
+				},
+			},
+			{
 				Name:    "state",
 				Aliases: []string{"s"},
 				Usage:   "Display current state of the episode",
 				Action: func(c *cli.Context) error {
 					printLogo()
-					err := cmd.State(state.StateFile{}, config.Dir())
+					err := cmd.State(state.StateFile{}, config.Dir(), config.ConfigurationFile{})
 
 					if err != nil {
 						return cli.Exit("", 1)
