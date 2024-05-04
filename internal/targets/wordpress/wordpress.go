@@ -9,14 +9,13 @@ import (
 )
 
 func ScheduleEpisode(
-	step config.Step,
+	wordpressConfig config.Wordpress,
 	stateIo state.StateReaderWriter,
 	title string,
 	currentEpisodeNumber string,
 	scheduledDate string,
 ) (Episode, error) {
 	fmt.Printf(" Schedule blogpost '%s' for %s \n", title, scheduledDate)
-	wordpressConfig := step.Wordpress
 
 	currentState, err := stateIo.Read()
 
@@ -38,7 +37,7 @@ func ScheduleEpisode(
 		}
 
 	} else {
-		fmt.Println("Episode already initiated")
+		fmt.Println(" Episode already initiated")
 
 		episode.APIKey = wordpressConfig.APIKey
 		episode.Server = wordpressConfig.Server

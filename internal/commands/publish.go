@@ -145,7 +145,7 @@ func Publish(io config.ConfigurationReaderWriter, stateIo state.StateReaderWrite
 			fmt.Printf("\n\n[%d/%d] Wordpress \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.WordpressBlogCreated {
 				_, err := wordpress.ScheduleEpisode(
-					step,
+					step.Wordpress,
 					stateIo,
 					currentState.Metadata.Title,
 					currentState.Metadata.EpisodeNumber,
