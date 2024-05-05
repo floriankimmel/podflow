@@ -1,58 +1,68 @@
 package wordpress
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 )
 
-type handler struct{}
+type WordpressTestServer struct {
+	PodloveID    string
+	WordpressID  string
+	Server       *httptest.Server
+	CreateCalled bool
+}
 
-func (h handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func WriteJSON(w http.ResponseWriter, v string) {
+	if _, err := w.Write([]byte(v)); err != nil {
+		w.WriteHeader(500)
+	}
+}
+func (h *WordpressTestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	podloveURL := fmt.Sprintf("/wp-json/podlove/v2/episodes/%s", h.PodloveID)
+	episodeURL := fmt.Sprintf("/wp-json/wp/v2/episodes/%s", h.WordpressID)
+	chapterURL := fmt.Sprintf("/wp-json/podlove/v2/chapters/%s", h.PodloveID)
+	mediaURL := fmt.Sprintf("/wp-json/podlove/v2/episodes/%s/media", h.PodloveID)
+
 	switch r.URL.Path {
-	case "/wp-json/podlove/v2/episodes/2":
-		{
-			if _, err := w.Write([]byte(`{"post_1": "1" }`)); err != nil {
-				w.WriteHeader(500)
-			}
-		}
+	case podloveURL:
+		WriteJSON(w, "{\"post_id\": \""+h.WordpressID+"\"}")
+	case episodeURL:
 	case "/wp-json/wp/v2/episodes/":
-		{
-			if _, err := w.Write([]byte(`{}`)); err != nil {
-				w.WriteHeader(500)
-			}
-		}
-	case "/wp-json/podlove/v2/chapters/2":
-	case "/wp-json/podlove/v2/episodes/2/media/3/enable":
-	case "/wp-json/podlove/v2/episodes/2/media/2/enable":
-		if _, err := w.Write([]byte(`{}`)); err != nil {
-			w.WriteHeader(500)
-		}
+		WriteJSON(w, "{}")
 	case "/wp-json/podlove/v2/episodes/":
-		if _, err := w.Write([]byte(`{"id": "2" }`)); err != nil {
-			w.WriteHeader(500)
+		{
+			WriteJSON(w, "{\"id\": "+h.PodloveID+"}")
+			h.CreateCalled = true
 		}
+	case chapterURL:
+	case mediaURL + "/3/enable":
+	case mediaURL + "/2/enable":
+		WriteJSON(w, "{}")
+
 	case "/wp-json/podlove/v2/chapters/":
-		if _, err := w.Write([]byte(`{}`)); err != nil {
-			w.WriteHeader(500)
-		}
+		WriteJSON(w, "{}")
 	case "/wp-json/wp/v2/media/":
-		if _, err := w.Write([]byte(`{"id": "3"}`)); err != nil {
-			w.WriteHeader(500)
-		}
+		WriteJSON(w, `{"id": "3"}`)
 	default:
 		w.WriteHeader(404)
 	}
 }
 
-func CreateWordPressTestServer() *httptest.Server {
+func CreateWordPressTestServer(WordpressID string, PodloveID string) *WordpressTestServer {
+	wordpressTestServer := &WordpressTestServer{
+		WordpressID: WordpressID,
+		PodloveID:   PodloveID,
+	}
 	mux := http.NewServeMux()
-	mux.HandleFunc("/wp-json/wp/v2/episodes/", handler{}.ServeHTTP)
-	mux.HandleFunc("/wp-json/podlove/v2/episodes/", handler{}.ServeHTTP)
-	mux.HandleFunc("/wp-json/podlove/v2/episodes/2", handler{}.ServeHTTP)
-	mux.HandleFunc("/wp-json/podlove/v2/chapters/", handler{}.ServeHTTP)
-	mux.HandleFunc("/wp-json/wp/v2/media/", handler{}.ServeHTTP)
-	mux.HandleFunc("/wp-json/podlove/v2/episodes/2/media/2/enable", handler{}.ServeHTTP)
-	mux.HandleFunc("/wp-json/podlove/v2/episodes/2/media/3/enable", handler{}.ServeHTTP)
-	mux.HandleFunc("/wp-json/podlove/v2/chapters/2", handler{}.ServeHTTP)
-	return httptest.NewServer(mux)
+	mux.HandleFunc("/wp-json/wp/v2/episodes/", wordpressTestServer.ServeHTTP)
+	mux.HandleFunc("/wp-json/podlove/v2/episodes/", wordpressTestServer.ServeHTTP)
+	mux.HandleFunc("/wp-json/podlove/v2/episodes/"+PodloveID, wordpressTestServer.ServeHTTP)
+	mux.HandleFunc("/wp-json/podlove/v2/chapters/", wordpressTestServer.ServeHTTP)
+	mux.HandleFunc("/wp-json/wp/v2/media/", wordpressTestServer.ServeHTTP)
+	mux.HandleFunc("/wp-json/podlove/v2/episodes/"+PodloveID+"/media/{media}/enable", wordpressTestServer.ServeHTTP)
+	mux.HandleFunc("/wp-json/podlove/v2/chapters/"+PodloveID, wordpressTestServer.ServeHTTP)
+	wordpressTestServer.Server = httptest.NewServer(mux)
+
+	return wordpressTestServer
 }
