@@ -1,6 +1,7 @@
 package wordpress_test
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 
@@ -29,15 +30,17 @@ var _ = Describe("An wordpress episode can be", Ordered, func() {
 		if err := os.WriteFile(chapterFilePath, []byte("00:01:01.517 Automated Test"), 0600); err != nil {
 			panic(err)
 		}
+		WordpressID := "4"
+		PodloveID := "2"
+		FeaturedMediaID := "3"
 
+		wordpressTestServer := wordpress.CreateWordPressTestServer(WordpressID, PodloveID, FeaturedMediaID)
+		server := wordpressTestServer.Server
+
+		defer server.Close()
 		defer os.Remove(stateFile.Name())
 		defer os.Remove(file.Name())
 		defer os.Remove(chapterFile.Name())
-
-		wordpressTestServer := wordpress.CreateWordPressTestServer("4", "2")
-		server := wordpressTestServer.Server
-		defer server.Close()
-
 		step := config.Step{
 			Wordpress: config.Wordpress{
 				APIKey:  "apiKey",
@@ -53,9 +56,9 @@ var _ = Describe("An wordpress episode can be", Ordered, func() {
 		stateIo := testData.TempStateFile{}
 		if err := stateIo.Write(state.State{
 			Wordpress: state.Wordpress{
-				WordpressID:     "4",
-				PodloveID:       "2",
-				FeaturedMediaID: "3",
+				WordpressID:     WordpressID,
+				PodloveID:       json.Number(PodloveID),
+				FeaturedMediaID: FeaturedMediaID,
 			},
 		}); err != nil {
 			panic(err)
@@ -64,7 +67,7 @@ var _ = Describe("An wordpress episode can be", Ordered, func() {
 		episode, err := wordpress.ScheduleEpisode(step.Wordpress, stateIo, title, "1", scheduledDate)
 
 		Expect(err).Should(BeNil())
-		Expect(episode.WordpressID).Should(Equal("4"))
+		Expect(episode.WordpressID).Should(Equal(WordpressID))
 		Expect(wordpressTestServer.CreateCalled).Should(BeFalse())
 	})
 	It("scheduled successfully", func() {
@@ -80,7 +83,11 @@ var _ = Describe("An wordpress episode can be", Ordered, func() {
 			panic(err)
 		}
 
-		wordpressTestServer := wordpress.CreateWordPressTestServer("2", "1")
+		WordpressID := "2"
+		PodloveID := "1"
+		FeaturedMediaID := "3"
+
+		wordpressTestServer := wordpress.CreateWordPressTestServer(WordpressID, PodloveID, FeaturedMediaID)
 		server := wordpressTestServer.Server
 
 		defer server.Close()
@@ -104,6 +111,7 @@ var _ = Describe("An wordpress episode can be", Ordered, func() {
 		episode, err := wordpress.ScheduleEpisode(step.Wordpress, stateIo, title, "1", scheduledDate)
 
 		Expect(err).Should(BeNil())
-		Expect(episode.WordpressID).Should(Equal("2"))
+		Expect(episode.WordpressID).Should(Equal(WordpressID))
+		Expect(wordpressTestServer.CreateCalled).Should(BeTrue())
 	})
 })

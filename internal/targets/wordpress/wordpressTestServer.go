@@ -7,10 +7,11 @@ import (
 )
 
 type WordpressTestServer struct {
-	PodloveID    string
-	WordpressID  string
-	Server       *httptest.Server
-	CreateCalled bool
+	PodloveID       string
+	WordpressID     string
+	FeaturedMediaID string
+	Server          *httptest.Server
+	CreateCalled    bool
 }
 
 func WriteJSON(w http.ResponseWriter, v string) {
@@ -43,16 +44,17 @@ func (h *WordpressTestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 	case "/wp-json/podlove/v2/chapters/":
 		WriteJSON(w, "{}")
 	case "/wp-json/wp/v2/media/":
-		WriteJSON(w, `{"id": "3"}`)
+		WriteJSON(w, "{\"id\": \""+h.FeaturedMediaID+"\"}")
 	default:
 		w.WriteHeader(404)
 	}
 }
 
-func CreateWordPressTestServer(WordpressID string, PodloveID string) *WordpressTestServer {
+func CreateWordPressTestServer(WordpressID string, PodloveID string, FeatureMediaID string) *WordpressTestServer {
 	wordpressTestServer := &WordpressTestServer{
-		WordpressID: WordpressID,
-		PodloveID:   PodloveID,
+		WordpressID:     WordpressID,
+		PodloveID:       PodloveID,
+		FeaturedMediaID: FeatureMediaID,
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/wp-json/wp/v2/episodes/", wordpressTestServer.ServeHTTP)
