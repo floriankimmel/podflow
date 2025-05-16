@@ -21,6 +21,7 @@ type State struct {
 	S3Uploaded           bool          `yaml:"s3Uploaded,omitempty"`
 	AuphonicProduction   bool          `yaml:"auphonicProduction,omitempty"`
 	WordpressBlogCreated bool          `yaml:"wordpressBlogCreated,omitempty"`
+	SteadyHqCreated      bool          `yaml:"steadyHqCreated,omitempty"`
 	Downloaded           bool          `yaml:"downloaded,omitempty"`
 	ChapterMarks         []ChapterMark `yaml:"chapterMarks,omitempty"`
 }

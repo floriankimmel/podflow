@@ -63,12 +63,21 @@ type Wordpress struct {
 	Chapter   string `yaml:"chapter,omitempty"`
 }
 
+type SteadyHq struct {
+	APIKey    string `yaml:"apiKey,omitempty"`
+	Image     string `yaml:"image,omitempty"`
+	Episode   string `yaml:"episode,omitempty"`
+	Title     string `yaml:"title,omitempty"`
+	ShowNotes string `yaml:"showNotes,omitempty"`
+}
+
 type Step struct {
 	FTP       FTP       `yaml:"ftp,omitempty"`
 	Download  FTP       `yaml:"download,omitempty"`
 	S3        S3        `yaml:"s3,omitempty"`
 	Auphonic  Auphonic  `yaml:"auphonic,omitempty"`
 	Wordpress Wordpress `yaml:"wordpress,omitempty"`
+	SteadyHq  SteadyHq  `yaml:"steadyhq,omitempty"`
 }
 
 type Configuration struct {
@@ -157,6 +166,14 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
 			replace(&config.Steps[i].Wordpress.Poster, replacementValues)
 			replace(&config.Steps[i].Wordpress.ShowNotes, replacementValues)
 			replace(&config.Steps[i].Wordpress.APIKey, replacementValues)
+		}
+
+		if SteadyHq(config.Steps[i].SteadyHq) != (SteadyHq{}) {
+			replace(&config.Steps[i].SteadyHq.Episode, replacementValues)
+			replace(&config.Steps[i].SteadyHq.Title, replacementValues)
+			replace(&config.Steps[i].SteadyHq.Image, replacementValues)
+			replace(&config.Steps[i].SteadyHq.ShowNotes, replacementValues)
+			replace(&config.Steps[i].SteadyHq.APIKey, replacementValues)
 		}
 
 		if len(config.Steps[i].Auphonic.Files) > 0 {

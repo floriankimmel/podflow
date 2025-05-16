@@ -29,7 +29,7 @@ func SendHTTPRequest(request HTTPRequest) (*APIResponse, error) {
 	log.Printf("Headers: %s\n", request.Headers)
 	log.Printf("Method: %s\n", request.Method)
 
-	if request.Headers["Content-Type"] == "application/json" {
+	if strings.Contains(request.Headers["Content-Type"], "json") {
 		var jsonPayload []byte
 		if request.Body != nil {
 			var err error

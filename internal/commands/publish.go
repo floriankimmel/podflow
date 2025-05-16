@@ -172,6 +172,32 @@ func Publish(
 			}
 		}
 
+		if step.SteadyHq != (config.SteadyHq{}) {
+			fmt.Printf("\n\n[%d/%d] SteadyHq \n", (i + 1), len(replacedPodflowConfig.Steps))
+			if !currentState.SteadyHqCreated {
+				step.SteadyHq.Title = strings.Replace(step.SteadyHq.Title, "{{episodeTitle}}", currentState.Metadata.Title, -1)
+
+				err := targets.ScheduleSteadyHq(
+					step.SteadyHq,
+					currentState.Metadata.ReleaseDate,
+				)
+
+				if err != nil {
+					color.Red(errorPrefix + err.Error())
+					return err
+				}
+
+				currentState, _ = stateIo.Read()
+				currentState.SteadyHqCreated = true
+				if err := stateIo.Write(currentState); err != nil {
+					return err
+				}
+				color.Green("  Steady production done")
+			} else {
+				color.Green("  Steady production skipped")
+			}
+		}
+
 		if len(step.Auphonic.Title) > 0 {
 			fmt.Printf("\n\n[%d/%d] Auphonic \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.AuphonicProduction {

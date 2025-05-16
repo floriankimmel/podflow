@@ -83,7 +83,7 @@ will be remember in `{{folderName}}.state.yml` which makes it possible for podfl
     podloveID: "2"
     featuredMediaID: "3"
 ```
-We do store everyting related to the wordpress article to make sure there are no unwanted side effect when rerunning
+We do store everything related to the wordpress article to make sure there are no unwanted side effect when rerunning
 the schedule task.
 
 ### 🧑‍💻 Metadata
@@ -106,7 +106,9 @@ ftpUploaded: true
 s3Uploaded: true
 auphonicProduction: true
 wordpressBlogCreated: true
+steadyHqCreated: true
 downloaded: true
+
 ```
 
 If present the associated step has been executed successfully and will not be tried anymore.
@@ -297,6 +299,26 @@ be installed on the wordpress site.
 | `showNotes` | Blog post content |
 | `chapter` | Chapters used for podlove webplayer |
 
+#### SteadyHq
+
+Schedule steadyhq audio posts.
+
+```yml
+    - steadyhq:
+        apiKey: '{{env.STEADYHQ_API_KEY}}'
+        title: 'LEP#{{episodeNumber}} - {{episodeTitle}}'
+        image: http://{{episodeNumber}}.png
+        episode: http://{{episodeNumber}}.mp3
+        showNotes: '{{folderName}}.md'
+```
+
+| Argument      | Description |
+| ------------- | -------------------------------
+| `episode` | URL of the episode |
+| `title` | Title of the episode |
+| `image` | URL of featured Image |
+| `showNotes` | File of blog post content |
+
 ### Example
 
 ```yml
@@ -389,6 +411,14 @@ steps:
         image: '{{folderName}}.png'
         showNotes: '{{folderName}}.md'
         chapter: '{{folderName}}.chapters.txt'
+
+    - steadyhq:
+        apiKey: '{{env.STEADYHQ_API_KEY}}'
+        title: 'LEP#{{episodeNumber}} - {{episodeTitle}}'
+        image: http://rssfeed.laufendentdecken-podcast.at/data/{{episodeNumber}}_{{folderName}}.png
+        episode: http://rssfeed.laufendentdecken-podcast.at/data/{{episodeNumber}}_{{folderName}}.mp3
+        showNotes: '{{folderName}}.md'
+
 
 ```
 # ✍️ Author
