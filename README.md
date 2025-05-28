@@ -4,7 +4,7 @@ A CLI tool to automate everything related to uploading a podcast episode. It is 
 ## 🫶 Features
 - 💡 Fully configurable - define your own workflow  
 -  🧠 Stateful. Each successful step will not be executed again.  
--  🎖️ Choose from different services like FTP (upload and download), Amazon S3, Auphonic.  
+-  🎖️ Choose from different services like FTP (delete, upload and download), [Amazon S3](https://aws.amazon.com/de/s3/), [Auphonic](https://auphonic.com/),[SteadyHQ](https://steadyhq.com/en/).  
 -  🔖 Create chapter marks independent of the audio recording tool.  
 
 ## 📦 Installation
