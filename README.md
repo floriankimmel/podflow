@@ -1,18 +1,15 @@
 # 🎙️ Podflow
 
-A CLI tool to automate everything related to uploading a podcast episode. It is
-highly configurable to your specific needs.
-
+A CLI tool to automate everything related to uploading a podcast episode. It is highly configurable to your specific needs.
 ## 🫶 Features
-- 💡 Fully configurable - define your own workflow
-- 🧠 Statefull. Each successful step will not be executed again.
-- 🎖️ Choose from different services like FTP (Up- and Download), Amazon S3, Auphonic.
-- 🔖 Create chapter marks independent of audio recording tool.
+- 💡 Fully configurable - define your own workflow  
+-  🧠 Stateful. Each successful step will not be executed again.  
+-  🎖️ Choose from different services like FTP (upload and download), Amazon S3, Auphonic.  
+-  🔖 Create chapter marks independent of the audio recording tool.  
 
 ## 📦 Installation
 
-Find all the releases [here](https://github.com/floriankimmel/laufenentdecken-cli/releases). Ether
-download it there directly or install directly from source with Go's install command
+Find all the releases [here](https://github.com/floriankimmel/laufenentdecken-cli/releases). Either download it directly from there or install it directly from the source using Go's install command.
 
 ```bash
 go install github.com/floriankimmel/podflow@latest
@@ -22,33 +19,33 @@ go install github.com/floriankimmel/podflow@latest
 
 ### 🔖 Chapter Marks
 
-During recording you can create chapter marks independent of your recording software. Each mark will be stored in the
-state yml of the project
+During the recording, you can create chapter marks independent of your recording software. Each mark will be stored in the state.yml of the project.
 
 ```bash
 podflow chapter start | end | add | toggle-pause
 ```
 | Argument      | Description |
 | ------------- | -------------------------------
-| `start`| Mark the time the recording has started |
-| `add` | Add a new chapter mark|
+| `start`| Mark the time when the recording has started. |
+| `add` | Add a new chapter mark |
 | `end` | Mark the time the recording has ended |
-| `toggle-pause` | Start/End a pause. This time will be substracted when exporting the chapter marks |
+| `toggle-pause` | Start/End a pause. This time will be subtracted when exporting the chapter marks |
 
-To export chapter marks to a [Ultrashall](https://ultraschall.fm/), [Podlove](https://docs.podlove.org/) and [Auphonic](https://auphonic.com) compatible format use
+To export chapter marks to a [Ultraschall](https://ultraschall.fm/), [Podlove](https://docs.podlove.org/), and [Auphonic](https://auphonic.com) compatible format, use
 
 ```bash
 podflow chapter export
 ```
 
-To start publishing a episode move to the folder containing all the necessary files and run:
+To start publishing an episode, move to the folder containing all the necessary files and run:
 
 ### 🏁 Publishing
 
 ```bash
 podflow publish
 ```
-This will first check if all preconditions are met and afterwards executed each configured step.
+
+This will first check if all preconditions are met and afterwards execute each configured step.
 
 To just check if all requirements are met before starting the upload run:
 
@@ -61,20 +58,18 @@ podflow check
 podflow open
 ```
 
-The open command opens the current episode in wordpress in your browser
+The open command opens the current episode in WordPress in your browser.
 
 ## 💻 State
 
 ```bash
 podflow state
 ```
-The state command shows you the current state of the episode in a human readable way.
 
+The state command shows you the current state of the episode in a human-readable way.
 ### How does it work?
 
-Sometimes services are not available and errors can happen. Therefore podflow is statefull and
-makes executing the command again and again very easy. Everyting that already happened successfully
-will be remember in `{{folderName}}.state.yml` which makes it possible for podflow to continue where it left off.
+Sometimes services are not available, and errors can happen. Therefore, Podflow is stateful and makes executing the command again and again very easy. Everything that has already happened successfully will be remembered in `{{folderName}}.state.yml`, which makes it possible for Podflow to continue where it left off.
 
 ### 🧑‍💻 Wordpress
 ```yml
@@ -83,8 +78,8 @@ will be remember in `{{folderName}}.state.yml` which makes it possible for podfl
     podloveID: "2"
     featuredMediaID: "3"
 ```
-We do store everything related to the wordpress article to make sure there are no unwanted side effect when rerunning
-the schedule task.
+
+We do store everything related to the WordPress article to make sure there are no unwanted side effects when rerunning the scheduled task.
 
 ### 🧑‍💻 Metadata
 ```yml
@@ -93,11 +88,12 @@ the schedule task.
     releaseDate: "2025-01-12 09:00:00"
     title: Test
 ```
-| Argument      | Description |
-| ------------- | -------------------------------
-| `episodeNumber` | Episode number taken from the configuration and increased by 1. Can also be a string|
-| `releaseDate` | The actualy spefic datetime when this episode should be release to the public |
-| `title` | Title provided by the user |
+
+| Argument        | Description                                                                              |
+| --------------- | ---------------------------------------------------------------------------------------- |
+| `episodeNumber` | Episode number taken from the configuration and increased by 1. It can also be a string. |
+| `releaseDate`   | The actual specific datetime when this episode should be released to the public.         |
+| `title`         | Title provided by the user.                                                              |
 
 ### ✅ Successfully executed steps
 
@@ -109,11 +105,9 @@ auphonicProduction: true
 wordpressBlogCreated: true
 steadyHqCreated: true
 downloaded: true
-
 ```
 
-If present the associated step has been executed successfully and will not be tried anymore.
-
+If present, the associated step has been executed successfully and will not be tried again.
 ### 🔖 Chapter marks
 
 ```yml
@@ -122,14 +116,12 @@ chapterMarks:
      time: 2024-02-20T13:26:29.597423+01:00
 ```
 
-If during recording chapter marks were added they are part of the state file ready to be exported
-
+If chapter marks were added during the recording, they are part of the state file ready to be exported.
 ## ⚙️ Configuration
 
 ### Loading configuration
 
-By default podflow looks for a configuration in the `$HOME\.config\config.yml` file. If there is a need for different configuration files
-the default name `config.yml` can be overwritten by using the environment variable `PODFLOW_CONFIG_FILE`. So by running
+By default, Podflow looks for a configuration in the `$HOME\.config\config.yml` file. If there is a need for different configuration files, the default name `config.yml` can be overwritten by using the environment variable `PODFLOW_CONFIG_FILE`. So, by running
 
 ```bash
 PODFLOW_CONFIG_FILE=test.yml podflow check
@@ -148,15 +140,14 @@ releaseTime: "09:00:00"
 ```
 | Argument      | Description |
 | ------------- | -------------------------------
-| `currentEpisode` | Current Episode number. Will be updated once a new episode has been published |
-| `releaseDay` |  Day of the week: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday or Sunday |
+| `currentEpisode` | Current episode number. It will be updated once a new episode has been published |
+| `releaseDay` | Day of the week: Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, or Sunday |
 | `releaseTime` | Time of day (hh:mm:ss): 09:00:00 |
 
-So episode #`currentEpisode` will be release next `releaseDay` at `releaseTime`.
-
+So episode #`currentEpisode` will be released next `releaseDay` at `releaseTime`.
 ### Precondition(s)
 
-To ensure everyting is ready to start the upload workflow certain checks can be configured
+To ensure everything is ready to start the upload workflow, certain checks can be configured.
 
 ```yml
 files:
@@ -170,9 +161,9 @@ files:
 | Argument      | Description |
 | ------------- | -------------------------------
 | `fileName` | Path of the file. Placeholders can be used here |
-| `required` | If set to true uploading won't start without this file beeing present |
-| `notEmpty` | If set to true uploading won't start without the filesize greater 0  |
-| `umlauteNotAllowed` | If set to true uploading won't start without the file name containing umlaute (ä, ü, ö)|
+| `required` | If set to true, uploading won't start without this file being present |
+| `notEmpty` | If set to true, uploading won't start without the file size being greater than 0 |
+| `umlauteNotAllowed` | If set to true, uploading won't start if the file name contains umlauts (ä, ü, ö) |
 
 This configuration is used by both commands `check` and `publish`.
 
@@ -180,9 +171,9 @@ This configuration is used by both commands `check` and `publish`.
 
 | Placeholder      | Description |
 | ------------- | -------------------------------
-| `{{folderName}}` | Folder this script is executed in |
+| `{{folderName}}` | Folder in which this script is executed |
 | `{{episodeNumber}}` | Currently configured episode number |
-| `{{env.ENV_VARIABLE}}` | Any environment variable. Prefered way to store secrets |
+| `{{env.ENV_VARIABLE}}` | Any environment variable. Preferred way to store secrets |
 
 ### Steps
 
@@ -195,6 +186,7 @@ steps:
     - auphonic: ...
     - download: ...
     - wordpress: ...
+    - steadyhq:: ...
 ```
 
 #### FTP
@@ -209,10 +201,11 @@ steps:
           - source: '{{folderName}}.m4a'
             target: '{{episodeNumber}}_{{folderName}}.m4a'
 ```
+
 | Argument      | Description |
 | ------------- | -------------------------------
 | `source` | File name on your local machine |
-| `target` | File name on the ftp server |
+| `target` | File name on the FTP server |
 
 #### Delete FTP Files
 
@@ -228,7 +221,7 @@ steps:
 
 | Argument      | Description |
 | ------------- | -------------------------------
-| `target` | File name on the ftp server |
+| `target` | File name on the FTP server |
 
 #### Amazon S3
 
@@ -241,12 +234,13 @@ steps:
               - source: '{{folderName}}.m4a'
                 target: '{{episodeNumber}}_{{folderName}}.m4a'
 ```
+
 | Argument      | Description |
 | ------------- | -------------------------------
-| `region` | Region id defined by amazon: eu-central-1 |
-| `name` | Name of the s3 bucket|
+| `region` | Region ID defined by Amazon: eu-central-1 |
+| `name` | Name of the S3 bucket |
 | `source` | File name on your local machine |
-| `target` | File name in the s3 bucket |
+| `target` | File name in the S3 bucket |
 
 #### Auphonic
 
@@ -264,19 +258,19 @@ Enhance your audio quality with [Auphonic](https://auphonic.com/)
             image: '{{episodeNumber}}_{{folderName}}.png'
             chapters: '{{episodeNumber}}_{{folderName}}.chapters.txt'
 ```
+
 | Argument      | Description |
 | ------------- | -------------------------------
-| `preset` | UUID of the referenced preset, you can find it on the [Preset Page](https://auphonic.com/engine/presets/) |
-| `fileServer` | Url of the server auphonic tries to get the audio/image/chapter data from |
-| `title` | Auphonic title. Only field that allows `{{episodeTitle}}` as a placeholder  |
-| `episode` | File name of the episode. If file is not present production will not be started|
-| `image` | File name of the episode image.|
-| `chpaters` | File name of the episode chapters file.|
+| `preset` | UUID of the referenced preset; you can find it on the [Preset Page](https://auphonic.com/engine/presets/) |
+| `fileServer` | URL of the server Auphonic tries to get the audio/image/chapter data from |
+| `title` | Auphonic title. The only field that allows `{{episodeTitle}}` as a placeholder |
+| `episode` | File name of the episode. If the file is not present, production will not be started |
+| `image` | File name of the episode image. |
+| `chapters` | File name of the episode chapters file. |
 
 #### Download
 
-Download files to local machine. Current use case is to download auphonic output
-afterwards in order to upload it manually to patroen/steady.
+Download files to the local machine. The current use case is to download Auphonic output afterwards in order to upload it manually to Patreon/Steady.
 
 ```yml
     - download:
@@ -292,12 +286,11 @@ afterwards in order to upload it manually to patroen/steady.
 | Argument      | Description |
 | ------------- | -------------------------------
 | `target` | File name on your local machine |
-| `source` | File name in the s3 bucket |
+| `source` | File name in the S3 bucket |
 
 #### Wordpress
 
-Schedule wordpress blogpost. [Podlove](https://podlove.org/) Version 4 (or higher) is required to
-be installed on the wordpress site.
+Schedule WordPress blog post. [Podlove](https://podlove.org/) version 4 (or higher) is required to be installed on the WordPress site.
 
 ```yml
     - wordpress:
@@ -311,14 +304,14 @@ be installed on the wordpress site.
 
 | Argument      | Description |
 | ------------- | -------------------------------
-| `episode` | File name of the episode without extension. This is used to link your auphonic production with podlove |
-| `image` | Featured Image of post |
+| `episode` | File name of the episode without extension. This is used to link your Auphonic production with Podlove |
+| `image` | Featured image of the post |
 | `showNotes` | Blog post content |
-| `chapter` | Chapters used for podlove webplayer |
+| `chapter` | Chapters used for the Podlove web player |
 
 #### SteadyHq
 
-Schedule steadyhq audio posts.
+Schedule SteadyHQ audio posts.
 
 ```yml
     - steadyhq:
@@ -331,12 +324,12 @@ Schedule steadyhq audio posts.
 
 | Argument      | Description |
 | ------------- | -------------------------------
-| `episode` | URL of the episode |
-| `title` | Title of the episode |
-| `image` | URL of featured Image |
-| `showNotes` | File of blog post content |
+| `episode` | URL of the episode |  
+| `title` | Title of the episode |  
+| `image` | URL of the featured image |  
+| `showNotes` | File of blog post content |  
 
-### Example
+### Example used by the laufendentdecken podcast
 
 ```yml
 currentEpisode: 240
@@ -446,5 +439,7 @@ steps:
 
 
 ```
+
 # ✍️ Author
 Florian Kimmel [florian@le-podcast.at](mailto:florian@le-podcast.at)
+
