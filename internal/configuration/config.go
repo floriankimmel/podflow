@@ -41,11 +41,16 @@ type S3 struct {
 }
 
 type FTP struct {
-	Host     string    `yaml:"host,omitempty"`
-	Port     string    `yaml:"port,omitempty"`
-	Username string    `yaml:"username,omitempty"`
-	Password string    `yaml:"password,omitempty"`
-	Files    []FtpFile `yaml:"files,omitempty"`
+	Host     string          `yaml:"host,omitempty"`
+	Port     string          `yaml:"port,omitempty"`
+	Username string          `yaml:"username,omitempty"`
+	Password string          `yaml:"password,omitempty"`
+	Files    []FtpFile       `yaml:"files,omitempty"`
+	Delete   []FtpTargetFile `yaml:"delete,omitempty"`
+}
+
+type FtpTargetFile struct {
+	Target string `yaml:"target,omitempty"`
 }
 
 type FtpFile struct {
@@ -133,6 +138,15 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
 	}
 
 	for i := range config.Steps {
+		if len(config.Steps[i].FTP.Delete) > 0 {
+			replace(&config.Steps[i].FTP.Username, replacementValues)
+			replace(&config.Steps[i].FTP.Password, replacementValues)
+
+			for j := range config.Steps[i].FTP.Delete {
+				replace(&config.Steps[i].FTP.Delete[j].Target, replacementValues)
+			}
+		}
+
 		if len(config.Steps[i].FTP.Files) > 0 {
 			replace(&config.Steps[i].FTP.Username, replacementValues)
 			replace(&config.Steps[i].FTP.Password, replacementValues)

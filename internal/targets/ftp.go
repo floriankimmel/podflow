@@ -100,3 +100,34 @@ func FtpUpload(step config.Step) error {
 
 	return nil
 }
+
+func FtpDelete(step config.Step) error {
+	ftpConfig := step.FTP
+	filesToDelete := ftpConfig.Delete
+
+	c, err := ftp.Dial(ftpConfig.Host+":"+ftpConfig.Port, ftp.DialWithTimeout(5*time.Second))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("  Delete files from %s", ftpConfig.Host)
+	err = c.Login(ftpConfig.Username, ftpConfig.Password)
+	if err != nil {
+		return err
+	}
+
+	for _, fileToDelete := range filesToDelete {
+		fmt.Printf("\n  Deleting file %s \n", fileToDelete.Target)
+		err = c.Delete(fileToDelete.Target)
+		if err != nil {
+			return err
+		}
+	}
+	fmt.Printf("\n")
+
+	if err := c.Quit(); err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -89,6 +89,25 @@ func Publish(
 
 	for i := range replacedPodflowConfig.Steps {
 		step := replacedPodflowConfig.Steps[i]
+		if len(step.FTP.Delete) > 0 {
+			fmt.Printf("\n\n[%d/%d] Delete FTP files \n", (i + 1), len(replacedPodflowConfig.Steps))
+			if !currentState.FTPDeleted {
+				err := targets.FtpDelete(step)
+				if err != nil {
+					color.Red(errorPrefix + err.Error())
+					return err
+				}
+
+				currentState.FTPDeleted = true
+				if err := stateIo.Write(currentState); err != nil {
+					return err
+				}
+				color.Green("  FTP deletion done")
+			} else {
+				color.Green("  FTP deletion skipped")
+			}
+		}
+
 		if len(step.FTP.Files) > 0 {
 			fmt.Printf("\n\n[%d/%d] FTP \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.FTPUploaded {
@@ -219,6 +238,5 @@ func Publish(
 			}
 		}
 	}
-
 	return nil
 }

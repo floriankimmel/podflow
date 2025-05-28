@@ -103,6 +103,7 @@ the schedule task.
 
 ```yml
 ftpUploaded: true
+ftpDeleted: true
 s3Uploaded: true
 auphonicProduction: true
 wordpressBlogCreated: true
@@ -211,6 +212,22 @@ steps:
 | Argument      | Description |
 | ------------- | -------------------------------
 | `source` | File name on your local machine |
+| `target` | File name on the ftp server |
+
+#### Delete FTP Files
+
+```yml
+    -ftp:
+        host: ftp.host.at
+        port: "21"
+        username: "{{env.FTP_USER}}"
+        password:  "{{env.FTP_PWD}}"
+        delete:
+          - target: '{{episodeNumber}}_{{folderName}}.m4a'
+```
+
+| Argument      | Description |
+| ------------- | -------------------------------
 | `target` | File name on the ftp server |
 
 #### Amazon S3
@@ -418,6 +435,14 @@ steps:
         image: http://rssfeed.laufendentdecken-podcast.at/data/{{episodeNumber}}_{{folderName}}.png
         episode: http://rssfeed.laufendentdecken-podcast.at/data/{{episodeNumber}}_{{folderName}}.mp3
         showNotes: '{{folderName}}.md'
+
+    - ftp:
+        host: rssfeed.laufendentdecken-podcast.at
+        port: "21"
+        username: '{{env.FTP_USER}}'
+        password: '{{env.FTP_PWD}}'
+        delete:
+            - target: '{{episodeNumber}}_{{folderName}}.chapters.txt'
 
 
 ```

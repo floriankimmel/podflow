@@ -18,6 +18,7 @@ type State struct {
 	Metadata             Metadata      `yaml:"metadata,omitempty"`
 	Wordpress            Wordpress     `yaml:"wordpress,omitempty"`
 	FTPUploaded          bool          `yaml:"ftpUploaded,omitempty"`
+	FTPDeleted           bool          `yaml:"ftpDeleted,omitempty"`
 	S3Uploaded           bool          `yaml:"s3Uploaded,omitempty"`
 	AuphonicProduction   bool          `yaml:"auphonicProduction,omitempty"`
 	WordpressBlogCreated bool          `yaml:"wordpressBlogCreated,omitempty"`
