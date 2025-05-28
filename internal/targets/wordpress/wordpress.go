@@ -67,7 +67,7 @@ func ScheduleEpisode(
 		return Episode{}, err
 	}
 
-	if _, err := os.Stat(wordpressConfig.ShowNotes); os.IsExist(err) {
+	if _, err := os.Stat(wordpressConfig.ShowNotes); err == nil {
 		fmt.Println(" Setting show notes")
 		if err := episode.setContent(wordpressConfig.ShowNotes); err != nil {
 			return Episode{}, err
