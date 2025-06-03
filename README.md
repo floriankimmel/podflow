@@ -12,7 +12,29 @@ A CLI tool to automate everything related to uploading a podcast episode. It is 
 Find all the releases [here](https://github.com/floriankimmel/laufenentdecken-cli/releases). Either download it directly from there or install it directly from the source using Go's install command.
 
 ```bash
+# 🎙️ Podflow
+
+A CLI tool to automate everything related to uploading a podcast episode. It is highly configurable to your specific needs.
+## 🫶 Features
+- 💡 Fully configurable - define your own workflow  
+-  🧠 Stateful. Each successful step will not be executed again.  
+-  🎖️ Choose from different services like FTP (upload and download), Amazon S3, Auphonic.  
+-  🔖 Create chapter marks independent of the audio recording tool.  
+## 📦 Installation
+
+Find all the releases [here](https://github.com/floriankimmel/laufenentdecken-cli/releases). Either download it directly from there or install it directly from the source using Go's install command.
+
+```bash
 go install github.com/floriankimmel/podflow@latest
+```
+
+### 🍯 Homebrew
+
+If you are on macOS, you can also use [Homebrew](https://brew.sh/) to install podflow.
+
+```bash
+brew tag floriankimme/podflow
+brew install podflow
 ```
 
 ## 🎙️ Usage
@@ -80,7 +102,6 @@ Sometimes services are not available, and errors can happen. Therefore, Podflow 
 ```
 
 We do store everything related to the WordPress article to make sure there are no unwanted side effects when rerunning the scheduled task.
-
 ### 🧑‍💻 Metadata
 ```yml
 - metadata:
@@ -439,7 +460,6 @@ steps:
 
 
 ```
-
 # ✍️ Author
 Florian Kimmel [florian@le-podcast.at](mailto:florian@le-podcast.at)
 
