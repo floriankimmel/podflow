@@ -20,7 +20,7 @@ go install github.com/floriankimmel/podflow@latest
 If you are on macOS, you can also use [Homebrew](https://brew.sh/) to install podflow.
 
 ```bash
-brew tag floriankimme/podflow
+brew tag floriankimmel/podflow
 brew install podflow
 ```
 
