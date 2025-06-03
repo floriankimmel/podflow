@@ -194,7 +194,7 @@ func Publish(
 		if step.SteadyHq != (config.SteadyHq{}) {
 			fmt.Printf("\n\n[%d/%d] SteadyHq \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.SteadyHqCreated {
-				step.SteadyHq.Title = strings.Replace(step.SteadyHq.Title, "{{episodeTitle}}", currentState.Metadata.Title, -1)
+				step.SteadyHq.Title = strings.ReplaceAll(step.SteadyHq.Title, "{{episodeTitle}}", currentState.Metadata.Title, )
 
 				err := targets.ScheduleSteadyHq(
 					step.SteadyHq,
@@ -220,7 +220,7 @@ func Publish(
 		if len(step.Auphonic.Title) > 0 {
 			fmt.Printf("\n\n[%d/%d] Auphonic \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.AuphonicProduction {
-				step.Auphonic.Title = strings.Replace(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title, -1)
+				step.Auphonic.Title = strings.ReplaceAll(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title, )
 				_, err := targets.StartAuphonicProduction("https://auphonic.com", step, 20)
 
 				if err != nil {
