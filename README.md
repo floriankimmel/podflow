@@ -6,7 +6,6 @@ A CLI tool to automate everything related to uploading a podcast episode. It is 
 -  🧠 Stateful. Each successful step will not be executed again.  
 -  🎖️ Choose from different services like FTP (delete, upload and download), [Amazon S3](https://aws.amazon.com/de/s3/), [Auphonic](https://auphonic.com/), [SteadyHQ](https://steadyhq.com/en/).  
 -  🔖 Create chapter marks independent of the audio recording tool.  
-
 ## 📦 Installation
 
 Find all the releases [here](https://github.com/floriankimmel/laufenentdecken-cli/releases). Either download it directly from there or install it directly from the source using Go's install command.
@@ -125,6 +124,15 @@ chapterMarks:
 ```
 
 If chapter marks were added during the recording, they are part of the state file ready to be exported.
+## 📦 Archive
+
+Part of the lifecycle of a podcast episode is to archive it once it is published. You don't want to delete the entire production because it might be needed in the future. So with 
+
+```bash
+podflow archive <Foldername>
+```
+
+the production can be moved to a configured archive folder. The necessary configuration can be found in the next section.
 ## ⚙️ Configuration
 
 ### Loading configuration
@@ -337,6 +345,15 @@ Schedule SteadyHQ audio posts.
 | `image` | URL of the featured image |  
 | `showNotes` | File of blog post content |  
 
+### Archive
+
+```yaml
+archive:
+	target: <foldername>
+```
+
+Specify a folder where the podcast production should be archived. Currently, only folders are supported; no FTP or anything else. If you want to store it on a different server or even a NAS, you would need to mount it.
+
 ### Example used by the laufendentdecken podcast
 
 ```yml
@@ -364,6 +381,8 @@ files:
       required: true
       notEmpty: false
       umlauteNotAllowed: false
+archive:
+	target: <folder>
 steps:
     - ftp:
         host: ftp.host.at
@@ -449,4 +468,3 @@ steps:
 ```
 # ✍️ Author
 Florian Kimmel [florian@le-podcast.at](mailto:florian@le-podcast.at)
-
