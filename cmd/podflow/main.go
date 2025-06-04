@@ -99,8 +99,30 @@ func main() {
 				Usage:   "Start automated publishing process",
 				Action: func(c *cli.Context) error {
 					printLogo()
-					err := cmd.Publish(config.ConfigurationFile{}, state.StateFile{}, input.Stdin{}, config.Dir())
+					err := cmd.Publish(
+						config.ConfigurationFile{},
+						state.StateFile{},
+						input.Stdin{},
+						config.Dir(),
+					)
 
+					if err != nil {
+						return cli.Exit("", 1)
+					}
+
+					return nil
+				},
+			},
+			{
+				Name:  "archive",
+				Usage: "archive episodes that have already been published",
+				Action: func(cCtx *cli.Context) error {
+					dir := config.Dir() + "/" + cCtx.Args().Get(0)
+					err := cmd.Archive(
+						state.StateFile{},
+						config.ConfigurationFile{},
+						dir,
+						)
 					if err != nil {
 						return cli.Exit("", 1)
 					}

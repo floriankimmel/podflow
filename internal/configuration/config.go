@@ -85,13 +85,19 @@ type Step struct {
 	SteadyHq  SteadyHq  `yaml:"steadyhq,omitempty"`
 }
 
+type Archive struct {
+	Target string `yaml:"target,omitempty"`
+}
+
 type Configuration struct {
 	CurrentEpisode string        `yaml:"currentEpisode,omitempty"`
 	ReleaseDay     string        `yaml:"releaseDay,omitempty"`
 	ReleaseTime    string        `yaml:"releaseTime,omitempty"`
 	Files          []EpisodeFile `yaml:"files,omitempty"`
 	Steps          []Step        `yaml:"steps,omitempty"`
+	Archive        Archive       `yaml:"archive,omitempty"`
 }
+
 
 func Load(io ConfigurationReaderWriter) (Configuration, error) {
 	configFilePath, err := io.Path()
@@ -135,6 +141,10 @@ func ReplacePlaceholders(config Configuration, replacementValues ReplacementValu
 	for i := range config.Files {
 		replace(&config.Files[i].FileName, replacementValues)
 		replace(&config.Files[i].Name, replacementValues)
+	}
+
+	if config.Archive != (Archive{}) {
+		replace(&config.Archive.Target, replacementValues)
 	}
 
 	for i := range config.Steps {
