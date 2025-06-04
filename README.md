@@ -349,7 +349,7 @@ Schedule SteadyHQ audio posts.
 
 ```yaml
 archive:
-	target: <foldername>
+    target: <foldername>
 ```
 
 Specify a folder where the podcast production should be archived. Currently, only folders are supported; no FTP or anything else. If you want to store it on a different server or even a NAS, you would need to mount it.
@@ -382,7 +382,7 @@ files:
       notEmpty: false
       umlauteNotAllowed: false
 archive:
-	target: <folder>
+    target: <folder>
 steps:
     - ftp:
         host: ftp.host.at
