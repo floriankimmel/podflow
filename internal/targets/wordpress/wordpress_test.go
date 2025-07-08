@@ -49,6 +49,27 @@ var _ = Describe("An wordpress episode can be", Ordered, func() {
 		os.Remove(chapterFile.Name())
 	})
 
+	It("scheduled successfully", func() {
+		step := config.Step{
+			Wordpress: config.Wordpress{
+				APIKey:  "apiKey",
+				Server:  wordpressTestServer.Server.URL,
+				Image:   "wordpress.go",
+				Episode: "episode.mp3",
+				Chapter: chapterFile.Name(),
+			},
+		}
+		title := "title"
+		scheduledDate := "2021-07-10 00:00:00"
+
+		stateIo := testData.TempStateFile{}
+		episode, err := wordpress.ScheduleEpisode(step.Wordpress, stateIo, title, "1", scheduledDate)
+
+		Expect(err).Should(BeNil())
+		Expect(episode.WordpressID).Should(Equal(wordpressTestServer.WordpressID))
+		Expect(wordpressTestServer.CreateCalled).Should(BeTrue())
+	})
+
 	It("scheduled successfully for the second time", func() {
 		step := config.Step{
 			Wordpress: config.Wordpress{
@@ -80,24 +101,4 @@ var _ = Describe("An wordpress episode can be", Ordered, func() {
 		Expect(wordpressTestServer.CreateCalled).Should(BeFalse())
 	})
 
-	It("scheduled successfully", func() {
-		step := config.Step{
-			Wordpress: config.Wordpress{
-				APIKey:  "apiKey",
-				Server:  wordpressTestServer.Server.URL,
-				Image:   "wordpress.go",
-				Episode: "episode.mp3",
-				Chapter: chapterFile.Name(),
-			},
-		}
-		title := "title"
-		scheduledDate := "2021-07-10 00:00:00"
-
-		stateIo := testData.TempStateFile{}
-		episode, err := wordpress.ScheduleEpisode(step.Wordpress, stateIo, title, "1", scheduledDate)
-
-		Expect(err).Should(BeNil())
-		Expect(episode.WordpressID).Should(Equal(wordpressTestServer.WordpressID))
-		Expect(wordpressTestServer.CreateCalled).Should(BeTrue())
-	})
 })
