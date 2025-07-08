@@ -1,3 +1,4 @@
+// Package targets provides integrations for various publishing and distribution targets.
 package targets
 
 import (
@@ -6,6 +7,12 @@ import (
 	"podflow/internal/markdown"
 	"strings"
 )
+
+var steadyHqAPIURL = "https://steadyhq.com/api/v1/posts/audio_posts"
+
+func SetSteadyHqAPIURL(url string) {
+	steadyHqAPIURL = url
+}
 
 func ScheduleSteadyHq(
 	steadyHqConfig config.SteadyHq,
@@ -28,7 +35,7 @@ func ScheduleSteadyHq(
 
 	_, err := SendHTTPRequest(HTTPRequest{
 		Method:      "POST",
-		URL:         "https://steadyhq.com/api/v1/posts/audio_posts",
+		URL:         steadyHqAPIURL,
 		Headers:     headers(steadyHqConfig.APIKey),
 		Body:        body,
 		ProgressBar: false,
