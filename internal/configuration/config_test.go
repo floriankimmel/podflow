@@ -121,7 +121,9 @@ var _ = Describe("The podflow configuration", func() {
 			panic(err)
 		}
 		configFilePath := filepath.Join(workingDir, "podflow.yml")
-		os.Remove(configFilePath)
+		if _, err := os.Stat(configFilePath); err == nil {
+			os.Remove(configFilePath)
+		}
 
 		io := testData.TempConfigurationFile{}
 		_, err := config.Load(io)
