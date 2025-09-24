@@ -7,11 +7,13 @@ import (
 )
 
 type WordpressTestServer struct {
-	PodloveID       string
-	WordpressID     string
-	FeaturedMediaID string
-	Server          *httptest.Server
-	CreateCalled    bool
+	PodloveID          string
+	WordpressID        string
+	FeaturedMediaID    string
+	Server             *httptest.Server
+	CreateCalled       bool
+	SEOSettingsCalled  bool
+	SummaryCalled      bool
 }
 
 func WriteJSON(w http.ResponseWriter, v string) {
@@ -27,8 +29,15 @@ func (h *WordpressTestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	switch r.URL.Path {
 	case podloveURL:
+		if r.Method == "POST" {
+			h.SummaryCalled = true
+		}
 		WriteJSON(w, "{\"post_id\": \""+h.WordpressID+"\"}")
 	case episodeURL:
+		if r.Method == "POST" {
+			h.SEOSettingsCalled = true
+		}
+		WriteJSON(w, "{}")
 	case "/wp-json/wp/v2/episodes/":
 		WriteJSON(w, "{}")
 	case "/wp-json/podlove/v2/episodes/":

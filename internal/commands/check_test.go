@@ -203,4 +203,99 @@ var _ = Describe("Running the check command", func() {
 		Expect(err).ShouldNot(BeNil())
 
 	})
+
+	It("will detect absolute path file exists", func() {
+		if err := os.MkdirAll(workingDir, os.ModePerm); err != nil {
+			panic(err)
+		}
+		configFilePath := filepath.Join(workingDir, "podflow.yml")
+		tempFile, _ := os.Create(configFilePath)
+
+		// Create absolute path file
+		absoluteFilePath := filepath.Join(os.TempDir(), "test-absolute.md")
+		absoluteFile, _ := os.Create(absoluteFilePath)
+		if err := os.WriteFile(absoluteFilePath, []byte("test content"), 0600); err != nil {
+			panic(err)
+		}
+
+		defer os.Remove(tempFile.Name())
+		defer os.Remove(absoluteFile.Name())
+
+		io := testData.TempConfigurationFile{}
+		if err := io.Write(config.Configuration{
+			Files: []config.EpisodeFile{
+				{
+					Name:     "Absolute File",
+					FileName: absoluteFilePath,
+					Required: true,
+					NotEmpty: true,
+				},
+			},
+		}); err != nil {
+			panic(err)
+		}
+		err := cmd.Check(io, workingDir)
+
+		Expect(err).Should(BeNil())
+	})
+
+	It("will detect absolute path file is missing and return error", func() {
+		if err := os.MkdirAll(workingDir, os.ModePerm); err != nil {
+			panic(err)
+		}
+		configFilePath := filepath.Join(workingDir, "podflow.yml")
+		tempFile, _ := os.Create(configFilePath)
+
+		defer os.Remove(tempFile.Name())
+
+		// Use non-existent absolute path
+		nonExistentAbsolutePath := "/tmp/non-existent-file-12345.md"
+
+		io := testData.TempConfigurationFile{}
+		if err := io.Write(config.Configuration{
+			Files: []config.EpisodeFile{
+				{
+					Name:     "Missing Absolute File",
+					FileName: nonExistentAbsolutePath,
+					Required: true,
+				},
+			},
+		}); err != nil {
+			panic(err)
+		}
+		err := cmd.Check(io, workingDir)
+
+		Expect(err).ShouldNot(BeNil())
+	})
+
+	It("will detect absolute path file is empty and return error", func() {
+		if err := os.MkdirAll(workingDir, os.ModePerm); err != nil {
+			panic(err)
+		}
+		configFilePath := filepath.Join(workingDir, "podflow.yml")
+		tempFile, _ := os.Create(configFilePath)
+
+		// Create empty absolute path file
+		emptyAbsolutePath := filepath.Join(os.TempDir(), "empty-absolute.md")
+		emptyAbsoluteFile, _ := os.Create(emptyAbsolutePath)
+
+		defer os.Remove(tempFile.Name())
+		defer os.Remove(emptyAbsoluteFile.Name())
+
+		io := testData.TempConfigurationFile{}
+		if err := io.Write(config.Configuration{
+			Files: []config.EpisodeFile{
+				{
+					Name:     "Empty Absolute File",
+					FileName: emptyAbsolutePath,
+					NotEmpty: true,
+				},
+			},
+		}); err != nil {
+			panic(err)
+		}
+		err := cmd.Check(io, workingDir)
+
+		Expect(err).ShouldNot(BeNil())
+	})
 })

@@ -18,7 +18,6 @@ func Check(io config.ConfigurationReaderWriter, dir string) error {
 
 	files, _ := os.ReadDir(dir)
 	config, err := config.LoadAndReplacePlaceholders(io, dir)
-
 	if err != nil {
 		return err
 	}
@@ -26,11 +25,24 @@ func Check(io config.ConfigurationReaderWriter, dir string) error {
 	pattern, _ := regexp.Compile("[äöüÄÖÜ]")
 
 	for _, file := range config.Files {
-		if fileExists(files, file.FileName) {
-			color.Green(check + file.Name + " is already exported")
+		var exists bool
+		var empty bool
+
+		if strings.HasPrefix(file.FileName, "/") {
+			// Absolute path
+			exists = absoluteFileExists(file.FileName)
+			empty = !absoluteIsNotEmpty(file.FileName)
+		} else {
+			// Relative path
+			exists = fileExists(files, file.FileName)
+			empty = !isNotEmpty(files, file.FileName)
+		}
+
+		if exists {
+			color.Green(check + file.Name + " is already created")
 		} else {
 			if file.Required {
-				color.Red(" No " + file.Name + " is exported")
+				color.Red(" No " + file.Name + " is created")
 				ready = false
 			} else {
 				color.Yellow(" No " + file.Name)
@@ -47,13 +59,12 @@ func Check(io config.ConfigurationReaderWriter, dir string) error {
 		}
 
 		if file.NotEmpty {
-			if isNotEmpty(files, file.FileName) {
+			if !empty {
 				color.Green(check + file.Name + " is not empty")
 			} else {
 				color.Red(" " + file.Name + " is empty")
 				ready = false
 			}
-
 		}
 	}
 
@@ -87,3 +98,17 @@ func findFile(files []os.DirEntry, desiredFile string) os.DirEntry {
 	}
 	return nil
 }
+
+func absoluteFileExists(filePath string) bool {
+	_, err := os.Stat(filePath)
+	return !os.IsNotExist(err)
+}
+
+func absoluteIsNotEmpty(filePath string) bool {
+	info, err := os.Stat(filePath)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return info.Size() > 0
+}
+

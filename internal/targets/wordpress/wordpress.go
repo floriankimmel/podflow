@@ -124,5 +124,27 @@ func ScheduleEpisode(
 		return Episode{}, err
 	}
 
+	if wordpressConfig.ContentFile != "" {
+		fmt.Println(" Parsing content metadata")
+		metadata, err := parseContentMetadata(wordpressConfig.ContentFile, currentEpisodeNumber)
+		if err != nil {
+			return Episode{}, err
+		}
+
+		if metadata.FocusKeywords != "" || metadata.MetaDescription != "" {
+			fmt.Println(" Setting SEO settings")
+			if err := episode.setSEOSettings(metadata.FocusKeywords, metadata.MetaDescription); err != nil {
+				return Episode{}, err
+			}
+		}
+
+		if metadata.MetaDescription != "" {
+			fmt.Println(" Setting summary")
+			if err := episode.setSummary(metadata.MetaDescription); err != nil {
+				return Episode{}, err
+			}
+		}
+	}
+
 	return episode, nil
 }

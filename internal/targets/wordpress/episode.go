@@ -5,6 +5,7 @@ import (
 	"os"
 	"podflow/internal/markdown"
 	"podflow/internal/targets"
+	"regexp"
 	"strings"
 	"unicode"
 )
@@ -27,6 +28,11 @@ type Chapter struct {
 
 type Chapters struct {
 	Chapters []Chapter `json:"chapters"`
+}
+
+type ContentMetadata struct {
+	MetaDescription string
+	FocusKeywords   string
 }
 
 func headers(apiKey string) map[string]string {
@@ -257,6 +263,74 @@ func (e *Episode) addChapters(chapterFile string) error {
 		return err
 	}
 	return nil
+}
+
+func (e *Episode) setSEOSettings(keyword string, description string) error {
+	body := map[string]map[string]string{
+		"meta": {
+			"_yoast_wpseo_focuskw":  keyword,
+			"_yoast_wpseo_metadesc": description,
+		},
+	}
+
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:      "POST",
+		URL:         e.Server + wpURLPath + e.WordpressID,
+		Headers:     headers(e.APIKey),
+		Body:        body,
+		ProgressBar: false,
+	})
+
+	return err
+}
+
+func (e *Episode) setSummary(summary string) error {
+	body := map[string]string{
+		"summary": summary,
+	}
+
+	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:      "POST",
+		URL:         e.Server + podloveURLPath + string(e.PodloveID),
+		Headers:     headers(e.APIKey),
+		Body:        body,
+		ProgressBar: false,
+	})
+
+	return err
+}
+
+func parseContentMetadata(contentFile string, episodeNumber string) (ContentMetadata, error) {
+	// Replace placeholders in the file path
+	resolvedPath := strings.ReplaceAll(contentFile, "{{episodeNumber}}", episodeNumber)
+	
+	content, err := os.ReadFile(resolvedPath)
+	if err != nil {
+		return ContentMetadata{}, err
+	}
+
+	contentStr := string(content)
+	
+	// Extract Meta-Description
+	metaDescRegex := regexp.MustCompile(`\*\*Meta-Description:\*\*\s*\n([^\n]+)`)
+	metaDescMatch := metaDescRegex.FindStringSubmatch(contentStr)
+	metaDescription := ""
+	if len(metaDescMatch) > 1 {
+		metaDescription = strings.TrimSpace(metaDescMatch[1])
+	}
+
+	// Extract Focus Keywords
+	focusKeywordsRegex := regexp.MustCompile(`\*\*Focus Keywords:\*\*\s*\n([^\n]+)`)
+	focusKeywordsMatch := focusKeywordsRegex.FindStringSubmatch(contentStr)
+	focusKeywords := ""
+	if len(focusKeywordsMatch) > 1 {
+		focusKeywords = strings.TrimSpace(focusKeywordsMatch[1])
+	}
+
+	return ContentMetadata{
+		MetaDescription: metaDescription,
+		FocusKeywords:   focusKeywords,
+	}, nil
 }
 
 func chaptersExportToJSON(chapterFile string) (Chapters, error) {
