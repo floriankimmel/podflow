@@ -316,6 +316,7 @@ Schedule WordPress blog post. [Podlove](https://podlove.org/) version 4 (or high
         image: '{{folderName}}.png'
         showNotes: '{{folderName}}.md'
         chapter: '{{folderName}}.chapters.txt'
+        contentFile: '{{folderName}}.content.md'
 ```
 
 | Argument      | Description |
@@ -324,6 +325,24 @@ Schedule WordPress blog post. [Podlove](https://podlove.org/) version 4 (or high
 | `image` | Featured image of the post |
 | `showNotes` | Blog post content |
 | `chapter` | Chapters used for the Podlove web player |
+| `contentFile` | Optional content file for SEO metadata extraction. If provided, Podflow will parse this file for Focus Keywords and Meta Description |
+
+##### SEO and Summary Configuration
+
+When using the `contentFile` option, Podflow can automatically extract SEO metadata from your content file. The content file should include the following structured information:
+
+```markdown
+**Meta Description:**
+Your episode meta description for SEO purposes.
+
+**Focus Keywords:**
+keyword1, keyword2, keyword3
+```
+
+Podflow will:
+- Set the Yoast SEO focus keywords (`_yoast_wpseo_focuskw`)
+- Set the meta description (`_yoast_wpseo_metadesc`)
+- Configure the episode summary field with the meta description
 
 #### SteadyHq
 
@@ -448,6 +467,7 @@ steps:
         image: '{{folderName}}.png'
         showNotes: '{{folderName}}.md'
         chapter: '{{folderName}}.chapters.txt'
+        contentFile: '{{folderName}}.content.md'
 
     - steadyhq:
         apiKey: '{{env.STEADYHQ_API_KEY}}'
