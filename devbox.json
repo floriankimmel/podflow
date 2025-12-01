@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jetify-com/devbox/0.16.0/.schema/devbox.schema.json",
+  "packages": [
+    "go@1.21",
+    "git",
+    "golangci-lint@latest"
+  ],
+  "shell": {
+    "init_hook": [],
+    "scripts": {
+      "build":   ["go mod tidy", "go build -o bin/podflow ./cmd/podflow/"],
+      "test":    ["go test -v -cover -count=1 ./..."],
+      "lint":    ["golangci-lint run"],
+      "install": ["make build"]
+    }
+  }
+}
