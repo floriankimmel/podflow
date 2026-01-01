@@ -114,6 +114,118 @@
           "store_path": "/nix/store/3kn873p4cpk0yhz7y0qvwpnn1h885a40-golangci-lint-2.6.2"
         }
       }
+    },
+    "goreleaser@latest": {
+      "last_modified": "2025-12-01T02:47:39Z",
+      "resolved": "github:NixOS/nixpkgs/0d70460758949966e91d9ecb823b821f963cefbb#goreleaser",
+      "source": "devbox-search",
+      "version": "2.13.0",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/qb8wnpyspm683qway34y29n0zvad4q55-goreleaser-2.13.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/qb8wnpyspm683qway34y29n0zvad4q55-goreleaser-2.13.0"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/0sgsy09mlwgsd3yr479lcv5mxp8k22pj-goreleaser-2.13.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/0sgsy09mlwgsd3yr479lcv5mxp8k22pj-goreleaser-2.13.0"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/zksrax3g8qaaycl66kcbxjkcx2262i7j-goreleaser-2.13.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/zksrax3g8qaaycl66kcbxjkcx2262i7j-goreleaser-2.13.0"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/s0j5i8m7xlnh403la8d60y19wm8csxq3-goreleaser-2.13.0",
+              "default": true
+            }
+          ],
+          "store_path": "/nix/store/s0j5i8m7xlnh403la8d60y19wm8csxq3-goreleaser-2.13.0"
+        }
+      }
+    },
+    "pre-commit@latest": {
+      "last_modified": "2025-12-19T06:18:24Z",
+      "resolved": "github:NixOS/nixpkgs/7d853e518814cca2a657b72eeba67ae20ebf7059#pre-commit",
+      "source": "devbox-search",
+      "version": "4.5.1",
+      "systems": {
+        "aarch64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/yagix71f4isji0myf607lg6fnp2v8pzd-pre-commit-4.5.1",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/93pci74s78ys6kl0wkngbya11lc8w0wk-pre-commit-4.5.1-dist"
+            }
+          ],
+          "store_path": "/nix/store/yagix71f4isji0myf607lg6fnp2v8pzd-pre-commit-4.5.1"
+        },
+        "aarch64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/ilrpcyddb85m5gy62l4rvsfb7s7dhrd7-pre-commit-4.5.1",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/kfy8345gm5xcc5dlygg2zfyd0w462242-pre-commit-4.5.1-dist"
+            }
+          ],
+          "store_path": "/nix/store/ilrpcyddb85m5gy62l4rvsfb7s7dhrd7-pre-commit-4.5.1"
+        },
+        "x86_64-darwin": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/7dxds9ch0bnmadp07ppzyrlw0wxmihsl-pre-commit-4.5.1",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/8wqpnr6yvlzas2yssl4icvsyslk82b78-pre-commit-4.5.1-dist"
+            }
+          ],
+          "store_path": "/nix/store/7dxds9ch0bnmadp07ppzyrlw0wxmihsl-pre-commit-4.5.1"
+        },
+        "x86_64-linux": {
+          "outputs": [
+            {
+              "name": "out",
+              "path": "/nix/store/nq4n5yd6paaqc8hm1f54g9lsz87zpwzm-pre-commit-4.5.1",
+              "default": true
+            },
+            {
+              "name": "dist",
+              "path": "/nix/store/1bljyj2nkv05jm4q84rj6fbr4zc1q26p-pre-commit-4.5.1-dist"
+            }
+          ],
+          "store_path": "/nix/store/nq4n5yd6paaqc8hm1f54g9lsz87zpwzm-pre-commit-4.5.1"
+        }
+      }
     }
   }
 }

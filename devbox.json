@@ -3,7 +3,9 @@
   "packages": [
     "go@1.21",
     "git",
-    "golangci-lint@latest"
+    "golangci-lint@latest",
+    "goreleaser@latest",
+    "pre-commit@latest"
   ],
   "shell": {
     "init_hook": [],
