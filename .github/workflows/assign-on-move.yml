@@ -1,7 +1,7 @@
 name: Auto-assign on column move
 on:
-  projects_v2_item:
-    types: [edited]
+  repository_dispatch:
+    types: [projects_v2_item_edited]
 
 jobs:
   assign-mover:
@@ -11,8 +11,9 @@ jobs:
         with:
           github-token: ${{ secrets.GH_PAT }}
           script: |
-            const item = context.payload.projects_v2_item;
-            const mover = context.payload.sender.login;
+            const payload = context.payload.client_payload;
+            const item = payload.projects_v2_item;
+            const mover = payload.sender.login;
 
             if (item.content_type !== 'Issue') return;
 

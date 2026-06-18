@@ -1,0 +1,18 @@
+name: Relay project item webhooks
+on:
+  workflow_dispatch:
+    inputs:
+      event_payload:
+        description: "JSON payload from org webhook"
+        required: true
+        type: string
+
+jobs:
+  relay:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.GH_PAT }}
+          event-type: projects_v2_item_edited
+          client-payload: ${{ inputs.event_payload }}
