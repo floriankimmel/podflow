@@ -9,7 +9,7 @@ jobs:
     steps:
       - uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.PROJECT_PAT }}
+          github-token: ${{ secrets.GH_PAT }}
           script: |
             const item = context.payload.projects_v2_item;
             const mover = context.payload.sender.login;
