@@ -1,0 +1,38 @@
+name: Auto-assign on column move
+on:
+  projects_v2_item:
+    types: [edited]
+
+jobs:
+  assign-mover:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PROJECT_PAT }}
+          script: |
+            const item = context.payload.projects_v2_item;
+            const mover = context.payload.sender.login;
+
+            if (item.content_type !== 'Issue') return;
+
+            const query = `query($id: ID!) {
+              node(id: $id) {
+                ... on Issue {
+                  number
+                  repository { name owner { login } }
+                }
+              }
+            }`;
+
+            const result = await github.graphql(query, { id: item.content_node_id });
+            const issue = result.node;
+
+            await github.rest.issues.addAssignees({
+              owner: issue.repository.owner.login,
+              repo: issue.repository.name,
+              issue_number: issue.number,
+              assignees: [mover]
+            });
+
+            console.log(`Assigned ${mover} to issue #${issue.number}`);
