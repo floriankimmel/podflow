@@ -161,6 +161,29 @@ releaseTime: "09:00:00"
 | `releaseTime` | Time of day (hh:mm:ss): 09:00:00 |
 
 So episode #`currentEpisode` will be released next `releaseDay` at `releaseTime`.
+
+### Backend state sync (optional)
+
+Podflow can report publish progress to the shared team backend (see
+`backend/`), so the desktop app shows live per-step status for everyone with
+the workspace key. Reporting is best-effort: when unconfigured or unreachable,
+publish behaves exactly as before and the local `state.yml` stays the source
+of local truth.
+
+```yml
+backend:
+    url: https://podflow-backend.fly.dev
+    workspaceKey: '{{env.PODFLOW_WORKSPACE_KEY}}'
+```
+
+| Argument | Description |
+| ------------- | -------------------------------
+| `url` | Base URL of the podflow backend; empty disables reporting |
+| `workspaceKey` | Shared team key; `{{env.*}}` references are resolved at runtime |
+
+The environment variables `PODFLOW_BACKEND_URL` and `PODFLOW_WORKSPACE_KEY`
+override the config file values.
+
 ### Precondition(s)
 
 To ensure everything is ready to start the upload workflow, certain checks can be configured.
