@@ -1,0 +1,32 @@
+# fly.io app config for the podflow episode-state backend.
+#
+# First deploy:
+#   fly launch --no-deploy        # or keep this file and: fly apps create podflow-backend
+#   fly volumes create podflow_data --size 1
+#   fly secrets set WORKSPACE_KEY=<shared team key>
+#   fly deploy
+
+app = "podflow-backend"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  DATABASE_PATH = "/data/podflow.db"
+  PORT = "8080"
+
+[mounts]
+  source = "podflow_data"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"

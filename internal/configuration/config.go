@@ -90,6 +90,11 @@ type Archive struct {
 	Target string `yaml:"target,omitempty"`
 }
 
+type Backend struct {
+	URL          string `yaml:"url,omitempty"`
+	WorkspaceKey string `yaml:"workspaceKey,omitempty"`
+}
+
 type Configuration struct {
 	CurrentEpisode string        `yaml:"currentEpisode,omitempty"`
 	ReleaseDay     string        `yaml:"releaseDay,omitempty"`
@@ -97,8 +102,24 @@ type Configuration struct {
 	Files          []EpisodeFile `yaml:"files,omitempty"`
 	Steps          []Step        `yaml:"steps,omitempty"`
 	Archive        Archive       `yaml:"archive,omitempty"`
+	Backend        Backend       `yaml:"backend,omitempty"`
 }
 
+// ResolvedBackend returns the backend settings, letting the environment
+// (PODFLOW_BACKEND_URL / PODFLOW_WORKSPACE_KEY) override the config file.
+// Both values are optional: an empty result disables backend reporting.
+func (c Configuration) ResolvedBackend() Backend {
+	backend := c.Backend
+	if url, found := os.LookupEnv("PODFLOW_BACKEND_URL"); found {
+		backend.URL = url
+	}
+	if key, found := os.LookupEnv("PODFLOW_WORKSPACE_KEY"); found {
+		backend.WorkspaceKey = key
+	}
+	ReplaceEnvVariable(&backend.URL)
+	ReplaceEnvVariable(&backend.WorkspaceKey)
+	return backend
+}
 
 func Load(io ConfigurationReaderWriter) (Configuration, error) {
 	configFilePath, err := io.Path()

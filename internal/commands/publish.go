@@ -3,6 +3,7 @@ package cmd
 import (
 	"fmt"
 	"path/filepath"
+	"podflow/internal/backend"
 	config "podflow/internal/configuration"
 	"podflow/internal/input"
 	"podflow/internal/state"
@@ -87,13 +88,29 @@ func Publish(
 	}
 	replacedPodflowConfig := config.ReplacePlaceholders(podflowConfig, replacementValues)
 
+	// Best-effort backend reporting: nil reporter (unconfigured) is a no-op,
+	// and failures never interrupt the publish pipeline.
+	backendConfig := podflowConfig.ResolvedBackend()
+	reporter := backend.New(backendConfig.URL, backendConfig.WorkspaceKey)
+	episodeMetadata := backend.Metadata{
+		EpisodeNumber: currentState.Metadata.EpisodeNumber,
+		Slug:          filepath.Base(workingDir),
+		Title:         currentState.Metadata.Title,
+		ReleaseDate:   currentState.Metadata.ReleaseDate,
+	}
+	report := func(step string, status string) {
+		reporter.Report(episodeMetadata, step, status)
+	}
+
 	for i := range replacedPodflowConfig.Steps {
 		step := replacedPodflowConfig.Steps[i]
 		if len(step.FTP.Delete) > 0 {
 			fmt.Printf("\n\n[%d/%d] Delete FTP files \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.FTPDeleted {
+				report("ftp_delete", backend.StatusInProgress)
 				err := targets.FtpDelete(step)
 				if err != nil {
+					report("ftp_delete", backend.StatusFailed)
 					color.Red(errorPrefix + err.Error())
 					return err
 				}
@@ -102,8 +119,10 @@ func Publish(
 				if err := stateIo.Write(currentState); err != nil {
 					return err
 				}
+				report("ftp_delete", backend.StatusDone)
 				color.Green("  FTP deletion done")
 			} else {
+				report("ftp_delete", backend.StatusDone)
 				color.Green("  FTP deletion skipped")
 			}
 		}
@@ -111,8 +130,10 @@ func Publish(
 		if len(step.FTP.Files) > 0 {
 			fmt.Printf("\n\n[%d/%d] FTP \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.FTPUploaded {
+				report("ftp_upload", backend.StatusInProgress)
 				err := targets.FtpUpload(step)
 				if err != nil {
+					report("ftp_upload", backend.StatusFailed)
 					color.Red(errorPrefix + err.Error())
 					return err
 				}
@@ -121,8 +142,10 @@ func Publish(
 				if err := stateIo.Write(currentState); err != nil {
 					return err
 				}
+				report("ftp_upload", backend.StatusDone)
 				color.Green("  FTP upload done")
 			} else {
+				report("ftp_upload", backend.StatusDone)
 				color.Green("  FTP upload skipped")
 			}
 		}
@@ -130,8 +153,10 @@ func Publish(
 		if len(step.Download.Files) > 0 {
 			fmt.Printf("\n\n[%d/%d] Download \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.Downloaded {
+				report("download", backend.StatusInProgress)
 				err := targets.FtpDownload(step)
 				if err != nil {
+					report("download", backend.StatusFailed)
 					color.Red(errorPrefix + err.Error())
 					return err
 				}
@@ -140,8 +165,10 @@ func Publish(
 				if err := stateIo.Write(currentState); err != nil {
 					return err
 				}
+				report("download", backend.StatusDone)
 				color.Green("  Download done")
 			} else {
+				report("download", backend.StatusDone)
 				color.Green("  Download skipped")
 			}
 		}
@@ -149,8 +176,10 @@ func Publish(
 		if len(step.S3.Buckets) > 0 {
 			fmt.Printf("\n\n[%d/%d] Amazon S3 \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.S3Uploaded {
+				report("s3", backend.StatusInProgress)
 				err := targets.S3Upload(step.S3)
 				if err != nil {
+					report("s3", backend.StatusFailed)
 					color.Red(errorPrefix + err.Error())
 					return err
 				}
@@ -159,14 +188,17 @@ func Publish(
 				if err := stateIo.Write(currentState); err != nil {
 					return err
 				}
+				report("s3", backend.StatusDone)
 				color.Green("  S3 upload done")
 			} else {
+				report("s3", backend.StatusDone)
 				color.Green("  S3 upload skipped")
 			}
 		}
 		if step.Wordpress != (config.Wordpress{}) {
 			fmt.Printf("\n\n[%d/%d] Wordpress \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.WordpressBlogCreated {
+				report("wordpress", backend.StatusInProgress)
 				_, err := wordpress.ScheduleEpisode(
 					step.Wordpress,
 					stateIo,
@@ -176,6 +208,7 @@ func Publish(
 				)
 
 				if err != nil {
+					report("wordpress", backend.StatusFailed)
 					color.Red(errorPrefix + err.Error())
 					return err
 				}
@@ -185,8 +218,10 @@ func Publish(
 				if err := stateIo.Write(currentState); err != nil {
 					return err
 				}
+				report("wordpress", backend.StatusDone)
 				color.Green("  Wordpress production done")
 			} else {
+				report("wordpress", backend.StatusDone)
 				color.Green("  Wordpress production skipped")
 			}
 		}
@@ -194,7 +229,8 @@ func Publish(
 		if step.SteadyHq != (config.SteadyHq{}) {
 			fmt.Printf("\n\n[%d/%d] SteadyHq \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.SteadyHqCreated {
-				step.SteadyHq.Title = strings.ReplaceAll(step.SteadyHq.Title, "{{episodeTitle}}", currentState.Metadata.Title, )
+				report("steady", backend.StatusInProgress)
+				step.SteadyHq.Title = strings.ReplaceAll(step.SteadyHq.Title, "{{episodeTitle}}", currentState.Metadata.Title)
 
 				err := targets.ScheduleSteadyHq(
 					step.SteadyHq,
@@ -202,6 +238,7 @@ func Publish(
 				)
 
 				if err != nil {
+					report("steady", backend.StatusFailed)
 					color.Red(errorPrefix + err.Error())
 					return err
 				}
@@ -211,8 +248,10 @@ func Publish(
 				if err := stateIo.Write(currentState); err != nil {
 					return err
 				}
+				report("steady", backend.StatusDone)
 				color.Green("  Steady production done")
 			} else {
+				report("steady", backend.StatusDone)
 				color.Green("  Steady production skipped")
 			}
 		}
@@ -220,10 +259,12 @@ func Publish(
 		if len(step.Auphonic.Title) > 0 {
 			fmt.Printf("\n\n[%d/%d] Auphonic \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.AuphonicProduction {
-				step.Auphonic.Title = strings.ReplaceAll(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title, )
+				report("auphonic", backend.StatusInProgress)
+				step.Auphonic.Title = strings.ReplaceAll(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title)
 				_, err := targets.StartAuphonicProduction("https://auphonic.com", step, 20)
 
 				if err != nil {
+					report("auphonic", backend.StatusFailed)
 					color.Red(errorPrefix + err.Error())
 					return err
 				}
@@ -232,8 +273,10 @@ func Publish(
 				if err := stateIo.Write(currentState); err != nil {
 					return err
 				}
+				report("auphonic", backend.StatusDone)
 				color.Green("  Auphonic production done")
 			} else {
+				report("auphonic", backend.StatusDone)
 				color.Green("  Auphonic production skipped")
 			}
 		}
