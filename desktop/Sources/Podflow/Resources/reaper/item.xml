@@ -1,0 +1,23 @@
+<ITEM
+  POSITION 0
+  SNAPOFFS 0
+  LENGTH {length}
+  LOOP 0
+  ALLTAKES 0
+  FADEIN 1 0.01 0 1 0 0 0
+  FADEOUT 1 0.01 0 1 0 0 0
+  MUTE 0 0
+  SEL 1
+  IGUID {{iguid}}
+  IID 1
+  NAME {filename}
+  VOLPAN 1 0 1 -1
+  SOFFS 0
+  PLAYRATE 1 1 0 -1 0 0.0025
+  CHANMODE 0
+  GUID {{guid}}
+  <SOURCE WAVE
+    FILE "Recordings/{filename}"
+  >
+>
+
