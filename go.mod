@@ -1,4 +1,4 @@
-module podflow
+module github.com/floriankimmel/podflow
 
 go 1.21.5
 

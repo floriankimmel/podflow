@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
-	config "podflow/internal/configuration"
+	config "github.com/floriankimmel/podflow/internal/configuration"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"

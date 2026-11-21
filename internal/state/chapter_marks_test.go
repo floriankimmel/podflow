@@ -1,7 +1,7 @@
 package state_test
 
 import (
-	"podflow/internal/state"
+	"github.com/floriankimmel/podflow/internal/state"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"

@@ -7,10 +7,10 @@ import (
 	"path/filepath"
 	"time"
 
-	cmd "podflow/internal/commands"
-	config "podflow/internal/configuration"
-	input "podflow/internal/input"
-	"podflow/internal/state"
+	cmd "github.com/floriankimmel/podflow/internal/commands"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	input "github.com/floriankimmel/podflow/internal/input"
+	"github.com/floriankimmel/podflow/internal/state"
 
 	"github.com/urfave/cli/v2"
 )
@@ -37,7 +37,7 @@ func main() {
 	log.SetOutput(logFile)
 
 	app := &cli.App{
-		Name:     "podflow",
+		Name:     "github.com/floriankimmel/podflow",
 		Usage:    " A CLI tool for automating everything related to your podcast",
 		Version:  "0.0.1",
 		Compiled: time.Now(),

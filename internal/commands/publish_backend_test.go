@@ -12,10 +12,10 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	cmd "podflow/internal/commands"
-	config "podflow/internal/configuration"
-	state "podflow/internal/state"
-	testData "podflow/test/testdata"
+	cmd "github.com/floriankimmel/podflow/internal/commands"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	state "github.com/floriankimmel/podflow/internal/state"
+	testData "github.com/floriankimmel/podflow/test/testdata"
 )
 
 // fullConfig configures every publish step so each one reports to the backend.

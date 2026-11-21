@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	config "podflow/internal/configuration"
-	"podflow/internal/state"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	"github.com/floriankimmel/podflow/internal/state"
 )
 
 func ScheduleEpisode(

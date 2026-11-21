@@ -8,7 +8,7 @@ import (
 	"log"
 	"mime/multipart"
 	"os"
-	"podflow/internal/targets"
+	"github.com/floriankimmel/podflow/internal/targets"
 )
 
 type Image struct {

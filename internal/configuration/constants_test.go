@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	config "podflow/internal/configuration"
+	config "github.com/floriankimmel/podflow/internal/configuration"
 )
 
 var _ = Describe("Getting constant", func() {

@@ -141,7 +141,7 @@ final class DependencyManager: ObservableObject {
             switch id {
             case .podflow:
                 try await runInstaller(["brew", "install", "fkimmel/tap/podflow"],
-                                       fallback: ["go", "install", "podflow/cmd/podflow@latest"])
+                                       fallback: ["go", "install", "github.com/floriankimmel/podflow/cmd/podflow@latest"])
             case .ollama:
                 try await runInstaller(["brew", "install", "--cask", "ollama"], fallback: nil)
             case .parakeet:

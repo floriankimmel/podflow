@@ -3,8 +3,8 @@ package testdata
 import (
 	"os"
 	"path/filepath"
-	config "podflow/internal/configuration"
-	"podflow/internal/state"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	"github.com/floriankimmel/podflow/internal/state"
 
 	"gopkg.in/yaml.v3"
 )
@@ -14,7 +14,7 @@ type TempConfigurationFile struct {
 }
 
 func (file TempConfigurationFile) Path() (string, error) {
-	return filepath.Join(os.TempDir(), "podflow", "podflow.yml"), nil
+	return filepath.Join(os.TempDir(), "github.com/floriankimmel/podflow", "podflow.yml"), nil
 }
 
 func (file TempConfigurationFile) Write(config config.Configuration) error {
@@ -78,5 +78,5 @@ func (file TempStateFile) Write(state state.State) error {
 }
 
 func (file TempStateFile) GetStateFilePath() string {
-	return filepath.Join(os.TempDir(), "podflow", "podflow.state.yml")
+	return filepath.Join(os.TempDir(), "github.com/floriankimmel/podflow", "podflow.state.yml")
 }

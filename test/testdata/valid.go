@@ -1,6 +1,6 @@
 package testdata
 
-import config "podflow/internal/configuration"
+import config "github.com/floriankimmel/podflow/internal/configuration"
 
 type ValidConfigurationFile struct{}
 

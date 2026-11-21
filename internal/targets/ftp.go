@@ -5,7 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
-	config "podflow/internal/configuration"
+	config "github.com/floriankimmel/podflow/internal/configuration"
 	"time"
 
 	"github.com/jlaffaye/ftp"

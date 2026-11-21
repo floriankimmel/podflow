@@ -8,13 +8,13 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	config "podflow/internal/configuration"
-	"podflow/internal/state"
-	"podflow/internal/targets/wordpress"
-	testData "podflow/test/testdata"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	"github.com/floriankimmel/podflow/internal/state"
+	"github.com/floriankimmel/podflow/internal/targets/wordpress"
+	testData "github.com/floriankimmel/podflow/test/testdata"
 )
 
-var workingDir = filepath.Join(os.TempDir(), "podflow")
+var workingDir = filepath.Join(os.TempDir(), "github.com/floriankimmel/podflow")
 
 var _ = Describe("An wordpress episode can be", Ordered, func() {
 	var wordpressTestServer *wordpress.WordpressTestServer

@@ -7,12 +7,12 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	cmd "podflow/internal/commands"
-	config "podflow/internal/configuration"
-	testData "podflow/test/testdata"
+	cmd "github.com/floriankimmel/podflow/internal/commands"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	testData "github.com/floriankimmel/podflow/test/testdata"
 )
 
-var workingDir = filepath.Join(os.TempDir(), "podflow")
+var workingDir = filepath.Join(os.TempDir(), "github.com/floriankimmel/podflow")
 
 var _ = Describe("Running the check command", func() {
 	It("will detect that required file is available", func() {

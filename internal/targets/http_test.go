@@ -3,7 +3,7 @@ package targets_test
 import (
 	"net/http"
 	"net/http/httptest"
-	"podflow/internal/targets"
+	"github.com/floriankimmel/podflow/internal/targets"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 	"net/http/httptest"
-	config "podflow/internal/configuration"
-	"podflow/internal/targets"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	"github.com/floriankimmel/podflow/internal/targets"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

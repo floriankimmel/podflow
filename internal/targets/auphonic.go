@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	config "podflow/internal/configuration"
+	config "github.com/floriankimmel/podflow/internal/configuration"
 	"strings"
 	"time"
 )

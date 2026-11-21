@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	config "podflow/internal/configuration"
-	"podflow/internal/input"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	"github.com/floriankimmel/podflow/internal/input"
 	"time"
 )
 

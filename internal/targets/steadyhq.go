@@ -3,8 +3,8 @@ package targets
 
 import (
 	"os"
-	config "podflow/internal/configuration"
-	"podflow/internal/markdown"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	"github.com/floriankimmel/podflow/internal/markdown"
 	"strings"
 )
 

@@ -3,8 +3,8 @@ package wordpress
 import (
 	"encoding/json"
 	"os"
-	"podflow/internal/markdown"
-	"podflow/internal/targets"
+	"github.com/floriankimmel/podflow/internal/markdown"
+	"github.com/floriankimmel/podflow/internal/targets"
 	"regexp"
 	"strings"
 	"unicode"

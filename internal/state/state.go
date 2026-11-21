@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	config "podflow/internal/configuration"
+	config "github.com/floriankimmel/podflow/internal/configuration"
 
 	"gopkg.in/yaml.v3"
 )

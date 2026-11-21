@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	config "podflow/internal/configuration"
-	"podflow/internal/state"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	"github.com/floriankimmel/podflow/internal/state"
 
 	"github.com/fatih/color"
 )

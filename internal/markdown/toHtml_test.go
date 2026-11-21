@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"podflow/internal/markdown"
+	"github.com/floriankimmel/podflow/internal/markdown"
 )
 
 var _ = Describe("ToHtml", func() {

@@ -3,14 +3,14 @@ package config_test
 import (
 	"os"
 	"path/filepath"
-	config "podflow/internal/configuration"
-	testData "podflow/test/testdata"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	testData "github.com/floriankimmel/podflow/test/testdata"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 )
 
-var workingDir = filepath.Join(os.TempDir(), "podflow")
+var workingDir = filepath.Join(os.TempDir(), "github.com/floriankimmel/podflow")
 
 var _ = Describe("The podflow configuration", func() {
 	It("can replace environment variables", func() {

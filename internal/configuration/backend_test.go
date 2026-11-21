@@ -2,7 +2,7 @@ package config_test
 
 import (
 	"os"
-	config "podflow/internal/configuration"
+	config "github.com/floriankimmel/podflow/internal/configuration"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

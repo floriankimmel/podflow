@@ -2,7 +2,7 @@ package testdata
 
 import (
 	"errors"
-	config "podflow/internal/configuration"
+	config "github.com/floriankimmel/podflow/internal/configuration"
 )
 
 type NotReadableConfigurationFile struct {

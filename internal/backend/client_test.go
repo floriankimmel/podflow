@@ -5,7 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"podflow/internal/backend"
+	"github.com/floriankimmel/podflow/internal/backend"
 	"testing"
 )
 

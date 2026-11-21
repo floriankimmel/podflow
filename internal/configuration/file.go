@@ -8,7 +8,7 @@ import (
 )
 
 const defaultConfigName = ".config"
-const defaultConfigDir = "podflow"
+const defaultConfigDir = "github.com/floriankimmel/podflow"
 
 type ConfigurationFile struct {
 }

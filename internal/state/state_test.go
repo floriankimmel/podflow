@@ -2,7 +2,7 @@ package state_test
 
 import (
 	"os"
-	"podflow/internal/state"
+	"github.com/floriankimmel/podflow/internal/state"
 
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"

@@ -1,8 +1,8 @@
 package config_test
 
 import (
-	config "podflow/internal/configuration"
-	testData "podflow/test/testdata"
+	config "github.com/floriankimmel/podflow/internal/configuration"
+	testData "github.com/floriankimmel/podflow/test/testdata"
 	"time"
 
 	. "github.com/onsi/ginkgo/v2"
