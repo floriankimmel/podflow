@@ -37,7 +37,7 @@ func main() {
 	log.SetOutput(logFile)
 
 	app := &cli.App{
-		Name:     "github.com/floriankimmel/podflow",
+		Name:     "podflow",
 		Usage:    " A CLI tool for automating everything related to your podcast",
 		Version:  "0.0.1",
 		Compiled: time.Now(),
