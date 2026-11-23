@@ -27,9 +27,18 @@ VERSION = $(shell /usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' 
 DMG = build/Podflow-$(VERSION).dmg
 BUILD_DIR = .build
 APP = build/Podflow.app
+SPARKLE = $(APP)/Contents/Frameworks/Sparkle.framework
+SPARKLE_BIN = .build/artifacts/sparkle/Sparkle/bin
+# Updates: each release is a GitHub release "desktop-v<version>" with the dmg;
+# the Sparkle feed (SUFeedURL in Info.plist) is appcast.xml on the fixed
+# release "desktop-appcast". Both are kept out of "latest" (that is the CLI).
+REPO = floriankimmel/podflow
+TAG = desktop-v$(VERSION)
+FEED_TAG = desktop-appcast
+NOTES ?=
 ICONSET = build/Podflow.iconset
 
-.PHONY: all app install release test test-plugin cli icon clean run
+.PHONY: all app install release publish check-version test test-plugin cli icon clean run
 
 all: app
 
@@ -76,7 +85,15 @@ app: $(BUILD_DIR)/release/Podflow build/Podflow.icns $(CLI)
 	cp $(CLI) $(APP)/Contents/Resources/podflow
 	cp -R plugin $(APP)/Contents/Resources/plugin
 	cp build/Podflow.icns $(APP)/Contents/Resources/Podflow.icns
-	# Inside out: the bundled CLI first, then the app.
+	mkdir -p $(APP)/Contents/Frameworks
+	ditto $(BUILD_DIR)/release/Sparkle.framework $(SPARKLE)
+	install_name_tool -add_rpath @executable_path/../Frameworks $(APP)/Contents/MacOS/Podflow
+	# Inside out: Sparkle's helpers, the framework, the bundled CLI, then the app.
+	codesign $(SIGN_FLAGS) $(SPARKLE)/Versions/B/XPCServices/Installer.xpc
+	codesign $(SIGN_FLAGS) --preserve-metadata=entitlements $(SPARKLE)/Versions/B/XPCServices/Downloader.xpc
+	codesign $(SIGN_FLAGS) $(SPARKLE)/Versions/B/Autoupdate
+	codesign $(SIGN_FLAGS) $(SPARKLE)/Versions/B/Updater.app
+	codesign $(SIGN_FLAGS) $(SPARKLE)
 	codesign $(SIGN_FLAGS) $(APP)/Contents/Resources/podflow
 	codesign $(SIGN_FLAGS) $(APP)
 	@echo "Built $(APP)"
@@ -99,6 +116,25 @@ release: app
 	xcrun stapler staple $(DMG)
 	spctl --assess --type open --context context:primary-signature -v $(DMG)
 	@echo "Release ready: $(DMG)"
+
+# Ships an update: notarized dmg as GitHub release $(TAG), then replaces the
+# Sparkle feed. Bump CFBundleShortVersionString and CFBundleVersion in
+# Info.plist first; HEAD must be pushed. Optional: make publish NOTES="…"
+publish: check-version release
+	scripts/appcast.sh $(DMG) https://github.com/$(REPO)/releases/download/$(TAG)/$(notdir $(DMG)) "$(NOTES)" > build/appcast.xml
+	gh release create $(TAG) $(DMG) --repo $(REPO) --target $$(git rev-parse HEAD) --latest=false \
+		--title "Podflow $(VERSION)" --notes "$(if $(NOTES),$(NOTES),Podflow desktop $(VERSION))"
+	gh release view $(FEED_TAG) --repo $(REPO) >/dev/null 2>&1 || \
+		gh release create $(FEED_TAG) --repo $(REPO) --prerelease --latest=false \
+			--title "Podflow update feed" --notes "Sparkle appcast for the desktop app. Do not delete."
+	gh release upload $(FEED_TAG) build/appcast.xml --repo $(REPO) --clobber
+	@echo "Published $(TAG); installed apps update from the feed"
+
+check-version:
+	@! gh release view $(TAG) --repo $(REPO) >/dev/null 2>&1 || \
+		{ echo "$(TAG) already released. Bump the version in Info.plist."; exit 1; }
+	@git fetch -q origin && git branch -r --contains HEAD | grep -q . || \
+		{ echo "Push HEAD first: the release tag points at it."; exit 1; }
 
 run: app
 	open $(APP)

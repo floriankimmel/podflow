@@ -9,9 +9,9 @@
 	<key>CFBundleIdentifier</key>
 	<string>at.laufendentdecken.podflow</string>
 	<key>CFBundleVersion</key>
-	<string>1.0.0</string>
+	<string>1.1.0</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.0.0</string>
+	<string>1.1.0</string>
 	<key>CFBundleExecutable</key>
 	<string>Podflow</string>
 	<key>CFBundlePackageType</key>
@@ -26,6 +26,12 @@
 	<true/>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
+	<key>SUFeedURL</key>
+	<string>https://github.com/floriankimmel/podflow/releases/download/desktop-appcast/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>/HPI1iqF0hDgaTsUpvLZARrUxxywisSuswbx605rzX4=</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>NSHumanReadableCopyright</key>
 	<string>Laufend Entdecken</string>
 </dict>

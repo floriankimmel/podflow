@@ -5,12 +5,13 @@ let package = Package(
     name: "Podflow",
     platforms: [.macOS(.v15)],
     dependencies: [
-        .package(url: "https://github.com/jpsim/Yams.git", from: "5.1.0")
+        .package(url: "https://github.com/jpsim/Yams.git", from: "5.1.0"),
+        .package(url: "https://github.com/sparkle-project/Sparkle.git", from: "2.9.0"),
     ],
     targets: [
         .executableTarget(
             name: "Podflow",
-            dependencies: ["Yams"],
+            dependencies: ["Yams", .product(name: "Sparkle", package: "Sparkle")],
             path: "Sources/Podflow",
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),

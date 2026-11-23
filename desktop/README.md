@@ -15,12 +15,34 @@ Requires full Xcode and Go:
 
 ```sh
 cd desktop
-make app      # build/Podflow.app (release, ad-hoc signed) incl. plugin and CLI
+make app      # build/Podflow.app incl. plugin, CLI and Sparkle
 make run      # build + open
+make install  # build + copy to /Applications
 make test     # plugin script tests + Swift tests
 ```
 
 `make` uses Xcode at `/Applications/Xcode.app`; override with `make XCODE=…`.
+It signs with the "Developer ID Application" certificate when present.
+
+## Release and updates
+
+Installed apps update themselves with [Sparkle](https://sparkle-project.org).
+They check the feed in `SUFeedURL` (Info.plist): `appcast.xml` on the GitHub
+release `desktop-appcast`. Each version is its own release `desktop-v<version>`
+with the notarized dmg. Neither is marked "latest"; that stays the CLI.
+
+To ship a version:
+
+1. Bump `CFBundleShortVersionString` and `CFBundleVersion` in `Info.plist`.
+2. Commit and push.
+3. `make publish NOTES="What changed"`: builds, notarizes, creates the
+   release and replaces the feed.
+
+Needs the notarytool profile `podflow` and the Sparkle signing key in the
+login Keychain (created with Sparkle's `generate_keys`; the public half is
+`SUPublicEDKey`). Back the key up with
+`.build/artifacts/sparkle/Sparkle/bin/generate_keys -x <file>`. Without it,
+installed apps accept no further updates.
 
 ## First run
 
