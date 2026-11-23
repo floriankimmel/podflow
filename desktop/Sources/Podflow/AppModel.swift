@@ -6,12 +6,7 @@ import SwiftUI
 /// status, and the headless Claude runs (prepare / publish) for an episode.
 @MainActor
 final class AppModel: ObservableObject {
-    enum ConnectionState: Equatable {
-        case unconfigured
-        case connected
-        case authError
-        case offline
-    }
+    typealias ConnectionState = EpisodeCatalog.Connection
 
     struct ActiveRun: Equatable {
         var episodeID: String
@@ -31,16 +26,30 @@ final class AppModel: ObservableObject {
     /// Rebuilt when the episodes folder changes in the settings.
     private(set) var store: EpisodeStore
     private(set) var pipeline: EpisodePipeline
+    private(set) var catalog: EpisodeCatalog
+    private let publishConfig: PublishConfig
 
     private var pollTask: Task<Void, Never>?
     private var folderObserver: AnyCancellable?
 
-    init(settings: SettingsStore, setup: ClaudeSetup = ClaudeSetup()) {
+    init(
+        settings: SettingsStore,
+        setup: ClaudeSetup = ClaudeSetup(),
+        publishConfig: PublishConfig = PublishConfig(),
+        backend: (() -> BackendClientProtocol?)? = nil
+    ) {
         self.settings = settings
         self.setup = setup
+        self.publishConfig = publishConfig
+        let backend = backend ?? { [settings] in
+            guard settings.isBackendConfigured else { return nil }
+            return BackendClient(baseURL: settings.backendURL, workspaceKey: settings.workspaceKey)
+        }
+        self.backend = backend
         let store = EpisodeStore(root: settings.episodesFolderURL)
         self.store = store
-        self.pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup))
+        self.pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup), publishConfig: publishConfig)
+        self.catalog = EpisodeCatalog(store: store, publishConfig: publishConfig, backend: backend)
         folderObserver = settings.$episodesFolder
             .dropFirst()
             .removeDuplicates()
@@ -51,16 +60,14 @@ final class AppModel: ObservableObject {
             }
     }
 
+    private let backend: () -> BackendClientProtocol?
+
     private func useEpisodesFolder(_ root: URL) {
         store = EpisodeStore(root: root)
-        pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup))
+        pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup), publishConfig: publishConfig)
+        catalog = EpisodeCatalog(store: store, publishConfig: publishConfig, backend: backend)
         selectedEpisodeID = nil
         Task { await refresh() }
-    }
-
-    var backendClient: BackendClient? {
-        guard settings.isBackendConfigured else { return nil }
-        return BackendClient(baseURL: settings.backendURL, workspaceKey: settings.workspaceKey)
     }
 
     var selectedEpisode: Episode? {
@@ -78,36 +85,9 @@ final class AppModel: ObservableObject {
     // MARK: Refresh
 
     func refresh() async {
-        var merged: [String: Episode] = [:]
-        for episode in store.listEpisodes() {
-            merged[episode.id] = episode
-        }
-
-        if let client = backendClient {
-            do {
-                for record in try await client.listEpisodes() {
-                    let id = record.episodeNumber ?? record.id
-                    var episode = merged[id] ?? Episode(id: id)
-                    episode.backendTitle = record.title
-                    episode.backendSteps = record.steps
-                    merged[id] = episode
-                }
-                connection = .connected
-            } catch BackendError.unauthorized {
-                connection = .authError
-            } catch {
-                connection = .offline
-            }
-        } else {
-            connection = .unconfigured
-        }
-
-        episodes = merged.values.sorted { lhs, rhs in
-            let l = Int(lhs.number) ?? -1
-            let r = Int(rhs.number) ?? -1
-            if l != r { return l > r }
-            return lhs.id.localizedStandardCompare(rhs.id) == .orderedDescending
-        }
+        let listing = await catalog.list()
+        episodes = listing.episodes
+        connection = listing.connection
     }
 
     /// Re-reads `state.json` of the local episodes (cheap; used while a run is active).
@@ -125,11 +105,7 @@ final class AppModel: ObservableObject {
     // MARK: Episodes
 
     func createEpisode(number: String, title: String, type: EpisodeType, video: URL?, transcript: URL?) async throws {
-        try store.create(number: number, title: title, type: type, video: video, transcript: transcript)
-        if let client = backendClient {
-            let metadata = BackendMetadata(episodeNumber: number, slug: nil, title: title, releaseDate: nil, profile: "video")
-            try? await client.putMetadata(id: number, metadata: metadata)
-        }
+        try await catalog.create(number: number, title: title, type: type, video: video, transcript: transcript)
         await refresh()
         selectedEpisodeID = number
     }
@@ -141,13 +117,7 @@ final class AppModel: ObservableObject {
         guard !isRunning(episode) else { return }
         lastError = nil
         do {
-            if let client = backendClient {
-                try await client.deleteEpisode(id: episode.id)
-            }
-            if episode.isLocal {
-                try store.delete(number: episode.number)
-                PublishConfig().remove(number: episode.number)
-            }
+            try await catalog.delete(episode)
             if selectedEpisodeID == episode.id { selectedEpisodeID = nil }
         } catch {
             lastError = "Episode konnte nicht gelöscht werden: \(error.localizedDescription)"

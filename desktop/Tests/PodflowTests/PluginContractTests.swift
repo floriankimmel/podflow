@@ -63,4 +63,8 @@ final class PluginContractTests: XCTestCase {
             XCTAssertTrue(config.contains("{{env.\(secret.rawValue)}}"), "CLI config lacks \(secret.rawValue)")
         }
     }
+
+    func testStateScriptReportsTheAppsBackendProfile() throws {
+        XCTAssertTrue(try read("scripts/state.sh").contains("profile: \"\(BackendProfile.video)\""))
+    }
 }

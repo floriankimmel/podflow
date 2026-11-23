@@ -20,7 +20,8 @@ headless in the episode folder. User-facing flow and setup are in `README.md`.
 | Review logic (autosave, images, release date, publish gate) | `Sources/Podflow/Services/ReviewSession.swift` |
 | Config for the bundled CLI's WordPress publish | `Sources/Podflow/Services/PublishConfig.swift` |
 | Settings, Keychain secrets, run environment | `Sources/Podflow/Services/SettingsStore.swift` |
-| App state, run tracking, backend sync | `Sources/Podflow/AppModel.swift` |
+| Episode list (local + backend merge), create, delete | `Sources/Podflow/Services/EpisodeCatalog.swift` |
+| UI state: selection, active run, log, error banner | `Sources/Podflow/AppModel.swift` |
 | Sparkle updates | `Sources/Podflow/Updater.swift`, `Info.plist` (`SUFeedURL`, `SUPublicEDKey`) |
 
 ## Commands
@@ -42,6 +43,8 @@ breaks a plain `swift build`; the Makefile unsets it and uses full Xcode.
   reads `SKILL.md`, the SEO prompt and the scripts and fails on drift.
 - `SKILL.md` has one `` ### `<step_id>` `` heading per step, in
   `PipelineStage.all` order.
+- `seo.md` is read by `ContentParser` (Swift) and `seo.sh`. Both must give
+  what `Tests/fixtures/seo/expected.json` says; add a fixture for new cases.
 - The plugin scripts are bash + curl + jq only. Test them in
   `Tests/plugin/run.sh`.
 - Real Claude runs cost money (a prepare run is about 3 USD). Pipeline tests

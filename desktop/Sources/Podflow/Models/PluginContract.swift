@@ -80,3 +80,8 @@ enum EnvName {
     /// Read by the podflow CLI, not the plugin.
     static let configFile = "PODFLOW_CONFIG_FILE"
 }
+
+/// Backend episode profiles. `state.sh` reports steps with the same value.
+enum BackendProfile {
+    static let video = "video"
+}
