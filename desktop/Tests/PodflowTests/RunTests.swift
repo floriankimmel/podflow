@@ -157,6 +157,51 @@ final class ClaudeTests: XCTestCase {
         XCTAssertTrue(FileManager.default.fileExists(atPath: folder.appendingPathComponent("run.log").path))
     }
 
+    func testOutputSplitInsideACharacterIsKept() async throws {
+        let result = try await ProcessRunner.run("/bin/bash", ["-c", #"printf 'l\xc3'; sleep 0.3; printf '\xa4uft\nende'"#])
+        XCTAssertEqual(result.output, "läuft\nende")
+    }
+
+    func testProcessesThatExitAtOnceAlwaysReturn() async throws {
+        for _ in 0..<50 {
+            let result = try await ProcessRunner.run("/usr/bin/true", [])
+            XCTAssertEqual(result.exitCode, 0)
+        }
+    }
+
+    func testCancellingStopsTheProcess() async throws {
+        let started = Date()
+        let task = Task { try await ProcessRunner.run("/bin/sleep", ["30"]) }
+        try await Task.sleep(for: .milliseconds(300))
+        task.cancel()
+        _ = try? await task.value
+        XCTAssertLessThan(Date().timeIntervalSince(started), 5)
+    }
+
+    func testRunLogAndVisibleLogNeverContainSecrets() async throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("podflow-tests-\(UUID().uuidString)")
+        let folder = root.appendingPathComponent("371")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let fake = root.appendingPathComponent("claude")
+        try """
+        #!/bin/bash
+        echo "{\\"type\\":\\"assistant\\",\\"message\\":{\\"content\\":[{\\"type\\":\\"text\\",\\"text\\":\\"key=$WP_KEY\\"}]}}"
+        echo '{"type":"result","is_error":false,"result":"ok"}'
+        """.write(to: fake, atomically: true, encoding: .utf8)
+        try FileManager.default.setAttributes([.posixPermissions: 0o755], ofItemAtPath: fake.path)
+        let runner = ClaudeRunner(setup: ClaudeSetup(binaryOverride: fake.path), pluginDirectory: root, cliPath: "/bundle/podflow")
+        let log = OutputBox()
+
+        _ = try await runner.run(mode: .prepare, episodeFolder: folder,
+                                 environment: ["WP_KEY": "geheim/1234"], onLog: { log.append($0) })
+
+        let runLog = try String(contentsOf: folder.appendingPathComponent(EpisodeFile.runLog), encoding: .utf8)
+        XCTAssertFalse(runLog.contains("1234"), runLog)
+        XCTAssertTrue(runLog.contains("key=***"), runLog)
+        XCTAssertEqual(log.value, "key=***")
+    }
+
     func testRunnerReportsMissingPieces() async {
         let runner = ClaudeRunner(setup: ClaudeSetup(binaryOverride: "/nonexistent/claude"), pluginDirectory: nil, cliPath: nil)
         do {
@@ -253,6 +298,19 @@ final class EpisodePipelineTests: XCTestCase {
             XCTFail("expected error")
         } catch let error as EpisodePipeline.PipelineError {
             XCTAssertEqual(error, .runFailed("Nicht angemeldet"))
+        }
+    }
+
+    func testCleanRunThatStopsBeforeTheGoalIsAFailure() async throws {
+        let pipeline = try pipeline(fakeClaude: [
+            setStep(StepID.auphonicCreate, "done"),
+            #"echo '{"type":"result","is_error":false,"result":"Mode fehlt, Abbruch."}'"#,
+        ].joined(separator: "\n"))
+        do {
+            _ = try await pipeline.prepare(try newEpisode(), settings: settings, onLog: { _ in })
+            XCTFail("expected error")
+        } catch let error as EpisodePipeline.PipelineError {
+            XCTAssertEqual(error, .runFailed("Der Lauf hat „Prüfen“ nicht erreicht. Mode fehlt, Abbruch."))
         }
     }
 

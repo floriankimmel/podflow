@@ -50,6 +50,19 @@ struct ClaudeRunner {
         ]
     }
 
+    /// Replaces every secret value, also in its JSON-escaped form, with "***".
+    static func redact(_ text: String, secrets: [String]) -> String {
+        var result = text
+        for secret in secrets where secret.count >= 4 {
+            var forms = [secret]
+            if let data = try? JSONEncoder().encode(secret), let encoded = String(data: data, encoding: .utf8) {
+                forms.append(String(encoded.dropFirst().dropLast()))
+            }
+            for form in Set(forms) { result = result.replacingOccurrences(of: form, with: "***") }
+        }
+        return result
+    }
+
     func run(
         mode: RunMode,
         episodeFolder: URL,
@@ -69,14 +82,18 @@ struct ClaudeRunner {
         defer { try? logHandle?.close() }
 
         let parser = StreamParser()
+        let secrets = SettingsStore.Secret.allCases.compactMap { extra[$0.rawValue] }
         let result = try await ProcessRunner.run(
             binary,
             Self.arguments(mode: mode, pluginDirectory: pluginDirectory),
             environment: ProcessRunner.environment(adding: environment),
             currentDirectory: episodeFolder,
-            onOutput: { chunk in
-                try? logHandle?.write(contentsOf: Data(chunk.utf8))
-                for line in parser.feed(chunk) { onLog(line) }
+            onOutput: { lines in
+                // Runs skip permission prompts and have the secrets in their
+                // environment; keep them out of run.log and the visible log.
+                let safe = Self.redact(lines, secrets: secrets)
+                try? logHandle?.write(contentsOf: Data(safe.utf8))
+                for line in parser.feed(safe) { onLog(line) }
             }
         )
         return Outcome(exitCode: result.exitCode, summary: parser.summary, isError: parser.isError || result.exitCode != 0)

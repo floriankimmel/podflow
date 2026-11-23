@@ -113,6 +113,20 @@ struct EpisodePipeline {
             throw PipelineError.stepFailed(label: PipelineStage.label(for: failed.id), detail: failed.error)
         }
         if outcome.isError { throw PipelineError.runFailed(outcome.summary) }
+        // A run can end cleanly without getting there (the skill refused, or
+        // Claude stopped early); that is not a success.
+        guard Self.reachedGoal(mode, state) else {
+            let goal = PipelineStage.label(for: mode == .prepare ? StepID.review : StepID.scheduled)
+            let detail = outcome.summary.isEmpty ? "" : " \(outcome.summary)"
+            throw PipelineError.runFailed("Der Lauf hat „\(goal)“ nicht erreicht.\(detail)")
+        }
         return state
+    }
+
+    private static func reachedGoal(_ mode: RunMode, _ state: EpisodeState) -> Bool {
+        switch mode {
+        case .prepare: return [.inProgress, .done].contains(state.status(of: StepID.review))
+        case .publish: return state.status(of: StepID.scheduled) == .done
+        }
     }
 }

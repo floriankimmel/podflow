@@ -36,27 +36,70 @@ enum ProcessRunner {
         process.standardOutput = pipe
         process.standardError = pipe
 
+        // Output is handed on in whole lines: a chunk can end inside a
+        // multi-byte character, and callers parse and redact per line.
         let collected = OutputBox()
+        let lines = LineBuffer()
+        let deliver: @Sendable (String) -> Void = { text in
+            guard !text.isEmpty else { return }
+            collected.append(text)
+            onOutput?(text)
+        }
         let handle = pipe.fileHandleForReading
         handle.readabilityHandler = { fileHandle in
             let data = fileHandle.availableData
-            guard !data.isEmpty, let text = String(data: data, encoding: .utf8) else { return }
-            collected.append(text)
-            onOutput?(text)
+            guard !data.isEmpty else { return }
+            deliver(lines.append(data))
         }
 
-        try process.run()
-        await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-            process.terminationHandler = { _ in continuation.resume() }
+        // The handler is set before the start, so a process that exits at once
+        // still resumes; cancelling the task stops the process.
+        let status: Int32 = try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Int32, Error>) in
+                process.terminationHandler = { finished in continuation.resume(returning: finished.terminationStatus) }
+                do {
+                    try process.run()
+                } catch {
+                    process.terminationHandler = nil
+                    continuation.resume(throwing: error)
+                }
+            }
+        } onCancel: {
+            if process.isRunning { process.terminate() }
         }
         handle.readabilityHandler = nil
-        if let rest = try? handle.readToEnd(), let text = String(data: rest, encoding: .utf8), !text.isEmpty {
-            collected.append(text)
-            onOutput?(text)
-        }
-        return Result(exitCode: process.terminationStatus, output: collected.value)
+        if let rest = try? handle.readToEnd() { deliver(lines.append(rest)) }
+        deliver(lines.flush())
+        return Result(exitCode: status, output: collected.value)
     }
 }
+
+/// Collects raw output bytes and releases them up to the last line break.
+final class LineBuffer: @unchecked Sendable {
+    private let lock = NSLock()
+    private var pending = Data()
+
+    /// The complete lines received so far (with their line breaks), or "".
+    func append(_ data: Data) -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        pending.append(data)
+        guard let lastBreak = pending.lastIndex(of: UInt8(ascii: "\n")) else { return "" }
+        let complete = pending[pending.startIndex...lastBreak]
+        pending = Data(pending[pending.index(after: lastBreak)...])
+        return String(decoding: complete, as: UTF8.self)
+    }
+
+    /// Whatever is left after the process ended (an unterminated last line).
+    func flush() -> String {
+        lock.lock()
+        defer { lock.unlock() }
+        let rest = String(decoding: pending, as: UTF8.self)
+        pending = Data()
+        return rest
+    }
+}
+
 
 final class OutputBox: @unchecked Sendable {
     private let lock = NSLock()
