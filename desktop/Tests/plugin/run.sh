@@ -23,6 +23,9 @@ bash "$SCRIPTS/state.sh" put auphonic_create uuid UUID1
 bash "$SCRIPTS/state.sh" set auphonic_create done
 check "state done" "done" "$(bash "$SCRIPTS/state.sh" get auphonic_create)"
 check "state data survives set" "UUID1" "$(bash "$SCRIPTS/state.sh" data auphonic_create uuid)"
+for i in $(seq 1 20); do bash "$SCRIPTS/state.sh" put "parallel_$i" n "$i" & done; wait
+check "parallel updates all kept" "20" "$(jq '[.steps | keys[] | select(startswith("parallel_"))] | length' state.json)"
+check "no state temp files left" "" "$(ls -A | grep '^state\.json\.' || true)"
 bash "$SCRIPTS/state.sh" set transcript failed "kein Transkript"
 check "state error stored" "kein Transkript" "$(jq -r .steps.transcript.error state.json)"
 bash "$SCRIPTS/state.sh" set transcript done
@@ -75,7 +78,16 @@ check "create prints uuid" "UUID1" "$(bash "$A" create "LEP#371 - Test" "371_tes
 check "create held for review" "true" "$(jq -rs '[.[] | select(.path == "/api/productions.json")][0].body.review_before_publishing' "$LOG")"
 check "create uses preset + basename" "PRESET1 371_test" "$(jq -rs '[.[] | select(.path == "/api/productions.json")][0].body | "\(.preset) \(.output_basename)"' "$LOG")"
 check "bearer auth sent" "bearer k" "$(jq -rs '[.[] | select(.path == "/api/productions.json")][0].auth' "$LOG")"
+check "create again reuses production" "UUID1 1" "$(bash "$A" create "LEP#371 - Test" "371_test") $(jq -s '[.[] | select(.path == "/api/productions.json")] | length' "$LOG")"
 check "upload" "uploaded" "$(bash "$A" upload UUID1 video.mp4)"
+echo "video" > "Folge; final.mp4"
+check "upload path with ; and space" "uploaded" "$(bash "$A" upload UUID1 "Folge; final.mp4")"
+echo "slow" > slow.mp4
+bash "$A" upload UUID1 slow.mp4 1 >/dev/null; check "slow upload still running" "3" "$?"
+before="$(jq -s '[.[] | select(.path == "/api/production/UUID1/upload.json")] | length' "$LOG")"
+check "upload resumes waiting" "uploaded" "$(bash "$A" upload UUID1 slow.mp4 30)"
+check "slow upload sent once" "$before" "$(jq -s '[.[] | select(.path == "/api/production/UUID1/upload.json")] | length' "$LOG")"
+check "upload leaves no temp files" "" "$(ls -A | grep '^\.auphonic-upload' || true)"
 bash "$A" upload UUID1 missing.mp4 2>/dev/null; check "upload missing file fails" "2" "$?"
 check "start" "Audio Processing" "$(bash "$A" start UUID1)"
 bash "$A" wait UUID1 0 >/dev/null; check "wait reports still running" "3" "$?"
@@ -90,9 +102,12 @@ echo "png" > cover.png
 check "cover" "cover uploaded" "$(bash "$A" cover UUID1 cover.png)"
 bash "$A" cover UUID1 missing.png 2>/dev/null; check "cover missing file fails" "2" "$?"
 check "no youtube url before publish" "" "$(bash "$A" youtube-url UUID1)"
+bash "$A" youtube-url UUID1 1 >/dev/null; check "youtube url polling gives up" "3" "$?"
 bash "$A" publish UUID1 >/dev/null
-check "youtube url after publish" "https://www.youtube.com/watch?v=abc123" "$(bash "$A" youtube-url UUID1)"
-AUPHONIC_API_KEY=bad bash "$A" publish UUID1 >/dev/null 2>&1; check "http error fails" "nonzero" "$([ $? -ne 0 ] && echo nonzero || echo zero)"
+check "publish again is skipped" "already published 1" "$(bash "$A" publish UUID1) $(jq -s '[.[] | select(.path == "/api/production/UUID1/publish.json")] | length' "$LOG")"
+check "youtube url after publish" "https://www.youtube.com/watch?v=abc123" "$(bash "$A" youtube-url UUID1 5)"
+AUPHONIC_API_KEY=bad bash "$A" start UUID1 >/dev/null 2>&1; check "http error fails" "nonzero" "$([ $? -ne 0 ] && echo nonzero || echo zero)"
+AUPHONIC_BASE="http://127.0.0.1:1" bash "$A" details UUID1 >/dev/null 2>err.txt; check "network error explained" "network error" "$(grep -o 'network error' err.txt)"
 ( unset AUPHONIC_API_KEY; bash "$A" details UUID1 2>/dev/null ); check "missing credentials fail" "2" "$?"
 
 echo

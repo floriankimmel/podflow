@@ -50,7 +50,7 @@ final class PluginContractTests: XCTestCase {
         let read = Set(matches(#"\$\{?([A-Z][A-Z0-9_]+)"#, in: scripts))
         // Optional overrides and the scripts' own variables.
         let scriptOwned: Set = ["AUPHONIC_API_KEY", "AUPHONIC_BASE", "AUPHONIC_POLL_SECONDS", "PODFLOW_STATE_FILE",
-                             "STATE_FILE", "AUTH", "BASE", "CLAUDE_SKILL_DIR", "ARGUMENTS"]
+                             "STATE_FILE", "AUTH", "BASE", "POLL", "CLAUDE_SKILL_DIR", "ARGUMENTS"]
 
         let cliSecrets: Set<SettingsStore.Secret> = [.ftpUser, .ftpPassword, .wordpressKey]
         let pluginProvided = Set(SettingsStore.Secret.allCases.filter { !cliSecrets.contains($0) }.map(\.rawValue))

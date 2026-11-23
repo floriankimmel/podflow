@@ -31,10 +31,10 @@ Files in the episode folder: `state.json`, `transcript.txt`, `shownotes.md`, `so
 ## Mode `prepare`
 
 ### `auphonic_create`
-`auphonic.sh create "<title>" "<audioBasename>"` with the values from `state.sh field title` / `audioBasename`. Store the printed uuid: `state.sh put auphonic_create uuid <uuid>`.
+`auphonic.sh create "<title>" "<audioBasename>"` with the values from `state.sh field title` / `audioBasename`. Store the printed uuid: `state.sh put auphonic_create uuid <uuid>`. Calling `create` again in the same folder prints the same uuid, so a retry never creates a second production.
 
 ### `auphonic_upload`
-`auphonic.sh upload <uuid> "<video>"` (`state.sh field video` is the absolute video path). The upload is large; run it with the maximum command timeout (10 minutes) and, if it times out, retry once before failing.
+`auphonic.sh upload <uuid> "<video>"` (`state.sh field video` is the absolute video path). The transfer runs in the background; each call waits up to 9 minutes. Exit code `3` means still uploading: call it again (it keeps waiting for the same transfer, it does not start over). Repeat up to 40 times (about six hours). Exit code `1` is a failure.
 
 ### `auphonic_start`
 `auphonic.sh start <uuid>`.
@@ -80,10 +80,12 @@ bash auphonic.sh metadata <uuid> "$(bash seo.sh "YouTube Titel" seo.md)" .youtub
 `auphonic.sh cover <uuid> "<cover file>"` with the file in this folder whose name starts with `cover.` (picked in the review). It becomes the artwork of the audio files and the YouTube video. Fail if there is no such file.
 
 ### `auphonic_publish`
-`auphonic.sh publish <uuid>`, then `auphonic.sh wait <uuid>` (repeat on exit code `3`, up to 6 times). Then `auphonic.sh youtube-url <uuid>`; if it prints a URL, `state.sh put auphonic_publish youtubeUrl <url>`. A missing URL is not a failure.
+`auphonic.sh publish <uuid>` (a second call after a successful one does nothing), then `auphonic.sh wait <uuid>` (repeat on exit code `3`, up to 6 times). Then `auphonic.sh youtube-url <uuid> 540`; if it prints a URL, `state.sh put auphonic_publish youtubeUrl <url>`. Exit code `3` (no URL yet) is not a failure of this step.
 
 ### `shownotes_youtube_link`
-If a YouTube URL is stored and `shownotes.md` does not contain it yet, append:
+If no YouTube URL is stored yet (`state.sh data auphonic_publish youtubeUrl` is empty), call `auphonic.sh youtube-url <uuid> 540` up to 3 times and store the URL once it appears. If there is still none, fail the step with "YouTube-Link noch nicht verfügbar, später erneut versuchen": WordPress must not be scheduled without it, and a retry picks up here.
+
+If `shownotes.md` does not contain the URL yet, append:
 
 ```
 

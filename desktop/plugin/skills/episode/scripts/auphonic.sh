@@ -2,14 +2,17 @@
 # Auphonic API calls for the episode flow. bash + curl + jq only.
 #
 #   auphonic.sh create <title> <output-basename>   create production from preset, held for review; prints uuid
-#   auphonic.sh upload <uuid> <file>               upload the input video
+#                                                  (once per episode folder: a second call prints the same uuid)
+#   auphonic.sh upload <uuid> <file> [max-seconds] upload the input video in the background and wait for it;
+#                                                  exit 0 uploaded, 3 still uploading (call again), 1 error
 #   auphonic.sh start <uuid>                       start processing
 #   auphonic.sh wait <uuid> [max-seconds]          poll until done; exit 0 done, 3 still running, 1 error
 #   auphonic.sh transcript <uuid> <out-file>       download the speech-recognition transcript (txt)
 #   auphonic.sh metadata <uuid> <title> <summary-file> <tags-csv>
 #   auphonic.sh cover <uuid> <image-file>           set the cover (artwork of audio files and YouTube video)
-#   auphonic.sh publish <uuid>                     release the held production to its outgoing services
-#   auphonic.sh youtube-url <uuid>                 print the YouTube URL once released (empty if unknown)
+#   auphonic.sh publish <uuid>                     release the held production (once: a second call does nothing)
+#   auphonic.sh youtube-url <uuid> [max-seconds]   print the YouTube URL once released; with max-seconds poll
+#                                                  for it, exit 3 when it is still missing
 #   auphonic.sh details <uuid>                     print production JSON
 #
 # Env: AUPHONIC_API_KEY (bearer) or AUPHONIC_USER + AUPHONIC_PWD (basic),
@@ -38,7 +41,11 @@ api() {
   shift 2
   local out code
   out="$(mktemp)"
-  code="$(curl -sS -L -o "$out" -w '%{http_code}' -X "$method" "${AUTH[@]}" "$@" "${BASE}${path}")"
+  if ! code="$(curl -sS -L -o "$out" -w '%{http_code}' -X "$method" "${AUTH[@]}" "$@" "${BASE}${path}")"; then
+    echo "auphonic: ${method} ${path} failed (network error)" >&2
+    rm -f "$out"
+    return 1
+  fi
   if [ "$code" -ge 400 ]; then
     echo "auphonic: ${method} ${path} failed (HTTP ${code}): $(head -c 500 "$out")" >&2
     rm -f "$out"
@@ -48,24 +55,60 @@ api() {
   rm -f "$out"
 }
 
+POLL="${AUPHONIC_POLL_SECONDS:-20}"
+
 cmd="${1:-}"
-[ -n "$cmd" ] || { sed -n '2,19p' "$0" >&2; exit 2; }
+[ -n "$cmd" ] || { sed -n '2,23p' "$0" >&2; exit 2; }
 shift
 auth
 
 case "$cmd" in
   create)
     title="$1"; basename="$2"
+    # A run that died after creating must not create a second production.
+    if [ -s .auphonic-production ]; then cat .auphonic-production; exit 0; fi
     [ -n "${AUPHONIC_PRESET:-}" ] || { echo "auphonic: AUPHONIC_PRESET not set" >&2; exit 2; }
     body="$(jq -n --arg preset "$AUPHONIC_PRESET" --arg title "$title" --arg base "$basename" \
       '{preset: $preset, metadata: {title: $title}, output_basename: $base, review_before_publishing: true}')"
-    api POST /api/productions.json -H "Content-Type: application/json" --data "$body" | jq -er '.data.uuid'
+    uuid="$(api POST /api/productions.json -H "Content-Type: application/json" --data "$body" | jq -er '.data.uuid')"
+    echo "$uuid" > .auphonic-production
+    echo "$uuid"
     ;;
 
   upload)
-    uuid="$1"; file="$2"
+    # Large videos take longer than one command may run, so curl runs in the
+    # background and later calls wait for the same transfer.
+    uuid="$1"; file="$2"; max="${3:-540}"; waited=0
     [ -f "$file" ] || { echo "auphonic: no such file: $file" >&2; exit 2; }
-    api POST "/api/production/${uuid}/upload.json" --form "input_file=@${file}" | jq -er '.data.uuid' > /dev/null
+    pidfile=".auphonic-upload-${uuid}.pid"; codefile=".auphonic-upload-${uuid}.code"; outfile=".auphonic-upload-${uuid}.json"
+    running() { [ -s "$pidfile" ] && kill -0 "$(cat "$pidfile")" 2>/dev/null; }
+    if [ ! -f "$codefile" ] && ! running; then
+      rm -f "$outfile"
+      ( trap '' HUP
+        code="$(curl -sS -L -o "$outfile" -w '%{http_code}' -X POST "${AUTH[@]}" \
+          --form "input_file=@\"${file}\"" "${BASE}/api/production/${uuid}/upload.json" 2>/dev/null)" || code="000"
+        echo "$code" > "${codefile}.tmp" && mv "${codefile}.tmp" "$codefile"
+      ) < /dev/null > /dev/null 2>&1 &
+      echo $! > "$pidfile"
+    fi
+    while [ ! -f "$codefile" ]; do
+      if ! running; then
+        sleep 1
+        [ -f "$codefile" ] && break
+        rm -f "$pidfile"
+        echo "auphonic: upload stopped without a result" >&2; exit 1
+      fi
+      if [ "$waited" -ge "$max" ]; then echo "uploading"; exit 3; fi
+      sleep "$POLL"; waited=$((waited + POLL))
+    done
+    code="$(cat "$codefile")"
+    rm -f "$codefile" "$pidfile"
+    if [ "$code" -lt 200 ] || [ "$code" -ge 400 ]; then
+      echo "auphonic: upload failed (HTTP ${code}): $(head -c 500 "$outfile" 2>/dev/null)" >&2
+      rm -f "$outfile"; exit 1
+    fi
+    jq -er '.data.uuid' "$outfile" > /dev/null || { echo "auphonic: unexpected upload response" >&2; rm -f "$outfile"; exit 1; }
+    rm -f "$outfile"
     echo "uploaded"
     ;;
 
@@ -87,8 +130,8 @@ case "$cmd" in
         echo "running: ${label}"
         exit 3
       fi
-      sleep "${AUPHONIC_POLL_SECONDS:-20}"
-      waited=$((waited + ${AUPHONIC_POLL_SECONDS:-20}))
+      sleep "$POLL"
+      waited=$((waited + POLL))
     done
     ;;
 
@@ -115,17 +158,28 @@ case "$cmd" in
   cover)
     uuid="$1"; file="$2"
     [ -f "$file" ] || { echo "auphonic: no such file: $file" >&2; exit 2; }
-    api POST "/api/production/${uuid}/upload.json" --form "image=@${file}" | jq -er '.data.uuid' > /dev/null
+    api POST "/api/production/${uuid}/upload.json" --form "image=@\"${file}\"" | jq -er '.data.uuid' > /dev/null
     echo "cover uploaded"
     ;;
 
   publish)
+    # Releasing twice fails at Auphonic; a retry after a successful call skips it.
+    marker=".auphonic-published-$1"
+    if [ -f "$marker" ]; then echo "already published"; exit 0; fi
     api POST "/api/production/$1/publish.json" | jq -er '.data.status_string'
+    touch "$marker"
     ;;
 
   youtube-url)
-    api GET "/api/production/$1.json" \
-      | jq -r '[.data | .. | strings | select(test("^https?://(www\\.)?(youtube\\.com/watch|youtu\\.be/)"))] | (.[0] // empty)'
+    uuid="$1"; max="${2:-}"; waited=0
+    while :; do
+      url="$(api GET "/api/production/${uuid}.json" \
+        | jq -r '[.data | .. | strings | select(test("^https?://(www\\.)?(youtube\\.com/watch|youtu\\.be/)"))] | (.[0] // empty)')"
+      if [ -n "$url" ]; then echo "$url"; exit 0; fi
+      [ -n "$max" ] || exit 0
+      if [ "$waited" -ge "$max" ]; then exit 3; fi
+      sleep "$POLL"; waited=$((waited + POLL))
+    done
     ;;
 
   details)

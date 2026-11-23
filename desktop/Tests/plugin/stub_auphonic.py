@@ -1,6 +1,7 @@
 """Minimal Auphonic API stub for script tests. Usage: stub_auphonic.py <port> <log-file>"""
 import json
 import sys
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 PORT, LOG = int(sys.argv[1]), sys.argv[2]
@@ -53,6 +54,8 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/api/productions.json":
             return self._send(200, {"uuid": "UUID1"})
         if self.path == "/api/production/UUID1/upload.json":
+            if b"slow" in raw:
+                time.sleep(3)
             return self._send(200, {"uuid": "UUID1"})
         if self.path == "/api/production/UUID1/start.json":
             state["status"], state["polls"] = 4, 0

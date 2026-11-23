@@ -11,10 +11,21 @@ set -euo pipefail
 STATE_FILE="${PODFLOW_STATE_FILE:-state.json}"
 [ -f "$STATE_FILE" ] || echo '{"steps":{}}' > "$STATE_FILE"
 
+# Steps may run in parallel: serialise read-modify-write with a lock directory,
+# and replace the file atomically (temp file on the same volume) so the app
+# never reads a half-written state.
 update() {
-  local tmp
-  tmp="$(mktemp)"
-  jq "$@" "$STATE_FILE" > "$tmp" && mv "$tmp" "$STATE_FILE"
+  local lock="${STATE_FILE}.lock" tries=0 tmp
+  until mkdir "$lock" 2>/dev/null; do
+    tries=$((tries + 1))
+    # An update takes milliseconds; a lock held for 5 s is left over from a
+    # killed run.
+    if [ "$tries" -ge 50 ]; then rmdir "$lock" 2>/dev/null || true; tries=0; fi
+    sleep 0.1
+  done
+  tmp="$(mktemp "${STATE_FILE}.XXXXXX")"
+  if jq "$@" "$STATE_FILE" > "$tmp"; then mv "$tmp" "$STATE_FILE"; else rm -f "$tmp"; rmdir "$lock"; return 1; fi
+  rmdir "$lock"
 }
 
 report_backend() {
