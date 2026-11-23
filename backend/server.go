@@ -103,6 +103,18 @@ func (s *Server) handleEpisode(w http.ResponseWriter, r *http.Request) {
 		}
 		writeJSON(w, http.StatusOK, ep)
 
+	case sub == "" && r.Method == http.MethodDelete:
+		err := s.store.Delete(id)
+		if errors.Is(err, ErrNotFound) {
+			writeJSON(w, http.StatusNotFound, map[string]string{"error": "episode not found"})
+			return
+		}
+		if err != nil {
+			serverError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]string{"status": "deleted"})
+
 	case sub == "steps" && r.Method == http.MethodPost:
 		var report stepReport
 		if err := json.NewDecoder(r.Body).Decode(&report); err != nil {

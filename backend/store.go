@@ -97,6 +97,32 @@ func (s *Store) migrate() error {
 
 func (s *Store) Close() error { return s.db.Close() }
 
+// Delete removes an episode with its steps and content. SQLite does not
+// enforce the ON DELETE CASCADE without a per-connection pragma, so the
+// child rows are deleted explicitly.
+func (s *Store) Delete(id string) error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	if _, err := tx.Exec(`DELETE FROM steps WHERE episode_id = ?`, id); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(`DELETE FROM content WHERE episode_id = ?`, id); err != nil {
+		return err
+	}
+	res, err := tx.Exec(`DELETE FROM episodes WHERE id = ?`, id)
+	if err != nil {
+		return err
+	}
+	if n, _ := res.RowsAffected(); n == 0 {
+		return ErrNotFound
+	}
+	return tx.Commit()
+}
+
 func now() string { return time.Now().UTC().Format(time.RFC3339) }
 
 // resolveID returns the canonical episode row id for an incoming identity.

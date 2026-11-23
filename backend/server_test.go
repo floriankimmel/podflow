@@ -206,3 +206,42 @@ func TestMetadataUpsertProfile(t *testing.T) {
 		t.Fatalf("ep = %+v", ep)
 	}
 }
+
+func TestDeleteEpisode(t *testing.T) {
+	s := newTestServer(t)
+	for _, n := range []string{"1", "2"} {
+		report := stepReport{Step: "auphonic_wait", Status: "done", Metadata: Metadata{EpisodeNumber: n}}
+		request(t, s, http.MethodPost, "/episodes/"+n+"/steps", testKey, report)
+	}
+	request(t, s, http.MethodPost, "/episodes/1/content", testKey, contentReport{Key: "shownotes", Body: "x"})
+
+	if rec := request(t, s, http.MethodDelete, "/episodes/1", "", nil); rec.Code != http.StatusUnauthorized {
+		t.Fatalf("delete without key = %d, want 401", rec.Code)
+	}
+	if rec := request(t, s, http.MethodDelete, "/episodes/1", testKey, nil); rec.Code != http.StatusOK {
+		t.Fatalf("delete = %d, want 200", rec.Code)
+	}
+	if rec := request(t, s, http.MethodGet, "/episodes/1", testKey, nil); rec.Code != http.StatusNotFound {
+		t.Fatalf("get after delete = %d, want 404", rec.Code)
+	}
+	if rec := request(t, s, http.MethodDelete, "/episodes/1", testKey, nil); rec.Code != http.StatusNotFound {
+		t.Fatalf("second delete = %d, want 404", rec.Code)
+	}
+
+	rec := request(t, s, http.MethodGet, "/episodes", testKey, nil)
+	var eps []Episode
+	_ = json.Unmarshal(rec.Body.Bytes(), &eps)
+	if len(eps) != 1 || eps[0].EpisodeNumber != "2" {
+		t.Fatalf("list after delete = %+v", eps)
+	}
+
+	// A new report for the same number starts fresh: no old steps or content.
+	report := stepReport{Step: "transcript", Status: "in_progress", Metadata: Metadata{EpisodeNumber: "1"}}
+	request(t, s, http.MethodPost, "/episodes/1/steps", testKey, report)
+	rec = request(t, s, http.MethodGet, "/episodes/1", testKey, nil)
+	var ep Episode
+	_ = json.Unmarshal(rec.Body.Bytes(), &ep)
+	if len(ep.Steps) != 1 || ep.Steps[0].Step != "transcript" || len(ep.Content) != 0 {
+		t.Fatalf("recreated episode carries old data: %+v", ep)
+	}
+}

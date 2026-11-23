@@ -70,6 +70,15 @@ One episode with steps and content. `404` when unknown.
 curl -H "X-Workspace-Key: dev-key" http://localhost:8080/episodes/259
 ```
 
+### `DELETE /episodes/{id}`
+
+Remove an episode with its steps and content. `404` when it does not exist.
+A later step report for the same number creates a fresh episode.
+
+```sh
+curl -X DELETE -H "X-Workspace-Key: dev-key" http://localhost:8080/episodes/259
+```
+
 ### `POST /episodes/{id}/steps`
 
 Upsert a step status. Creates the episode on first report.
