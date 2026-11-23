@@ -122,7 +122,9 @@ release: app
 # Info.plist first; HEAD must be pushed. Optional: make publish NOTES="…"
 publish: check-version release
 	scripts/appcast.sh $(DMG) https://github.com/$(REPO)/releases/download/$(TAG)/$(notdir $(DMG)) "$(NOTES)" > build/appcast.xml
-	gh release create $(TAG) $(DMG) --repo $(REPO) --target $$(git rev-parse HEAD) --latest=false \
+	# Tag via git: gh creating the tag itself needs the "workflow" token scope.
+	git tag $(TAG) && git push origin $(TAG)
+	gh release create $(TAG) $(DMG) --repo $(REPO) --verify-tag --latest=false \
 		--title "Podflow $(VERSION)" --notes "$(if $(NOTES),$(NOTES),Podflow desktop $(VERSION))"
 	gh release view $(FEED_TAG) --repo $(REPO) >/dev/null 2>&1 || \
 		gh release create $(FEED_TAG) --repo $(REPO) --prerelease --latest=false \
