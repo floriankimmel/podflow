@@ -12,10 +12,6 @@ let package = Package(
             name: "Podflow",
             dependencies: ["Yams"],
             path: "Sources/Podflow",
-            resources: [
-                .copy("Resources/prompts"),
-                .copy("Resources/reaper")
-            ],
             swiftSettings: [.swiftLanguageMode(.v5)]
         ),
         .testTarget(

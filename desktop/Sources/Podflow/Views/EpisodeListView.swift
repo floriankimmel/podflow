@@ -2,61 +2,45 @@ import SwiftUI
 
 struct EpisodeListView: View {
     @EnvironmentObject var model: AppModel
-    @EnvironmentObject var settings: SettingsStore
+    @State private var deleting: Episode?
 
     var body: some View {
         List(selection: $model.selectedEpisodeID) {
             if model.episodes.isEmpty {
-                emptyState
+                Label("Noch keine Episoden", systemImage: "tray")
+                    .foregroundStyle(.secondary)
             } else {
                 ForEach(model.episodes) { episode in
-                    EpisodeRow(episode: episode, record: model.backendRecord(for: episode))
+                    EpisodeRow(episode: episode, running: model.isRunning(episode))
                         .tag(episode.id)
+                        .contextMenu {
+                            Button("Episode löschen …", role: .destructive) { deleting = episode }
+                                .disabled(model.isRunning(episode))
+                        }
                 }
             }
         }
         .listStyle(.sidebar)
         .navigationTitle("Episoden")
-        .onChange(of: model.selectedEpisodeID) {
-            Task { await model.refreshSelected() }
-        }
-    }
-
-    @ViewBuilder
-    private var emptyState: some View {
-        if settings.storageRootURL == nil {
-            Label("Kein Episoden-Ordner gewählt", systemImage: "folder.badge.questionmark")
-                .foregroundStyle(.secondary)
-        } else {
-            Label("Keine Episoden in \(settings.storageRootPath)", systemImage: "folder")
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .truncationMode(.middle)
-        }
+        .deleteEpisodeDialog(episode: $deleting)
     }
 }
 
 struct EpisodeRow: View {
     let episode: Episode
-    let record: BackendEpisode?
+    let running: Bool
 
-    /// Furthest-reached or failed stage glyph for the sidebar.
-    private var statusGlyph: (symbol: String, color: Color) {
-        if let record {
-            if record.steps.contains(where: { $0.status == .failed }) {
-                return ("exclamationmark.circle.fill", .red)
-            }
-            if record.anyStepInProgress {
-                return ("arrow.triangle.2.circlepath.circle.fill", .blue)
-            }
+    private var statusGlyph: (symbol: String, color: Color, label: String) {
+        if episode.hasFailure { return ("exclamationmark.circle.fill", .red, "Fehler") }
+        if running || episode.hasStepInProgress {
+            return ("arrow.triangle.2.circlepath.circle.fill", .blue, "läuft")
         }
-        let backendDone = record?.steps.filter { $0.status == .done }.map(\.step) ?? []
-        let doneCount = Set(backendDone).union(episode.local?.doneSteps ?? []).count
-        if doneCount == 0 { return ("circle.dashed", .secondary) }
-        let total = episode.profile.stages.count
-        return doneCount >= total
-            ? ("checkmark.circle.fill", .green)
-            : ("circle.bottomhalf.filled", Theme.accent)
+        switch episode.phase {
+        case .notStarted: return ("circle.dashed", .secondary, "neu")
+        case .preparing, .publishing: return ("circle.bottomhalf.filled", Theme.accent, "in Arbeit")
+        case .review: return ("eye.circle.fill", Theme.accent, "bereit zum Prüfen")
+        case .scheduled: return ("calendar.badge.checkmark", .green, "geplant")
+        }
     }
 
     var body: some View {
@@ -65,31 +49,57 @@ struct EpisodeRow: View {
                 .foregroundStyle(statusGlyph.color)
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
-                    if let number = episode.displayNumber {
-                        Text("#\(number)")
-                            .font(.caption.monospacedDigit().weight(.bold))
-                            .foregroundStyle(Theme.accent)
-                    }
-                    // Hard rule: titles truncate with ellipsis, never clip.
-                    Text(episode.displayTitle)
+                    Text("#\(episode.number)")
+                        .font(.caption.monospacedDigit().weight(.bold))
+                        .foregroundStyle(Theme.accent)
+                    Text(episode.title.isEmpty ? "Ohne Titel" : episode.title)
                         .lineLimit(1)
                         .truncationMode(.tail)
                 }
                 HStack(spacing: 6) {
-                    if let date = episode.releaseDate, !date.isEmpty {
-                        Text(date)
+                    Text(statusGlyph.label)
+                    if !episode.isLocal {
+                        Text("nicht auf diesem Mac")
+                            .padding(.horizontal, 5)
+                            .background(.quaternary, in: Capsule())
                     }
-                    Text(episode.profile.displayName)
-                        .padding(.horizontal, 5)
-                        .background(.quaternary, in: Capsule())
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-                .truncationMode(.tail)
             }
         }
         .padding(.vertical, 2)
-        .help(episode.displayTitle)
+        .help(episode.title)
+    }
+}
+
+extension View {
+    /// Confirmation before an episode folder goes to the Trash.
+    func deleteEpisodeDialog(episode: Binding<Episode?>) -> some View {
+        modifier(DeleteEpisodeDialog(episode: episode))
+    }
+}
+
+private struct DeleteEpisodeDialog: ViewModifier {
+    @Binding var episode: Episode?
+    @EnvironmentObject var model: AppModel
+
+    func body(content: Content) -> some View {
+        content.confirmationDialog(
+            "Episode #\(episode?.number ?? "") löschen?",
+            isPresented: Binding(get: { episode != nil }, set: { if !$0 { episode = nil } }),
+            titleVisibility: .visible,
+            presenting: episode
+        ) { episode in
+            Button(episode.isLocal ? "In den Papierkorb legen" : "Entfernen", role: .destructive) {
+                Task { await model.deleteEpisode(episode) }
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: { episode in
+            Text(episode.isLocal
+                ? "Der Episoden-Ordner mit Transkript und Texten kommt in den Papierkorb, und die Episode verschwindet auch beim anderen Host aus der Liste. Was schon bei Auphonic, YouTube oder WordPress ist, bleibt dort."
+                : "Die Episode verschwindet aus der gemeinsamen Liste, auch beim anderen Host. Dateien auf dessen Mac und alles bei Auphonic, YouTube oder WordPress bleiben erhalten.")
+        }
     }
 }

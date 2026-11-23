@@ -24,6 +24,7 @@ protocol BackendClientProtocol: Sendable {
     func reportStep(id: String, step: String, status: StepState, metadata: BackendMetadata) async throws
     func putMetadata(id: String, metadata: BackendMetadata) async throws
     func putContent(id: String, key: String, body: String) async throws
+    func deleteEpisode(id: String) async throws
 }
 
 struct BackendMetadata: Codable, Sendable {
@@ -99,6 +100,16 @@ struct BackendClient: BackendClientProtocol {
         let encoded = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
         let body = try JSONEncoder().encode(metadata)
         _ = try await send(request(path: "/episodes/\(encoded)/metadata", method: "POST", body: body))
+    }
+
+    /// Already gone counts as success.
+    func deleteEpisode(id: String) async throws {
+        let encoded = id.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? id
+        do {
+            _ = try await send(request(path: "/episodes/\(encoded)", method: "DELETE"))
+        } catch BackendError.notFound {
+            return
+        }
     }
 
     func putContent(id: String, key: String, body: String) async throws {

@@ -1,180 +1,114 @@
 import SwiftUI
 
-/// Guided first-run flow (app-onboarding spec): detects/installs external
-/// tools and sets the storage root. Ready to publish = podflow CLI + storage
-/// root; transcription tools are staged and optional here (D9).
+/// Guided setup: installs Claude Code if missing, signs in, collects the
+/// shared accounts. No terminal needed.
 struct OnboardingView: View {
     @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var model: AppModel
     @Environment(\.dismiss) private var dismiss
 
-    @StateObject private var manager: DependencyManager
+    @State private var busy: String?
+    @State private var error: String?
 
-    init() {
-        _manager = StateObject(wrappedValue: DependencyManager(settings: SettingsStore.shared))
-    }
+    private var claudeReady: Bool { model.claudeStatus == .ready }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            HStack(spacing: 10) {
-                Image(systemName: "figure.run")
-                    .font(.system(size: 30))
-                    .foregroundStyle(Theme.accent)
-                VStack(alignment: .leading) {
-                    Text("Willkommen bei Podflow")
-                        .font(.title2.weight(.bold))
-                    Text("Einrichtung für die Laufend-Entdecken-Produktion")
-                        .foregroundStyle(.secondary)
-                }
-            }
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Podflow einrichten").font(.title2.weight(.semibold))
 
-            VStack(alignment: .leading, spacing: 10) {
-                ForEach(manager.dependencies) { dependency in
-                    DependencyRow(dependency: dependency) {
-                        Task { await manager.install(dependency.id) }
-                    }
-                }
-            }
-            .padding(14)
-            .glassPanel()
+            claudeSection
 
-            storageRootStep
+            Form { AccountFields() }
+                .formStyle(.grouped)
+                .scrollContentBackground(.hidden)
+
+            if !settings.missingForRun.isEmpty {
+                Text("Es fehlt noch: \(settings.missingForRun.joined(separator: ", "))")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
 
             HStack {
-                readinessLine
                 Spacer()
-                Button("Erneut prüfen") {
-                    Task { await manager.detectAll() }
-                }
-                .buttonStyle(GlassButtonStyle())
-                Button(manager.isReadyForPublish ? "Fertig" : "Später fertigstellen") {
-                    if manager.isReadyForPublish {
-                        settings.onboardingCompleted = true
-                    }
-                    dismiss()
+                Button("Später") { dismiss() }
+                Button("Fertig") {
+                    settings.onboardingCompleted = true
                     Task { await model.refresh() }
+                    dismiss()
                 }
                 .buttonStyle(GlassButtonStyle(prominent: true))
+                .disabled(!claudeReady || !settings.missingForRun.isEmpty)
             }
         }
-        .padding(24)
-        .frame(width: 560)
-        .background(Theme.backdrop)
-        .task { await manager.detectAll() }
+        .padding(20)
+        .frame(width: 560, height: 720)
+        .task { await model.refreshClaudeStatus() }
     }
 
-    private var storageRootStep: some View {
-        HStack(spacing: 10) {
-            Image(systemName: settings.storageRootURL != nil ? "checkmark.circle.fill" : "folder.badge.questionmark")
-                .foregroundStyle(settings.storageRootURL != nil ? .green : .orange)
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Episoden-Ordner")
-                    .font(.callout.weight(.semibold))
-                Text(settings.storageRootPath.isEmpty ? "Noch nicht gewählt" : settings.storageRootPath)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.middle)
-            }
-            Spacer()
-            Button("Ordner wählen…") {
-                let panel = NSOpenPanel()
-                panel.canChooseDirectories = true
-                panel.canChooseFiles = false
-                panel.canCreateDirectories = true
-                panel.message = "Ordner, in dem jede Episode als Unterordner liegt"
-                if panel.runModal() == .OK, let url = panel.url {
-                    settings.storageRootPath = url.path
+    private var claudeSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: claudeReady ? "checkmark.circle.fill" : "circle.dashed")
+                    .foregroundStyle(claudeReady ? .green : .secondary)
+                    .font(.title3)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Claude").font(.headline)
+                    Text(claudeText).font(.callout).foregroundStyle(.secondary)
+                }
+                Spacer()
+                if let busy {
+                    ProgressView().controlSize(.small)
+                    Text(busy).font(.caption).foregroundStyle(.secondary)
+                } else {
+                    switch model.claudeStatus {
+                    case .missing:
+                        Button("Installieren") { install() }.buttonStyle(GlassButtonStyle(prominent: true))
+                    case .loggedOut:
+                        Button("Anmelden") { login() }.buttonStyle(GlassButtonStyle(prominent: true))
+                    case .ready, .none:
+                        EmptyView()
+                    }
                 }
             }
-            .buttonStyle(GlassButtonStyle())
+            if let error {
+                Text(error).font(.caption).foregroundStyle(.red).textSelection(.enabled)
+            }
         }
         .padding(14)
-        .glassPanel()
+        .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
     }
 
-    private var readinessLine: some View {
-        Group {
-            if manager.isReadyForPublish {
-                Label(
-                    manager.allInstalled
-                        ? "Bereit — alle Werkzeuge installiert"
-                        : "Bereit zum Publizieren — Transkriptions-Tools optional",
-                    systemImage: "checkmark.seal.fill"
-                )
-                .foregroundStyle(.green)
-            } else {
-                Label("Noch nicht bereit: podflow CLI + Episoden-Ordner nötig", systemImage: "hourglass")
-                    .foregroundStyle(.orange)
+    private var claudeText: String {
+        switch model.claudeStatus {
+        case .none: return "Wird geprüft …"
+        case .missing: return "Claude Code erledigt die Arbeit im Hintergrund und muss einmal installiert werden."
+        case .loggedOut: return "Bitte mit deinem Claude-Konto anmelden. Es öffnet sich der Browser."
+        case .ready: return "Installiert und angemeldet."
+        }
+    }
+
+    private func install() {
+        perform("Wird installiert …") {
+            try await model.setup.install()
+        }
+    }
+
+    private func login() {
+        perform("Warte auf die Anmeldung im Browser …") {
+            try await model.setup.login()
+        }
+    }
+
+    private func perform(_ label: String, _ work: @escaping () async throws -> Void) {
+        busy = label
+        error = nil
+        Task {
+            do {
+                try await work()
+            } catch {
+                self.error = error.localizedDescription
             }
-        }
-        .font(.callout)
-    }
-}
-
-private struct DependencyRow: View {
-    let dependency: DependencyManager.Dependency
-    let install: () -> Void
-
-    var body: some View {
-        HStack(spacing: 10) {
-            statusIcon
-            VStack(alignment: .leading, spacing: 2) {
-                HStack(spacing: 6) {
-                    Text(dependency.name)
-                        .font(.callout.weight(.semibold))
-                    if !dependency.requiredForPublish {
-                        Text("optional für Publish")
-                            .font(.caption2)
-                            .padding(.horizontal, 5)
-                            .background(.quaternary, in: Capsule())
-                    }
-                }
-                Text(dependency.message ?? dependency.detail)
-                    .font(.caption)
-                    .foregroundStyle(dependency.state == .failed ? .red : .secondary)
-                    .lineLimit(2)
-                if dependency.state == .installing, let progress = dependency.progress {
-                    ProgressView(value: progress)
-                        .controlSize(.small)
-                    Text("\(Int(progress * 100)) %")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
-            Spacer()
-            trailing
-        }
-    }
-
-    @ViewBuilder
-    private var statusIcon: some View {
-        switch dependency.state {
-        case .installed:
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-        case .missing:
-            Image(systemName: "circle").foregroundStyle(.orange)
-        case .failed:
-            Image(systemName: "xmark.circle.fill").foregroundStyle(.red)
-        case .checking, .installing:
-            ProgressView().controlSize(.small)
-        case .unknown:
-            Image(systemName: "questionmark.circle").foregroundStyle(.secondary)
-        }
-    }
-
-    @ViewBuilder
-    private var trailing: some View {
-        switch dependency.state {
-        case .missing, .failed:
-            Button("Installieren") { install() }
-                .buttonStyle(GlassButtonStyle(prominent: true))
-        case .installed:
-            Text("Installiert")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        default:
-            EmptyView()
+            await model.refreshClaudeStatus()
+            busy = nil
         }
     }
 }

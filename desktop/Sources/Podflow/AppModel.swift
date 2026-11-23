@@ -1,9 +1,9 @@
+import Combine
 import Foundation
 import SwiftUI
 
-/// Central view model: merges local episode folders with backend records,
-/// drives adaptive polling (D4: on-demand when idle, 5s while any step of the
-/// viewed episode is in progress), and runs the pipeline actions.
+/// Central view model: local episode folders merged with the shared backend
+/// status, and the headless Claude runs (prepare / publish) for an episode.
 @MainActor
 final class AppModel: ObservableObject {
     enum ConnectionState: Equatable {
@@ -13,28 +13,49 @@ final class AppModel: ObservableObject {
         case offline
     }
 
+    struct ActiveRun: Equatable {
+        var episodeID: String
+        var mode: RunMode
+    }
+
     @Published var episodes: [Episode] = []
-    @Published var backendRecords: [String: BackendEpisode] = [:]
     @Published var selectedEpisodeID: String?
     @Published var connection: ConnectionState = .unconfigured
-    @Published var lastRefreshed: Date?
-    @Published var runningAction: String?
-    @Published var actionLog: String = ""
+    @Published var activeRun: ActiveRun?
+    @Published var runLog: [String] = []
     @Published var lastError: String?
-    @Published var showPatreonReminder = false
+    @Published var claudeStatus: ClaudeSetup.Status?
 
     let settings: SettingsStore
-    let presets: PresetStore
-    let discovery = EpisodeDiscovery()
-    let runner = PodflowRunner()
-    let readiness = ReadinessCheck()
-    let promptStore = PromptStore()
+    let setup: ClaudeSetup
+    /// Rebuilt when the episodes folder changes in the settings.
+    private(set) var store: EpisodeStore
+    private(set) var pipeline: EpisodePipeline
 
     private var pollTask: Task<Void, Never>?
+    private var folderObserver: AnyCancellable?
 
-    init(settings: SettingsStore, presets: PresetStore) {
+    init(settings: SettingsStore, setup: ClaudeSetup = ClaudeSetup()) {
         self.settings = settings
-        self.presets = presets
+        self.setup = setup
+        let store = EpisodeStore(root: settings.episodesFolderURL)
+        self.store = store
+        self.pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup))
+        folderObserver = settings.$episodesFolder
+            .dropFirst()
+            .removeDuplicates()
+            .debounce(for: .milliseconds(300), scheduler: RunLoop.main)
+            .sink { [weak self] _ in
+                guard let self else { return }
+                self.useEpisodesFolder(self.settings.episodesFolderURL)
+            }
+    }
+
+    private func useEpisodesFolder(_ root: URL) {
+        store = EpisodeStore(root: root)
+        pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup))
+        selectedEpisodeID = nil
+        Task { await refresh() }
     }
 
     var backendClient: BackendClient? {
@@ -46,59 +67,32 @@ final class AppModel: ObservableObject {
         episodes.first { $0.id == selectedEpisodeID }
     }
 
-    func backendRecord(for episode: Episode) -> BackendEpisode? {
-        backendRecords[episode.id]
+    func isRunning(_ episode: Episode) -> Bool {
+        activeRun?.episodeID == episode.id
     }
 
-    // MARK: Refresh / merge
+    var nextEpisodeNumber: String {
+        EpisodeStore.nextNumber(known: episodes.map(\.number))
+    }
+
+    // MARK: Refresh
 
     func refresh() async {
         var merged: [String: Episode] = [:]
-
-        // Local folders
-        if let root = settings.storageRootURL {
-            for local in discovery.listEpisodes(root: root) {
-                let identity = local.identity
-                merged[identity] = Episode(
-                    id: identity,
-                    local: local,
-                    backendID: nil,
-                    episodeNumber: local.episodeNumber,
-                    title: local.title,
-                    releaseDate: local.releaseDate,
-                    profileID: local.profileID
-                )
-            }
+        for episode in store.listEpisodes() {
+            merged[episode.id] = episode
         }
 
-        // Backend records
         if let client = backendClient {
             do {
-                let records = try await client.listEpisodes()
-                connection = .connected
-                var recordMap: [String: BackendEpisode] = [:]
-                for record in records {
-                    recordMap[record.id] = record
-                    if var existing = merged[record.id] {
-                        existing.backendID = record.id
-                        existing.episodeNumber = existing.episodeNumber ?? record.episodeNumber
-                        if (existing.title ?? "").isEmpty { existing.title = record.title }
-                        existing.releaseDate = existing.releaseDate ?? record.releaseDate
-                        existing.profileID = existing.profileID ?? record.profile
-                        merged[record.id] = existing
-                    } else {
-                        merged[record.id] = Episode(
-                            id: record.id,
-                            local: nil,
-                            backendID: record.id,
-                            episodeNumber: record.episodeNumber,
-                            title: record.title,
-                            releaseDate: record.releaseDate,
-                            profileID: record.profile
-                        )
-                    }
+                for record in try await client.listEpisodes() {
+                    let id = record.episodeNumber ?? record.id
+                    var episode = merged[id] ?? Episode(id: id)
+                    episode.backendTitle = record.title
+                    episode.backendSteps = record.steps
+                    merged[id] = episode
                 }
-                backendRecords = recordMap
+                connection = .connected
             } catch BackendError.unauthorized {
                 connection = .authError
             } catch {
@@ -109,179 +103,113 @@ final class AppModel: ObservableObject {
         }
 
         episodes = merged.values.sorted { lhs, rhs in
-            let l = Int(lhs.episodeNumber ?? "") ?? -1
-            let r = Int(rhs.episodeNumber ?? "") ?? -1
+            let l = Int(lhs.number) ?? -1
+            let r = Int(rhs.number) ?? -1
             if l != r { return l > r }
             return lhs.id.localizedStandardCompare(rhs.id) == .orderedDescending
         }
-        lastRefreshed = Date()
-        updatePolling()
     }
 
-    func refreshSelected() async {
-        guard let episode = selectedEpisode, let client = backendClient else { return }
-        if let record = try? await client.getEpisode(id: episode.id) {
-            backendRecords[episode.id] = record
-            lastRefreshed = Date()
-        }
-        updatePolling()
-    }
-
-    /// Adaptive polling (D4): a 5s loop only while a step of the selected
-    /// episode is in progress or an app action is running.
-    func updatePolling() {
-        let active = runningAction != nil
-            || (selectedEpisode.flatMap { backendRecords[$0.id]?.anyStepInProgress } ?? false)
-        if active, pollTask == nil {
-            pollTask = Task { [weak self] in
-                while !Task.isCancelled {
-                    try? await Task.sleep(for: .seconds(5))
-                    await self?.refreshSelected()
-                    guard let self, self.pollTask != nil else { return }
-                }
-            }
-        } else if !active {
-            pollTask?.cancel()
-            pollTask = nil
+    /// Re-reads `state.json` of the local episodes (cheap; used while a run is active).
+    func reloadLocalState() {
+        for index in episodes.indices {
+            guard let folder = episodes[index].folderURL, let state = store.readState(in: folder) else { continue }
+            if episodes[index].state != state { episodes[index].state = state }
         }
     }
 
-    // MARK: Step reporting
-
-    func report(episode: Episode, step: String, status: StepState) async {
-        guard let client = backendClient else { return }
-        let metadata = BackendMetadata(
-            episodeNumber: episode.episodeNumber,
-            slug: episode.local?.slug,
-            title: episode.title,
-            releaseDate: episode.releaseDate,
-            profile: episode.profileID
-        )
-        try? await client.reportStep(id: episode.id, step: step, status: status, metadata: metadata)
-        await refreshSelected()
+    func refreshClaudeStatus() async {
+        claudeStatus = await setup.status()
     }
 
-    func pushContent(episode: Episode, key: String, body: String) async {
-        guard let client = backendClient else { return }
-        try? await client.putContent(id: episode.id, key: key, body: body)
-    }
+    // MARK: Episodes
 
-    // MARK: Pipeline actions
-
-    private func appliedConfig(for episode: Episode) throws -> PodflowConfig? {
-        let presetID = episode.local.flatMap { local in
-            discovery.readAppMetadata(from: local.folderURL).presetID.flatMap(UUID.init(uuidString:))
+    func createEpisode(number: String, title: String, type: EpisodeType, video: URL?, transcript: URL?) async throws {
+        try store.create(number: number, title: title, type: type, video: video, transcript: transcript)
+        if let client = backendClient {
+            let metadata = BackendMetadata(episodeNumber: number, slug: nil, title: title, releaseDate: nil, profile: "video")
+            try? await client.putMetadata(id: number, metadata: metadata)
         }
-        guard let preset = presets.preset(id: presetID) ?? presets.defaultPreset else { return nil }
-        try presets.validate(preset)
-        let missing = presets.missingEnvVariables(for: preset)
-        if !missing.isEmpty {
-            throw PresetError.missingEnvVariables(missing)
-        }
-        return preset.configuration.removingPublishSteps(episode.profile.excludedPublishSteps)
+        await refresh()
+        selectedEpisodeID = number
     }
 
-    func runPublish(for episode: Episode) async {
-        guard let folder = episode.local?.folderURL else { return }
-        runningAction = "publish"
-        actionLog = ""
+    /// Removes the episode from the shared status (for both hosts) and, when
+    /// it is on this Mac, moves its folder to the Trash. Nothing is removed
+    /// from Auphonic, YouTube or WordPress.
+    func deleteEpisode(_ episode: Episode) async {
+        guard !isRunning(episode) else { return }
         lastError = nil
-        updatePolling()
-        defer {
-            runningAction = nil
-            updatePolling()
-        }
         do {
-            let config = try appliedConfig(for: episode)
-            let result = try await runner.run(
-                command: ["publish"],
-                episodeFolder: folder,
-                configuration: config,
-                backendURL: settings.backendURL,
-                workspaceKey: settings.workspaceKey,
-                onOutput: { text in
-                    Task { @MainActor [weak self] in self?.actionLog += text }
-                }
-            )
-            if result.exitCode == 0 {
-                // Manual follow-up: Patreon upload reminder (task 9.2).
-                showPatreonReminder = true
-            } else {
-                lastError = "podflow publish beendet mit Exit-Code \(result.exitCode)"
+            if let client = backendClient {
+                try await client.deleteEpisode(id: episode.id)
             }
+            if episode.isLocal {
+                try store.delete(number: episode.number)
+                PublishConfig().remove(number: episode.number)
+            }
+            if selectedEpisodeID == episode.id { selectedEpisodeID = nil }
         } catch {
-            lastError = error.localizedDescription
+            lastError = "Episode konnte nicht gelöscht werden: \(error.localizedDescription)"
         }
         await refresh()
     }
 
-    func runTranscription(for episode: Episode, force: Bool = false) async {
-        guard let folder = episode.local?.folderURL else { return }
-        runningAction = "transcribe"
-        lastError = nil
-        updatePolling()
-        defer {
-            runningAction = nil
-            updatePolling()
-        }
-        await report(episode: episode, step: "transcribe", status: .inProgress)
-        do {
-            let service = TranscriptionService(commandTemplate: settings.transcriptionCommand)
-            let transcript = try await service.transcribe(episodeFolder: folder, force: force)
-            await pushContent(episode: episode, key: ContentKey.transcript, body: transcript)
-            await report(episode: episode, step: "transcribe", status: .done)
-        } catch {
-            lastError = error.localizedDescription
-            await report(episode: episode, step: "transcribe", status: .failed)
+    // MARK: Runs
+
+    func startPrepare(_ episode: Episode) async {
+        await track(.prepare, episode) { [pipeline, settings = settings.pipelineSettings] onLog in
+            try await pipeline.prepare(episode, settings: settings, onLog: onLog)
         }
     }
 
-    private func generationService() -> GenerationService {
-        let runner: TextModelRunner
-        switch settings.generationEngine {
-        case .claude:
-            runner = ClaudeCodeModelRunner()
-        case .ollama:
-            runner = OllamaModelRunner(ollama: OllamaClient(), model: settings.generationModel)
+    func startPublish(_ episode: Episode, review: EpisodePipeline.Review) async {
+        await track(.publish, episode) { [pipeline, settings = settings.pipelineSettings] onLog in
+            try await pipeline.publish(episode, review: review, settings: settings, onLog: onLog)
         }
-        return GenerationService(runner: runner, prompts: promptStore)
     }
 
-    func runGeneration(_ step: String, for episode: Episode, force: Bool = false) async {
-        guard let folder = episode.local?.folderURL else { return }
-        runningAction = step
+    /// UI bookkeeping around one pipeline run: one run at a time, live log,
+    /// live step status, error banner.
+    private func track(
+        _ mode: RunMode,
+        _ episode: Episode,
+        _ work: @escaping (@escaping @Sendable (String) -> Void) async throws -> EpisodeState
+    ) async {
+        guard activeRun == nil else { return }
+        activeRun = ActiveRun(episodeID: episode.id, mode: mode)
+        runLog = []
         lastError = nil
-        updatePolling()
-        defer {
-            runningAction = nil
-            updatePolling()
-        }
-        await report(episode: episode, step: step, status: .inProgress)
+        startPolling()
         do {
-            let service = generationService()
-            let config = try? appliedConfig(for: episode)
-            switch step {
-            case "shownotes":
-                let text = try await service.generateShownotes(
-                    episodeFolder: folder, episodeNumber: episode.episodeNumber, config: config, force: force)
-                await pushContent(episode: episode, key: ContentKey.shownotes, body: text)
-            case "social":
-                let posts = try await service.generateSocial(
-                    episodeFolder: folder, episodeNumber: episode.episodeNumber, config: config, force: force)
-                for (platform, post) in posts {
-                    await pushContent(episode: episode, key: ContentKey.social(platform), body: post)
-                }
-            case "seo":
-                let text = try await service.generateSEO(
-                    episodeFolder: folder, episodeNumber: episode.episodeNumber, config: config, force: force)
-                await pushContent(episode: episode, key: ContentKey.seo, body: text)
-            default:
-                break
+            _ = try await work { [weak self] line in
+                Task { @MainActor in self?.appendLog(line) }
             }
-            await report(episode: episode, step: step, status: .done)
         } catch {
             lastError = error.localizedDescription
-            await report(episode: episode, step: step, status: .failed)
         }
+        stopPolling()
+        activeRun = nil
+        await refresh()
+    }
+
+    private func appendLog(_ line: String) {
+        runLog.append(line)
+        if runLog.count > 500 { runLog.removeFirst(runLog.count - 500) }
+    }
+
+    private func startPolling() {
+        pollTask?.cancel()
+        pollTask = Task { [weak self] in
+            while !Task.isCancelled {
+                try? await Task.sleep(for: .seconds(2))
+                self?.reloadLocalState()
+            }
+        }
+    }
+
+    private func stopPolling() {
+        pollTask?.cancel()
+        pollTask = nil
     }
 }

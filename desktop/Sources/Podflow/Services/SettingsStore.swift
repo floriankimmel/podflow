@@ -1,8 +1,8 @@
 import Foundation
 import Combine
 
-/// App settings persisted in UserDefaults; the workspace key lives in the
-/// Keychain (KeychainStore), never in defaults.
+/// App settings. Secrets live in the Keychain, everything else in UserDefaults.
+/// Secrets reach the plugin and the CLI only as environment variables of a run.
 @MainActor
 final class SettingsStore: ObservableObject {
     static let shared = SettingsStore()
@@ -10,96 +10,142 @@ final class SettingsStore: ObservableObject {
     private let defaults: UserDefaults
     private let keychain: KeychainStoring
 
+    enum Keys {
+        static let backendURL = "backendURL"
+        static let onboardingCompleted = "onboardingCompleted"
+        static let auphonicPreset = "auphonicPreset"
+        static let wordpressServer = "wordpressServer"
+        static let ftpHost = "ftpHost"
+        static let ftpPort = "ftpPort"
+        static let posterBaseURL = "posterBaseURL"
+        static let releaseTime = "releaseTime"
+        static let episodesFolder = "episodesFolder"
+    }
+
+    /// Keychain accounts; raw value doubles as the environment variable name.
+    enum Secret: String, CaseIterable {
+        case workspaceKey = "PODFLOW_WORKSPACE_KEY"
+        case auphonicUser = "AUPHONIC_USER"
+        case auphonicPassword = "AUPHONIC_PWD"
+        case wordpressKey = "WP_KEY"
+        case ftpUser = "FTP_USER"
+        case ftpPassword = "FTP_PWD"
+    }
+
+    static let defaultBackendURL = "https://podflow-backend.fly.dev"
+    static let defaultWordpressServer = "https://laufendentdecken-podcast.at"
+    static let defaultFTPHost = "rssfeed.laufendentdecken-podcast.at"
+    static let defaultPosterBaseURL = "http://rssfeed.laufendentdecken-podcast.at/data/"
+
     init(defaults: UserDefaults = .standard, keychain: KeychainStoring = KeychainStore()) {
         self.defaults = defaults
         self.keychain = keychain
-        backendURL = defaults.string(forKey: Keys.backendURL) ?? ""
-        storageRootPath = defaults.string(forKey: Keys.storageRoot) ?? ""
+        backendURL = defaults.string(forKey: Keys.backendURL) ?? Self.defaultBackendURL
         onboardingCompleted = defaults.bool(forKey: Keys.onboardingCompleted)
-        let storedCommand = defaults.string(forKey: Keys.transcriptionCommand)
-        // Migrate the broken legacy default (parakeet is not an Ollama model).
-        if storedCommand == nil || storedCommand == Self.legacyTranscriptionCommand {
-            transcriptionCommand = Self.defaultTranscriptionCommand
-        } else {
-            transcriptionCommand = storedCommand!
+        auphonicPreset = defaults.string(forKey: Keys.auphonicPreset) ?? ""
+        wordpressServer = defaults.string(forKey: Keys.wordpressServer) ?? Self.defaultWordpressServer
+        ftpHost = defaults.string(forKey: Keys.ftpHost) ?? Self.defaultFTPHost
+        ftpPort = defaults.string(forKey: Keys.ftpPort) ?? "21"
+        posterBaseURL = defaults.string(forKey: Keys.posterBaseURL) ?? Self.defaultPosterBaseURL
+        releaseTime = defaults.string(forKey: Keys.releaseTime) ?? "09:00"
+        episodesFolder = defaults.string(forKey: Keys.episodesFolder) ?? EpisodeStore.defaultRoot.path
+        var loaded: [Secret: String] = [:]
+        for secret in Secret.allCases {
+            loaded[secret] = (try? keychain.read(account: secret.rawValue)) ?? ""
         }
-        generationModel = defaults.string(forKey: Keys.generationModel) ?? Self.defaultGenerationModel
-        generationEngine = GenerationEngine(
-            rawValue: defaults.string(forKey: Keys.generationEngine) ?? "") ?? .ollama
-        audioServerURLTemplate = defaults.string(forKey: Keys.audioServerURL) ?? ""
-        workspaceKey = (try? keychain.read(account: Keys.workspaceKeyAccount)) ?? ""
-    }
-
-    enum Keys {
-        static let backendURL = "backendURL"
-        static let storageRoot = "storageRootPath"
-        static let onboardingCompleted = "onboardingCompleted"
-        static let transcriptionCommand = "transcriptionCommand"
-        static let generationModel = "generationModel"
-        static let generationEngine = "generationEngine"
-        static let audioServerURL = "audioServerURLTemplate"
-        static let workspaceKeyAccount = "podflow-workspace-key"
-    }
-
-    static let defaultTranscriptionCommand = "quicksubs {{audio}} --engine parakeet -o {{outputDir}}"
-    static let legacyTranscriptionCommand = "quicksubs --model parakeet --output {{output}} {{audio}}"
-    static let defaultGenerationModel = "qwen2.5:14b-instruct"
-    static let fallbackGenerationModel = "qwen2.5:7b-instruct"
-
-    /// Which engine produces shownotes/social/SEO text.
-    enum GenerationEngine: String, CaseIterable, Identifiable {
-        case ollama
-        case claude
-
-        var id: String { rawValue }
-        var label: String {
-            switch self {
-            case .ollama: return "Ollama (lokal)"
-            case .claude: return "Claude Code"
-            }
-        }
+        secrets = loaded
     }
 
     @Published var backendURL: String {
         didSet { defaults.set(backendURL, forKey: Keys.backendURL) }
     }
 
-    @Published var workspaceKey: String {
-        didSet { try? keychain.write(account: Keys.workspaceKeyAccount, value: workspaceKey) }
-    }
-
-    @Published var storageRootPath: String {
-        didSet { defaults.set(storageRootPath, forKey: Keys.storageRoot) }
-    }
-
     @Published var onboardingCompleted: Bool {
         didSet { defaults.set(onboardingCompleted, forKey: Keys.onboardingCompleted) }
     }
 
-    @Published var transcriptionCommand: String {
-        didSet { defaults.set(transcriptionCommand, forKey: Keys.transcriptionCommand) }
+    @Published var auphonicPreset: String {
+        didSet { defaults.set(auphonicPreset, forKey: Keys.auphonicPreset) }
     }
 
-    @Published var generationModel: String {
-        didSet { defaults.set(generationModel, forKey: Keys.generationModel) }
+    @Published var wordpressServer: String {
+        didSet { defaults.set(wordpressServer, forKey: Keys.wordpressServer) }
     }
 
-    @Published var generationEngine: GenerationEngine {
-        didSet { defaults.set(generationEngine.rawValue, forKey: Keys.generationEngine) }
+    @Published var ftpHost: String {
+        didSet { defaults.set(ftpHost, forKey: Keys.ftpHost) }
     }
 
-    /// URL template for Auphonic-produced audio on the podcast server, e.g.
-    /// "https://server/podcast/{{episodeNumber}}_{{slug}}.mp3".
-    @Published var audioServerURLTemplate: String {
-        didSet { defaults.set(audioServerURLTemplate, forKey: Keys.audioServerURL) }
+    @Published var ftpPort: String {
+        didSet { defaults.set(ftpPort, forKey: Keys.ftpPort) }
     }
 
-    var storageRootURL: URL? {
-        guard !storageRootPath.isEmpty else { return nil }
-        return URL(fileURLWithPath: storageRootPath, isDirectory: true)
+    /// Public URL prefix of the files uploaded by FTP (podcast cover).
+    @Published var posterBaseURL: String {
+        didSet { defaults.set(posterBaseURL, forKey: Keys.posterBaseURL) }
     }
+
+    /// Default release time of day ("HH:mm") suggested in the review step.
+    @Published var releaseTime: String {
+        didSet { defaults.set(releaseTime, forKey: Keys.releaseTime) }
+    }
+
+    /// Folder holding one subfolder per episode.
+    @Published var episodesFolder: String {
+        didSet { defaults.set(episodesFolder, forKey: Keys.episodesFolder) }
+    }
+
+    var episodesFolderURL: URL {
+        URL(fileURLWithPath: (episodesFolder as NSString).expandingTildeInPath, isDirectory: true)
+    }
+
+    @Published private(set) var secrets: [Secret: String]
+
+    func secret(_ secret: Secret) -> String {
+        secrets[secret] ?? ""
+    }
+
+    func setSecret(_ secret: Secret, _ value: String) {
+        secrets[secret] = value
+        try? keychain.write(account: secret.rawValue, value: value)
+    }
+
+    var workspaceKey: String { secret(.workspaceKey) }
 
     var isBackendConfigured: Bool {
         !backendURL.isEmpty && !workspaceKey.isEmpty
+    }
+
+    /// Settings a run cannot work without, as user-facing names.
+    var missingForRun: [String] {
+        var missing: [String] = []
+        if secret(.auphonicUser).isEmpty || secret(.auphonicPassword).isEmpty { missing.append("Auphonic-Zugang") }
+        if auphonicPreset.isEmpty { missing.append("Auphonic-Preset") }
+        if secret(.wordpressKey).isEmpty { missing.append("WordPress-Schlüssel") }
+        if secret(.ftpUser).isEmpty || secret(.ftpPassword).isEmpty { missing.append("FTP-Zugang") }
+        return missing
+    }
+
+    /// Everything a pipeline run needs from the settings.
+    var pipelineSettings: EpisodePipeline.Settings {
+        EpisodePipeline.Settings(
+            environment: runEnvironment(),
+            missing: missingForRun,
+            wordpressServer: wordpressServer,
+            ftpHost: ftpHost,
+            ftpPort: ftpPort,
+            posterBaseURL: posterBaseURL
+        )
+    }
+
+    /// Environment for a headless run: secrets plus non-secret run settings.
+    func runEnvironment() -> [String: String] {
+        var environment: [String: String] = [:]
+        for secret in Secret.allCases where !self.secret(secret).isEmpty {
+            environment[secret.rawValue] = self.secret(secret)
+        }
+        environment["AUPHONIC_PRESET"] = auphonicPreset
+        if !backendURL.isEmpty { environment["PODFLOW_BACKEND_URL"] = backendURL }
+        return environment
     }
 }

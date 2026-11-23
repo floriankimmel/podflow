@@ -3,13 +3,9 @@ import SwiftUI
 struct MainView: View {
     @EnvironmentObject var model: AppModel
     @EnvironmentObject var settings: SettingsStore
-    @EnvironmentObject var presets: PresetStore
 
     @State private var showOnboarding = false
-    @State private var showSettings = false
     @State private var showNewEpisode = false
-    @State private var showPrompts = false
-    @State private var showPresets = false
 
     var body: some View {
         NavigationSplitView {
@@ -20,6 +16,7 @@ struct MainView: View {
                 Theme.backdrop
                 if let episode = model.selectedEpisode {
                     EpisodeDetailView(episode: episode)
+                        .id(episode.id)
                 } else {
                     emptyDetail
                 }
@@ -33,7 +30,7 @@ struct MainView: View {
                 } label: {
                     Label("Aktualisieren", systemImage: "arrow.clockwise")
                 }
-                .help("Backend-Status aktualisieren")
+                .help("Status aktualisieren")
 
                 Button {
                     showNewEpisode = true
@@ -43,41 +40,22 @@ struct MainView: View {
                 .help("Neue Episode anlegen")
 
                 Menu {
-                    Button("Prompts bearbeiten…") { showPrompts = true }
-                    Button("Presets verwalten…") { showPresets = true }
-                    Divider()
-                    Button("Onboarding erneut ausführen…") { showOnboarding = true }
-                    Button("Einstellungen…") { showSettings = true }
+                    Button("Einrichtung erneut ausführen…") { showOnboarding = true }
+                    SettingsLink { Text("Einstellungen…") }
                 } label: {
                     Label("Mehr", systemImage: "ellipsis.circle")
                 }
             }
         }
-        .sheet(isPresented: $showOnboarding) {
-            OnboardingView()
-        }
-        .sheet(isPresented: $showSettings) {
-            SettingsView()
-        }
-        .sheet(isPresented: $showNewEpisode) {
-            NewEpisodeView()
-        }
-        .sheet(isPresented: $showPrompts) {
-            PromptEditorView()
-        }
-        .sheet(isPresented: $showPresets) {
-            PresetManagerView()
-        }
-        .alert("Patreon nicht vergessen", isPresented: $model.showPatreonReminder) {
-            Button("Erledigt", role: .cancel) {}
-        } message: {
-            Text("Publish erfolgreich. Die Episode muss noch manuell auf Patreon hochgeladen werden.")
-        }
+        .sheet(isPresented: $showOnboarding) { OnboardingView() }
+        .sheet(isPresented: $showNewEpisode) { NewEpisodeView() }
         .task {
-            if !settings.onboardingCompleted {
+            await model.refresh()
+            await model.refreshClaudeStatus()
+            // Claude Code missing or signed out: the guided setup handles it.
+            if !settings.onboardingCompleted || model.claudeStatus != .ready {
                 showOnboarding = true
             }
-            await model.refresh()
         }
     }
 
@@ -86,19 +64,12 @@ struct MainView: View {
             Image(systemName: "waveform")
                 .font(.system(size: 42))
                 .foregroundStyle(Theme.accent)
-            if settings.storageRootURL == nil {
-                Text("Kein Episoden-Ordner gewählt")
-                    .font(.title3.weight(.semibold))
-                Text("Lege den Speicherort in den Einstellungen oder im Onboarding fest.")
-                    .foregroundStyle(.secondary)
-                Button("Einstellungen öffnen") { showSettings = true }
-                    .buttonStyle(GlassButtonStyle(prominent: true))
-            } else {
-                Text("Keine Episode ausgewählt")
-                    .font(.title3.weight(.semibold))
-                Text("Wähle links eine Episode oder lege eine neue an.")
-                    .foregroundStyle(.secondary)
-            }
+            Text("Keine Episode ausgewählt")
+                .font(.title3.weight(.semibold))
+            Text("Wähle links eine Episode oder lege eine neue an.")
+                .foregroundStyle(.secondary)
+            Button("Neue Episode") { showNewEpisode = true }
+                .buttonStyle(GlassButtonStyle(prominent: true))
         }
         .padding(40)
         .glassPanel()
@@ -106,10 +77,10 @@ struct MainView: View {
 
     private var connectionIndicator: some View {
         let (symbol, color, help): (String, Color, String) = switch model.connection {
-        case .connected: ("checkmark.icloud", .green, "Mit Backend verbunden")
-        case .authError: ("xmark.icloud", .red, "Workspace-Key abgelehnt — Einstellungen prüfen")
-        case .offline: ("icloud.slash", .orange, "Backend nicht erreichbar")
-        case .unconfigured: ("icloud", .secondary, "Backend nicht konfiguriert")
+        case .connected: ("checkmark.icloud", .green, "Gemeinsamer Status ist verbunden")
+        case .authError: ("xmark.icloud", .red, "Workspace-Schlüssel wurde abgelehnt — Einstellungen prüfen")
+        case .offline: ("icloud.slash", .orange, "Gemeinsamer Status nicht erreichbar")
+        case .unconfigured: ("icloud", .secondary, "Gemeinsamer Status nicht eingerichtet")
         }
         return Image(systemName: symbol)
             .foregroundStyle(color)

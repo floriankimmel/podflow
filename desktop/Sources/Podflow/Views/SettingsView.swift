@@ -1,77 +1,85 @@
 import SwiftUI
 
+/// Bound text field for a Keychain secret.
+struct SecretField: View {
+    let title: String
+    let secret: SettingsStore.Secret
+    var secure = true
+
+    @EnvironmentObject var settings: SettingsStore
+
+    var body: some View {
+        let binding = Binding(
+            get: { settings.secret(secret) },
+            set: { settings.setSecret(secret, $0.trimmingCharacters(in: .whitespacesAndNewlines)) }
+        )
+        if secure {
+            SecureField(title, text: binding)
+        } else {
+            TextField(title, text: binding)
+        }
+    }
+}
+
+/// Shared account fields, used by both onboarding and settings.
+struct AccountFields: View {
+    @EnvironmentObject var settings: SettingsStore
+
+    var body: some View {
+        Section("Auphonic") {
+            SecretField(title: "Benutzername", secret: .auphonicUser, secure: false)
+            SecretField(title: "Passwort", secret: .auphonicPassword)
+            TextField("Preset-ID", text: $settings.auphonicPreset)
+        }
+        Section("WordPress") {
+            SecretField(title: "Schlüssel", secret: .wordpressKey)
+        }
+        Section("Podcast-Server (FTP)") {
+            SecretField(title: "Benutzername", secret: .ftpUser, secure: false)
+            SecretField(title: "Passwort", secret: .ftpPassword)
+        }
+        Section("Gemeinsamer Status") {
+            SecretField(title: "Workspace-Schlüssel", secret: .workspaceKey)
+        }
+    }
+}
+
 struct SettingsView: View {
     @EnvironmentObject var settings: SettingsStore
     @EnvironmentObject var model: AppModel
-    @Environment(\.dismiss) private var dismiss
+    @State private var pickingFolder = false
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text("Einstellungen")
-                .font(.title2.weight(.bold))
-
-            Form {
-                Section("Backend") {
-                    TextField("Backend-URL", text: $settings.backendURL,
-                              prompt: Text("https://podflow-backend.fly.dev"))
-                    SecureField("Workspace-Key", text: $settings.workspaceKey)
-                        .help("Gemeinsamer Team-Schlüssel, gespeichert im Schlüsselbund")
-                }
-
-                Section("Episoden") {
+        Form {
+            Section("Episoden") {
+                LabeledContent("Ordner") {
                     HStack {
-                        TextField("Episoden-Ordner", text: $settings.storageRootPath)
+                        Text(settings.episodesFolder)
+                            .lineLimit(1)
                             .truncationMode(.middle)
-                        Button("Wählen…") {
-                            let panel = NSOpenPanel()
-                            panel.canChooseDirectories = true
-                            panel.canChooseFiles = false
-                            panel.canCreateDirectories = true
-                            if panel.runModal() == .OK, let url = panel.url {
-                                settings.storageRootPath = url.path
-                            }
-                        }
+                            .foregroundStyle(.secondary)
+                        Button("Ändern …") { pickingFolder = true }
                     }
                 }
-
-                Section("Transkription & Generierung") {
-                    TextField("Transkriptions-Befehl", text: $settings.transcriptionCommand)
-                        .help("Platzhalter: {{audio}}, {{output}}, {{outputDir}}")
-                    Picker("Generierungs-Engine", selection: $settings.generationEngine) {
-                        ForEach(SettingsStore.GenerationEngine.allCases) { engine in
-                            Text(engine.label).tag(engine)
-                        }
-                    }
-                    if settings.generationEngine == .ollama {
-                        TextField("Generierungs-Modell (Ollama)", text: $settings.generationModel)
-                            .help("Standard: \(SettingsStore.defaultGenerationModel), auf 16GB-Maschinen \(SettingsStore.fallbackGenerationModel)")
-                    }
-                }
-
-                Section("Video-Profil") {
-                    TextField("Audio-Server-URL", text: $settings.audioServerURLTemplate,
-                              prompt: Text("https://server/podcast/{{episodeNumber}}_{{slug}}.mp3"))
-                        .help("Platzhalter: {{episodeNumber}}, {{slug}}")
-                }
+                Text("Jede Episode bekommt dort einen eigenen Unterordner mit ihrer Nummer.")
+                    .font(.caption).foregroundStyle(.secondary)
             }
-            .formStyle(.grouped)
-
-            HStack {
-                Button("Onboarding erneut ausführen") {
-                    settings.onboardingCompleted = false
-                    dismiss()
-                }
-                .buttonStyle(GlassButtonStyle())
-                Spacer()
-                Button("Fertig") {
-                    dismiss()
-                    Task { await model.refresh() }
-                }
-                .buttonStyle(GlassButtonStyle(prominent: true))
+            AccountFields()
+            Section("Erweitert") {
+                TextField("Status-Server", text: $settings.backendURL)
+                TextField("WordPress-Adresse", text: $settings.wordpressServer)
+                TextField("FTP-Server", text: $settings.ftpHost)
+                TextField("FTP-Port", text: $settings.ftpPort)
+                TextField("Adresse der hochgeladenen Dateien", text: $settings.posterBaseURL)
+                TextField("Übliche Uhrzeit der Veröffentlichung", text: $settings.releaseTime)
             }
         }
-        .padding(24)
-        .frame(width: 540, height: 520)
-        .background(Theme.backdrop)
+        .formStyle(.grouped)
+        .frame(width: 560, height: 640)
+        // Changes apply as they are typed; reconnect the shared status when the window closes.
+        .onDisappear { Task { await model.refresh() } }
+        .fileImporter(isPresented: $pickingFolder, allowedContentTypes: [.folder]) { result in
+            if case .success(let url) = result { settings.episodesFolder = url.path }
+        }
     }
 }
