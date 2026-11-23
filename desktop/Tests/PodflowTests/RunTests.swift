@@ -313,7 +313,7 @@ final class ReviewTests: XCTestCase {
         calendar.timeZone = TimeZone(identifier: "Europe/Vienna")!
         // Monday 2026-11-23
         let now = calendar.date(from: DateComponents(year: 2026, month: 11, day: 23, hour: 12))!
-        let date = ReviewView.suggestedReleaseDate(time: "09:00", now: now, calendar: calendar)
+        let date = ReviewSession.suggestedReleaseDate(time: "09:00", now: now, calendar: calendar)
         let parts = calendar.dateComponents([.year, .month, .day, .hour, .minute, .weekday], from: date)
         XCTAssertEqual([parts.year, parts.month, parts.day, parts.hour, parts.minute, parts.weekday], [2026, 11, 27, 9, 0, 6])
     }

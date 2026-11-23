@@ -9,7 +9,6 @@ struct ReviewView: View {
     let episode: Episode
 
     @EnvironmentObject var model: AppModel
-    @EnvironmentObject var settings: SettingsStore
 
     enum Tab: String, CaseIterable, Identifiable {
         case shownotes = "Shownotes"
@@ -20,18 +19,21 @@ struct ReviewView: View {
         var id: String { rawValue }
     }
 
+    @StateObject private var session: ReviewSession
     @State private var tab: Tab = .shownotes
-    @State private var draft = ReviewDraft()
-    /// The draft as last read from or written to disk; edits differ from it.
-    @State private var saved = ReviewDraft()
-    @State private var releaseDate = Date()
     @State private var pickingImage: EpisodeStore.ImageSlot?
-    @State private var saveError: String?
 
-    private var folder: URL? { episode.folderURL }
+    init(episode: Episode, folder: URL, store: EpisodeStore, releaseTime: String) {
+        self.episode = episode
+        _session = StateObject(wrappedValue: ReviewSession(folder: folder, store: store, releaseTime: releaseTime))
+    }
+
     private var phase: EpisodePhase { episode.phase }
     private var running: Bool { model.isRunning(episode) }
-    private var editable: Bool { phase == .review && !running }
+    private var editable: Bool { session.isEditable }
+    private var runStatus: ReviewSession.RunStatus {
+        ReviewSession.RunStatus(phase: phase, isRunning: running, anyRunActive: model.activeRun != nil)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -54,15 +56,16 @@ struct ReviewView: View {
         }
         .padding(16)
         .glassPanel()
-        .task { load() }
-        .onChange(of: running) { if !running { load() } }
-        .onChange(of: draft) { save() }
+        .onAppear { session.runStatus = runStatus }
+        .onChange(of: runStatus) { session.runStatus = runStatus }
         .fileImporter(
             isPresented: Binding(get: { pickingImage != nil }, set: { if !$0 { pickingImage = nil } }),
             allowedContentTypes: [.png, .jpeg]
         ) { result in
             guard let slot = pickingImage, case .success(let url) = result else { return }
-            storeImage(url, as: slot)
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            session.pickImage(url, as: slot)
         }
     }
 
@@ -70,7 +73,7 @@ struct ReviewView: View {
 
     private var shownotesTab: some View {
         VStack(alignment: .leading, spacing: 8) {
-            TextEditor(text: $draft.shownotes)
+            TextEditor(text: $session.draft.shownotes)
                 .font(.body.monospaced())
                 .scrollContentBackground(.hidden)
                 .padding(8)
@@ -80,7 +83,7 @@ struct ReviewView: View {
                 Text(editable ? "Änderungen werden automatisch gespeichert." : "Nach dem Veröffentlichen nicht mehr änderbar.")
                     .font(.caption).foregroundStyle(.secondary)
                 Spacer()
-                CopyButton(text: draft.shownotes)
+                CopyButton(text: session.draft.shownotes)
             }
         }
     }
@@ -88,8 +91,8 @@ struct ReviewView: View {
     private var socialTab: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 12) {
-                if draft.posts.isEmpty { emptyHint("Noch keine Social-Media-Texte vorhanden.") }
-                ForEach($draft.posts) { $post in
+                if session.draft.posts.isEmpty { emptyHint("Noch keine Social-Media-Texte vorhanden.") }
+                ForEach($session.draft.posts) { $post in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack {
                             Text(post.platform).font(.headline)
@@ -116,8 +119,8 @@ struct ReviewView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("Fokus-Keyword, Meta-Beschreibung und die YouTube-Texte werden automatisch eingetragen. Title Tag und Facebook-Texte bitte in WordPress einfügen.")
                     .font(.callout).foregroundStyle(.secondary)
-                if draft.seo.isEmpty { emptyHint("Noch keine SEO-Texte vorhanden.") }
-                ForEach(draft.seo) { section in
+                if session.draft.seo.isEmpty { emptyHint("Noch keine SEO-Texte vorhanden.") }
+                ForEach(session.draft.seo) { section in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
                             Text(section.label).font(.headline)
@@ -143,10 +146,10 @@ struct ReviewView: View {
 
     private var factcheckTab: some View {
         ScrollView {
-            if draft.factcheck.isEmpty {
+            if session.draft.factcheck.isEmpty {
                 emptyHint("Kein Faktencheck-Bericht vorhanden.")
             } else {
-                Text(draft.factcheck)
+                Text(session.draft.factcheck)
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -166,9 +169,9 @@ struct ReviewView: View {
                     Text("Die Social-Media-Texte findest du im Reiter „Social Media“ zum Kopieren.")
                         .foregroundStyle(.secondary)
                 default:
-                    imageRow(title: "Cover", hint: "Erscheint in den Podcast-Apps und beim YouTube-Video.", file: draft.coverFile, slot: .cover)
-                    imageRow(title: "Beitragsbild für die Website", hint: "Das Bild über dem Beitrag in WordPress.", file: draft.featuredFile, slot: .featured)
-                    DatePicker("Erscheint am", selection: $releaseDate, displayedComponents: [.date, .hourAndMinute])
+                    imageRow(title: "Cover", hint: "Erscheint in den Podcast-Apps und beim YouTube-Video.", file: session.draft.coverFile, slot: .cover)
+                    imageRow(title: "Beitragsbild für die Website", hint: "Das Bild über dem Beitrag in WordPress.", file: session.draft.featuredFile, slot: .featured)
+                    DatePicker("Erscheint am", selection: $session.releaseDate, displayedComponents: [.date, .hourAndMinute])
                         .frame(maxWidth: 360)
                         .disabled(running)
 
@@ -182,12 +185,12 @@ struct ReviewView: View {
                         VStack(alignment: .leading, spacing: 6) {
                             Button(phase == .publishing ? "Veröffentlichung fortsetzen" : "Veröffentlichen") { publish() }
                                 .buttonStyle(GlassButtonStyle(prominent: true))
-                                .disabled(!canPublish)
-                            Text(publishHint).font(.caption).foregroundStyle(.secondary)
+                                .disabled(!session.canPublish)
+                            Text(session.publishHint).font(.caption).foregroundStyle(.secondary)
                         }
                     }
                 }
-                if let saveError {
+                if let saveError = session.saveError {
                     Text(saveError).font(.caption).foregroundStyle(.red)
                 }
             }
@@ -195,20 +198,10 @@ struct ReviewView: View {
         }
     }
 
-    private var canPublish: Bool {
-        draft.hasImages && model.activeRun == nil
-    }
-
-    private var publishHint: String {
-        if !draft.hasImages { return "Bitte zuerst beide Bilder auswählen." }
-        if model.activeRun != nil { return "Gerade läuft eine andere Episode." }
-        return "Das Video geht auf YouTube, das Audio auf den Server und der Beitrag wird in WordPress für den gewählten Termin geplant."
-    }
-
     private func imageRow(title: String, hint: String, file: String?, slot: EpisodeStore.ImageSlot) -> some View {
         HStack(spacing: 12) {
             Group {
-                if let file, let folder, let image = NSImage(contentsOf: folder.appendingPathComponent(file)) {
+                if let file, let image = NSImage(contentsOf: session.folder.appendingPathComponent(file)) {
                     Image(nsImage: image).resizable().scaledToFill()
                 } else {
                     Image(systemName: "photo").font(.title2).foregroundStyle(.secondary)
@@ -231,60 +224,9 @@ struct ReviewView: View {
         Text(text).foregroundStyle(.secondary).frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: Data
-
-    private func load() {
-        guard let folder else { return }
-        let loaded = model.store.loadReviewDraft(in: folder)
-        saved = loaded
-        draft = loaded
-        releaseDate = Self.suggestedReleaseDate(time: settings.releaseTime)
-    }
-
-    /// Autosave: writes the draft whenever it differs from what is on disk.
-    private func save() {
-        guard editable, draft != saved, let folder else { return }
-        do {
-            try model.store.saveReviewDraft(draft, in: folder)
-            saved = draft
-            saveError = nil
-        } catch {
-            saveError = "Speichern fehlgeschlagen: \(error.localizedDescription)"
-        }
-    }
-
-    private func storeImage(_ url: URL, as slot: EpisodeStore.ImageSlot) {
-        guard let folder else { return }
-        let scoped = url.startAccessingSecurityScopedResource()
-        defer { if scoped { url.stopAccessingSecurityScopedResource() } }
-        do {
-            let name = try model.store.storeImage(url, as: slot, in: folder)
-            switch slot {
-            case .cover: draft.coverFile = name
-            case .featured: draft.featuredFile = name
-            }
-            saved.coverFile = draft.coverFile
-            saved.featuredFile = draft.featuredFile
-            saveError = nil
-        } catch {
-            saveError = "Bild konnte nicht übernommen werden: \(error.localizedDescription)"
-        }
-    }
-
     private func publish() {
-        guard let coverFile = draft.coverFile, let featuredFile = draft.featuredFile else { return }
-        let review = EpisodePipeline.Review(releaseDate: releaseDate, coverFile: coverFile, featuredFile: featuredFile)
+        guard let review = session.publishDecisions() else { return }
         Task { await model.startPublish(episode, review: review) }
-    }
-
-    /// Next Friday at the configured time (the podcast's release slot).
-    static func suggestedReleaseDate(time: String, now: Date = Date(), calendar: Calendar = .current) -> Date {
-        let parts = time.split(separator: ":").compactMap { Int($0) }
-        var components = DateComponents()
-        components.weekday = 6
-        components.hour = parts.first ?? 9
-        components.minute = parts.count > 1 ? parts[1] : 0
-        return calendar.nextDate(after: now, matching: components, matchingPolicy: .nextTime) ?? now
     }
 }
 

@@ -120,17 +120,39 @@ struct EpisodeStore {
             seo: ContentParser.seoSections(from: readText(EpisodeFile.seo, in: folder)),
             factcheck: readText(EpisodeFile.factcheck, in: folder),
             coverFile: imageName(base: EpisodeFile.coverBase, in: folder),
-            featuredFile: imageName(base: EpisodeFile.featuredBase, in: folder)
+            featuredFile: imageName(base: EpisodeFile.featuredBase, in: folder),
+            releaseDate: readReviewFile(in: folder).releaseDate
         )
     }
 
-    /// Writes the editable parts (shownotes, social posts) back. SEO and the
-    /// fact-check are read-only. An empty post list never overwrites `social.md`.
+    /// Writes the editable parts (shownotes, social posts, release date) back.
+    /// SEO and the fact-check are read-only. An empty post list never
+    /// overwrites `social.md`.
     func saveReviewDraft(_ draft: ReviewDraft, in folder: URL) throws {
         try writeText(draft.shownotes, to: EpisodeFile.shownotes, in: folder)
         if !draft.posts.isEmpty {
             try writeText(ContentParser.socialMarkdown(from: draft.posts), to: EpisodeFile.social, in: folder)
         }
+        if draft.releaseDate != readReviewFile(in: folder).releaseDate {
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .iso8601
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            try encoder.encode(ReviewFile(releaseDate: draft.releaseDate))
+                .write(to: folder.appendingPathComponent(EpisodeFile.review), options: .atomic)
+        }
+    }
+
+    /// `review.json`: review decisions that have no other home.
+    private struct ReviewFile: Codable {
+        var releaseDate: Date?
+    }
+
+    private func readReviewFile(in folder: URL) -> ReviewFile {
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        guard let data = try? Data(contentsOf: folder.appendingPathComponent(EpisodeFile.review)),
+              let file = try? decoder.decode(ReviewFile.self, from: data) else { return ReviewFile() }
+        return file
     }
 
     /// Copies a picked image into the episode folder and returns its file name.

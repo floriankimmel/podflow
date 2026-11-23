@@ -4,6 +4,7 @@ struct EpisodeDetailView: View {
     let episode: Episode
 
     @EnvironmentObject var model: AppModel
+    @EnvironmentObject var settings: SettingsStore
     @State private var deleting: Episode?
 
     private var running: Bool { model.isRunning(episode) }
@@ -98,7 +99,9 @@ struct EpisodeDetailView: View {
                     button: episode.hasFailure ? "Erneut versuchen" : "Fortsetzen"
                 )
             case .review, .publishing, .scheduled:
-                ReviewView(episode: episode)
+                if let folder = episode.folderURL {
+                    ReviewView(episode: episode, folder: folder, store: model.store, releaseTime: settings.releaseTime)
+                }
             }
         }
     }

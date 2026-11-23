@@ -259,6 +259,8 @@ struct ReviewDraft: Equatable, Sendable {
     /// File names inside the episode folder, nil until picked.
     var coverFile: String?
     var featuredFile: String?
+    /// Picked in the review; nil until the person changes the suggestion.
+    var releaseDate: Date?
 
     var hasImages: Bool { coverFile != nil && featuredFile != nil }
 }
