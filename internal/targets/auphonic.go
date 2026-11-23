@@ -38,7 +38,7 @@ func StartAuphonicProduction(host string, step config.Step, sleepBetweenRequests
 	method := "POST"
 	url := host + "/api/productions.json"
 
-	fmt.Printf("\n Create " + auphonicConfig.Title + " Production\n")
+	fmt.Printf("\n Create %s Production\n", auphonicConfig.Title)
 
 	headers := map[string]string{
 		"Content-Type":  "application/json",

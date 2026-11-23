@@ -52,7 +52,9 @@ func (h *WordpressTestServer) ServeHTTP(w http.ResponseWriter, r *http.Request) 
 
 	case "/wp-json/podlove/v2/chapters/":
 		WriteJSON(w, "{}")
-	case "/wp-json/wp/v2/media/":
+	// The client posts to /media like WordPress expects; Go 1.22+ answers a
+	// POST to a missing trailing-slash route with a 307 it cannot follow.
+	case "/wp-json/wp/v2/media", "/wp-json/wp/v2/media/":
 		WriteJSON(w, "{\"id\": \""+h.FeaturedMediaID+"\"}")
 	default:
 		w.WriteHeader(404)
@@ -70,6 +72,7 @@ func CreateWordPressTestServer(WordpressID string, PodloveID string, FeatureMedi
 	mux.HandleFunc("/wp-json/podlove/v2/episodes/", wordpressTestServer.ServeHTTP)
 	mux.HandleFunc("/wp-json/podlove/v2/episodes/"+PodloveID, wordpressTestServer.ServeHTTP)
 	mux.HandleFunc("/wp-json/podlove/v2/chapters/", wordpressTestServer.ServeHTTP)
+	mux.HandleFunc("/wp-json/wp/v2/media", wordpressTestServer.ServeHTTP)
 	mux.HandleFunc("/wp-json/wp/v2/media/", wordpressTestServer.ServeHTTP)
 	mux.HandleFunc("/wp-json/podlove/v2/episodes/"+PodloveID+"/media/{media}/enable", wordpressTestServer.ServeHTTP)
 	mux.HandleFunc("/wp-json/podlove/v2/chapters/"+PodloveID, wordpressTestServer.ServeHTTP)
