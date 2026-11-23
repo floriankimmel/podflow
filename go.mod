@@ -1,6 +1,6 @@
 module github.com/floriankimmel/podflow
 
-go 1.21.5
+go 1.26
 
 require (
 	github.com/aws/aws-sdk-go v1.49.21
