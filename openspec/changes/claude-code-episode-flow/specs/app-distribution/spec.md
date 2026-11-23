@@ -7,7 +7,7 @@ The app is installable and updatable by a non-technical user and ships everythin
 ## ADDED Requirements
 
 ### Requirement: Bundle the podflow CLI
-The app bundle SHALL contain a `podflow` CLI binary built from this repository and pass its path to plugin runs.
+The app bundle SHALL contain a universal `podflow` CLI binary built from this repository and pass its path to plugin runs.
 
 #### Scenario: Publish without separate CLI install
 - **WHEN** a user without a separately installed `podflow` CLI publishes an episode
@@ -25,7 +25,7 @@ The app SHALL be distributed as a Developer ID signed and notarized `.dmg` via G
 - **THEN** the app offers to update in place
 
 ### Requirement: Onboarding of shared credentials
-The app SHALL collect Auphonic credentials, Auphonic preset UUID, WordPress API key and workspace key in onboarding, store secrets in the Keychain, and pass them only as environment variables to runs.
+The app SHALL collect Auphonic credentials, Auphonic preset UUID, WordPress API key, FTP credentials and workspace key in onboarding, store secrets in the Keychain, and pass them only as environment variables to runs.
 
 #### Scenario: Secrets never written to episode files
 - **WHEN** an episode `config.yml` is generated

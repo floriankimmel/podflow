@@ -2,7 +2,7 @@
 
 ## Purpose
 
-A mandatory human review between content generation and publishing, where the host edits content, copies manual-only parts, and supplies image and release date.
+A mandatory human review between content generation and publishing, where the host edits content, reads the fact-check, copies manual-only parts, and supplies images and release date.
 
 ## ADDED Requirements
 
@@ -21,7 +21,7 @@ The app SHALL let the user edit `shownotes.md` and save changes back to the epis
 - **THEN** the edited text is what gets published
 
 ### Requirement: SEO with copy buttons
-The app SHALL display each SEO section (title tag, meta description, focus keywords, OG title/description, YouTube title/description/tags) with a copy button for manual entry in WordPress/Yoast.
+The app SHALL display each SEO section (title tag, meta description, focus keywords, OG title/description, YouTube title/description/tags) with a copy button, and mark the sections that must be entered manually in WordPress (title tag, OG title/description).
 
 #### Scenario: Copy meta description
 - **WHEN** the user presses copy on the meta description
@@ -34,9 +34,16 @@ The app SHALL show one editable card with a copy button for each platform in `so
 - **WHEN** the user edits the Instagram card and presses copy
 - **THEN** the edited Instagram text is on the clipboard and saved to `social.md`
 
-### Requirement: Featured image and release date
-The app SHALL require a featured image and a release date/time before Publish is enabled, and pass both into the episode's `config.yml`.
+### Requirement: Fact-check report
+The app SHALL show the fact-check report (`factcheck.md`) in the review.
+
+#### Scenario: Corrections listed
+- **WHEN** the fact-check corrected or could not verify claims
+- **THEN** the review lists them with their sources
+
+### Requirement: Images and release date
+The app SHALL require a cover, a featured image and a release date/time before Publish is enabled, and pass them into the episode's CLI config.
 
 #### Scenario: Missing image
-- **WHEN** no featured image is selected
+- **WHEN** the cover or the featured image is not selected
 - **THEN** Publish is disabled with a hint
