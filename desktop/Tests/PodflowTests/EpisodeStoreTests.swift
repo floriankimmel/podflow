@@ -163,6 +163,26 @@ final class EpisodeStoreTests: XCTestCase {
         XCTAssertTrue(draft.hasImages)
     }
 
+    func testRePickingTheCurrentImageKeepsIt() throws {
+        let folder = try episodeWithGeneratedFiles()
+        try store.storeImage(try file("a.png", "bild"), as: .cover, in: folder)
+        let current = folder.appendingPathComponent("cover.png")
+
+        XCTAssertEqual(try store.storeImage(current, as: .cover, in: folder), "cover.png")
+
+        XCTAssertEqual(try String(contentsOf: current, encoding: .utf8), "bild")
+        XCTAssertEqual(try FileManager.default.contentsOfDirectory(atPath: folder.path).filter { $0.hasPrefix(".cover") }, [])
+    }
+
+    func testFailedImageCopyKeepsTheEarlierPick() throws {
+        let folder = try episodeWithGeneratedFiles()
+        try store.storeImage(try file("a.png", "bild"), as: .cover, in: folder)
+
+        XCTAssertThrowsError(try store.storeImage(root.appendingPathComponent("weg.jpg"), as: .cover, in: folder))
+
+        XCTAssertEqual(store.loadReviewDraft(in: folder).coverFile, "cover.png")
+    }
+
     /// The seam between app and plugin: what the real `state.sh` writes must
     /// decode into the app's state.
     func testStateWrittenByRealStateScriptIsDecoded() async throws {

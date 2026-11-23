@@ -169,14 +169,23 @@ struct EpisodeStore {
         try text.write(to: folder.appendingPathComponent(name), atomically: true, encoding: .utf8)
     }
 
-    /// Replaces an earlier pick with a different extension.
+    /// Replaces an earlier pick, also one with a different extension. The new
+    /// image is copied first, so a failed copy (or re-picking the current
+    /// file) never loses the existing one.
     private func storeImage(_ source: URL, base: String, in folder: URL) throws -> String {
-        if let existing = imageName(base: base, in: folder) {
-            try fileManager.removeItem(at: folder.appendingPathComponent(existing))
-        }
         let ext = source.pathExtension.isEmpty ? "png" : source.pathExtension.lowercased()
         let name = "\(base).\(ext)"
-        try fileManager.copyItem(at: source, to: folder.appendingPathComponent(name))
+        let staged = folder.appendingPathComponent(".\(base)-\(UUID().uuidString).\(ext)")
+        try fileManager.copyItem(at: source, to: staged)
+        do {
+            if let existing = imageName(base: base, in: folder) {
+                try fileManager.removeItem(at: folder.appendingPathComponent(existing))
+            }
+            try fileManager.moveItem(at: staged, to: folder.appendingPathComponent(name))
+        } catch {
+            try? fileManager.removeItem(at: staged)
+            throw error
+        }
         return name
     }
 
