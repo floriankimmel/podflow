@@ -39,7 +39,7 @@
 ## 6. Distribution
 
 - [x] 6.1 Build step embedding `podflow` CLI (darwin universal) into the app bundle; pass path as `PODFLOW_CLI`.
-- [ ] 6.2 Developer ID signing, notarization, `.dmg` release on GitHub; Sparkle appcast + in-app update.
+- [x] 6.2 Developer ID signing, notarization, `.dmg` release on GitHub; Sparkle appcast + in-app update.
 
 ## 7. End-to-end
 
