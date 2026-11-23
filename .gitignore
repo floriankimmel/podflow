@@ -4,3 +4,4 @@ bin/podflow
 desktop/.build/
 desktop/build/
 *.db
+desktop/.swiftpm/
