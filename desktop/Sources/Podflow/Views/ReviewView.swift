@@ -101,6 +101,7 @@ struct ReviewView: View {
                             CopyButton(text: post.text)
                         }
                         TextEditor(text: $post.text)
+                            .disabled(!session.canEditPosts)
                             .font(.body)
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 110)

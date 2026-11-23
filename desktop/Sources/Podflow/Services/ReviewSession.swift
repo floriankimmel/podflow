@@ -38,9 +38,13 @@ final class ReviewSession: ObservableObject {
         load()
     }
 
-    /// Shownotes and social posts can change only while the episode waits for
-    /// review and nothing runs for it.
+    /// Shownotes can change only while the episode waits for review and
+    /// nothing runs for it: publishing puts them on WordPress.
     var isEditable: Bool { runStatus.phase == .review && !runStatus.isRunning }
+
+    /// Social posts are copied by hand, usually after publishing, so they stay
+    /// editable except while a run is going.
+    var canEditPosts: Bool { !runStatus.isRunning }
 
     /// The picked release date, else next Friday at the configured time.
     var releaseDate: Date {
@@ -84,15 +88,15 @@ final class ReviewSession: ObservableObject {
         return EpisodePipeline.Review(releaseDate: releaseDate, coverFile: coverFile, featuredFile: featuredFile)
     }
 
-    /// Writes the draft whenever it differs from what is on disk. Release date
-    /// and images stay changeable until publishing, the texts only while editable.
+    /// Writes the draft whenever it differs from what is on disk, never while
+    /// a run is going. Shownotes only during review, the release date until
+    /// the episode is scheduled, social posts always.
     private func autosave() {
-        guard draft != saved, runStatus.phase != .scheduled, !runStatus.isRunning else { return }
+        guard draft != saved, !runStatus.isRunning else { return }
         var toSave = draft
-        if !isEditable {
-            toSave.shownotes = saved.shownotes
-            toSave.posts = saved.posts
-        }
+        if !isEditable { toSave.shownotes = saved.shownotes }
+        if runStatus.phase == .scheduled { toSave.releaseDate = saved.releaseDate }
+        guard toSave != saved else { return }
         do {
             try store.saveReviewDraft(toSave, in: folder)
             saved = toSave

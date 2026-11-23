@@ -62,6 +62,17 @@ final class ReviewSessionTests: XCTestCase {
         XCTAssertFalse(published.isEditable)
     }
 
+    func testSocialPostsStayEditableAfterPublishing() {
+        let review = session()
+        review.runStatus = .init(phase: .scheduled)
+        XCTAssertTrue(review.canEditPosts)
+        review.draft.posts[1].text = "Nach dem Veröffentlichen angepasst"
+        XCTAssertEqual(onDisk().posts[1].text, "Nach dem Veröffentlichen angepasst")
+
+        review.runStatus = .init(phase: .publishing, isRunning: true, anyRunActive: true)
+        XCTAssertFalse(review.canEditPosts)
+    }
+
     func testRunEndRereadsWhatTheRunWroteWithoutOverwritingIt() throws {
         let review = session()
         review.runStatus = .init(phase: .review, isRunning: true, anyRunActive: true)
