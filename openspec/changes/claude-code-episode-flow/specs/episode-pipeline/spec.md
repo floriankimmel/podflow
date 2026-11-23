@@ -7,11 +7,11 @@ One video-first episode flow: finished video → Auphonic → transcript → sho
 ## ADDED Requirements
 
 ### Requirement: Create an episode
-The app SHALL create an episode from episode number (prefilled with the next free number from the backend), title, type (`zencastr` or `compilation`), a finished video file and — for `zencastr` only — a transcript file, in its own folder `~/Podflow/<nr>/`.
+The app SHALL create an episode from episode number (prefilled with the next free number from the backend), title, type (`zencastr` or `compilation`), a finished video file and — for `zencastr` only — a transcript file, in its own folder `<episodes folder>/<nr>/` (default `~/Podflow`).
 
 #### Scenario: Zencastr episode
 - **WHEN** the user creates a `zencastr` episode with video and transcript
-- **THEN** the app creates `~/Podflow/<nr>/`, stores the transcript there, writes initial `state.json`, and registers the episode in the backend
+- **THEN** the app creates `<episodes folder>/<nr>/`, stores the transcript there, writes initial `state.json`, and registers the episode in the backend
 
 #### Scenario: Interview episode without transcript
 - **WHEN** the user creates an `compilation` episode
@@ -70,9 +70,40 @@ Each step SHALL record its status in `state.json`, skip itself when already done
 - **WHEN** a run failed at a step and the user presses retry
 - **THEN** completed steps are skipped (no second video upload) and execution resumes at the failed step
 
+#### Scenario: Interrupted side effect
+- **WHEN** a run stopped after creating or releasing the Auphonic production but before recording the step as done
+- **THEN** the retry neither creates a second production nor releases it twice
+
+#### Scenario: Long video upload
+- **WHEN** uploading the video takes longer than one command may run
+- **THEN** the upload continues in the background and the step waits for that same transfer instead of restarting it
+
+#### Scenario: Run ends early
+- **WHEN** a run exits without error but did not reach review (prepare) or scheduling (publish)
+- **THEN** the app reports the run as failed
+
 ### Requirement: Report status to the backend
 The app and plugin SHALL report step status to the backend so both hosts see the current state of every episode.
 
 #### Scenario: Co-host sees progress
 - **WHEN** one host runs an episode step
 - **THEN** the other host's app shows the updated step status
+
+### Requirement: Delete an episode
+The app SHALL let a host delete an episode. Deleting removes it from the shared backend status for both hosts and, when the episode is on this Mac, moves its folder to the Trash and removes its CLI config. Nothing is removed from Auphonic, YouTube or WordPress.
+
+#### Scenario: Delete a local episode
+- **WHEN** the host confirms deleting a local episode that is not running
+- **THEN** it disappears for both hosts, its folder is in the Trash and its CLI config is gone
+
+#### Scenario: Backend unreachable
+- **WHEN** removing the episode from the backend fails
+- **THEN** nothing local is deleted and the app shows the error
+
+### Requirement: Configurable episodes folder
+The app SHALL store episode folders under a folder the host can change in the settings (default `~/Podflow`).
+
+#### Scenario: Change the folder
+- **WHEN** the host picks a different episodes folder
+- **THEN** the episode list shows the episodes in that folder and new episodes are created there
+

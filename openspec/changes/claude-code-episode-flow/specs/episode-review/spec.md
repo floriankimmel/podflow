@@ -34,6 +34,10 @@ The app SHALL show one editable card with a copy button for each platform in `so
 - **WHEN** the user edits the Instagram card and presses copy
 - **THEN** the edited Instagram text is on the clipboard and saved to `social.md`
 
+#### Scenario: Edit after publishing
+- **WHEN** the episode is already published or scheduled and the user edits a social card
+- **THEN** the edit is saved to `social.md` (the posts are copied by hand, often after publishing)
+
 ### Requirement: Fact-check report
 The app SHALL show the fact-check report (`factcheck.md`) in the review.
 
