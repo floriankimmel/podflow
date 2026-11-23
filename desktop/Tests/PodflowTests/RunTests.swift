@@ -14,7 +14,7 @@ final class PublishConfigTests: XCTestCase {
         try? FileManager.default.removeItem(at: root)
     }
 
-    private var inputs: PublishConfig.Inputs {
+    static var inputs: PublishConfig.Inputs {
         var components = DateComponents()
         (components.year, components.month, components.day, components.hour, components.minute) = (2026, 11, 27, 9, 0)
         return PublishConfig.Inputs(
@@ -24,6 +24,8 @@ final class PublishConfigTests: XCTestCase {
             wordpressServer: "https://example.test", ftpHost: "ftp.example.test", ftpPort: "21",
             posterBaseURL: "http://files.example.test/data")
     }
+
+    private var inputs: PublishConfig.Inputs { Self.inputs }
 
     func testConfigHasCoverUploadAndWordPressStepWithoutSecrets() throws {
         let yaml = try PublishConfig.configYAML(inputs)

@@ -88,7 +88,7 @@ struct EpisodePipeline {
             episodeFolder: folder
         )
         var environment = settings.environment
-        environment["PODFLOW_CONFIG_FILE"] = configFile
+        environment[EnvName.configFile] = configFile
         return try await run(.publish, folder: folder, environment: environment, onLog: onLog)
     }
 

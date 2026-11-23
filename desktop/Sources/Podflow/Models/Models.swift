@@ -86,30 +86,6 @@ enum RunMode: String, Sendable {
     case publish
 }
 
-/// Step ids the plugin writes to `state.json` and reports to the backend
-/// (`plugin/skills/episode/SKILL.md`). The only place they are spelled out.
-enum StepID {
-    static let auphonicCreate = "auphonic_create"
-    static let auphonicUpload = "auphonic_upload"
-    static let auphonicStart = "auphonic_start"
-    static let auphonicWait = "auphonic_wait"
-    static let transcript = "transcript"
-    static let generateShownotes = "generate_shownotes"
-    static let generateSEO = "generate_seo"
-    static let generateSocial = "generate_social"
-    static let factcheck = "factcheck"
-    static let review = "review"
-    static let auphonicMetadata = "auphonic_metadata"
-    static let auphonicCover = "auphonic_cover"
-    static let auphonicPublish = "auphonic_publish"
-    static let shownotesYoutubeLink = "shownotes_youtube_link"
-    static let wordpress = "wordpress"
-    static let scheduled = "scheduled"
-
-    /// Key under which `auphonic_publish` stores the YouTube URL.
-    static let youtubeURLKey = "youtubeUrl"
-}
-
 struct PipelineStage: Identifiable, Hashable, Sendable {
     let id: String
     let label: String
@@ -255,21 +231,6 @@ struct Episode: Identifiable, Equatable, Sendable {
     }
 }
 
-// MARK: - Episode files
-
-enum EpisodeFile {
-    static let state = "state.json"
-    static let transcript = "transcript.txt"
-    static let shownotes = "shownotes.md"
-    static let social = "social.md"
-    static let seo = "seo.md"
-    static let factcheck = "factcheck.md"
-    static let chapters = "chapters.txt"
-    static let runLog = "run.log"
-    static let coverBase = "cover"
-    static let featuredBase = "wordpress"
-}
-
 /// One platform block of `social.md` ("## Instagram" …).
 struct SocialPost: Identifiable, Equatable, Sendable {
     var platform: String
@@ -285,7 +246,7 @@ struct SEOSection: Identifiable, Equatable, Sendable {
 
     /// The publish run cannot set this section; it is pasted into WordPress by hand.
     var isManual: Bool {
-        ["Title Tag", "Facebook OG Title", "Facebook OG Description"].contains(label)
+        SEOLabel.manual.contains(label)
     }
 }
 

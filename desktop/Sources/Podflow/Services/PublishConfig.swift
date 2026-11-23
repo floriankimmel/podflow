@@ -57,6 +57,7 @@ struct PublishConfig {
         let coverTarget = "\(inputs.audioBasename).\(coverExtension)"
         let posterBase = inputs.posterBaseURL.hasSuffix("/") ? inputs.posterBaseURL : inputs.posterBaseURL + "/"
 
+        func env(_ secret: SettingsStore.Secret) -> String { "{{env.\(secret.rawValue)}}" }
         func file(_ name: String, _ fileName: String) -> [String: Any] {
             ["name": name, "fileName": fileName, "required": true]
         }
@@ -74,12 +75,12 @@ struct PublishConfig {
                 ["ftp": [
                     "host": inputs.ftpHost,
                     "port": inputs.ftpPort,
-                    "username": "{{env.FTP_USER}}",
-                    "password": "{{env.FTP_PWD}}",
+                    "username": env(.ftpUser),
+                    "password": env(.ftpPassword),
                     "files": [["source": inputs.coverFile, "target": coverTarget]],
                 ]],
                 ["wordpress": [
-                    "apiKey": "{{env.WP_KEY}}",
+                    "apiKey": env(.wordpressKey),
                     "server": inputs.wordpressServer,
                     "image": inputs.featuredFile,
                     "poster": posterBase + coverTarget,

@@ -61,7 +61,7 @@ struct ClaudeRunner {
         guard let cliPath else { throw RunnerError.cliMissing }
 
         var environment = extra
-        environment["PODFLOW_CLI"] = cliPath
+        environment[EnvName.cli] = cliPath
 
         let logURL = episodeFolder.appendingPathComponent(EpisodeFile.runLog)
         FileManager.default.createFile(atPath: logURL.path, contents: nil)

@@ -144,8 +144,8 @@ final class SettingsStore: ObservableObject {
         for secret in Secret.allCases where !self.secret(secret).isEmpty {
             environment[secret.rawValue] = self.secret(secret)
         }
-        environment["AUPHONIC_PRESET"] = auphonicPreset
-        if !backendURL.isEmpty { environment["PODFLOW_BACKEND_URL"] = backendURL }
+        environment[EnvName.auphonicPreset] = auphonicPreset
+        if !backendURL.isEmpty { environment[EnvName.backendURL] = backendURL }
         return environment
     }
 }
