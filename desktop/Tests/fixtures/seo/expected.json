@@ -1,0 +1,17 @@
+{
+  "full.md": {
+    "Title Tag": "Laufen am Großglockner | Laufend Entdecken",
+    "Meta-Description": "Wie läuft man auf 3.798 Meter? Unser Gast erzählt vom Glocknerlauf.",
+    "Focus Keywords": "Glocknerlauf, Berglauf, Höhentraining",
+    "Facebook OG Title": "Auf den Großglockner laufen",
+    "Facebook OG Description": "Höhenmeter, Kälte und ein Ziel ganz oben.",
+    "YouTube Titel": "Glocknerlauf: So läuft man auf 3.798 Meter",
+    "YouTube Beschreibung": "Erste Zeile der Beschreibung.\n\n  Eingerückter Absatz bleibt eingerückt.\nMehr auf https://laufendentdecken-podcast.at",
+    "YouTube Tags": "Berglauf, Glocknerlauf, Höhentraining"
+  },
+  "fenced.md": { "Title Tag": "Im Zaun", "YouTube Titel": "Auch im Zaun" },
+  "indented.md": { "Title Tag": "Eingerückt", "Meta-Description": "Auch eingerückt" },
+  "trailing-space.md": { "Title Tag": "Mit Leerzeichen danach", "Meta-Description": "Tab danach" },
+  "empty-section.md": { "Title Tag": "", "Meta-Description": "Nur die hier" },
+  "preamble.md": { "Title Tag": "Nach der Einleitung" }
+}

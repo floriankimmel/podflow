@@ -277,8 +277,9 @@ enum ContentParser {
     }
 
     /// Models sometimes wrap the whole output in a ``` fence; drop those lines.
+    /// CR line endings are dropped too.
     private static func stripFence(_ markdown: String) -> String {
-        markdown.components(separatedBy: "\n")
+        markdown.replacingOccurrences(of: "\r", with: "").components(separatedBy: "\n")
             .filter { !$0.trimmingCharacters(in: .whitespaces).hasPrefix("```") }
             .joined(separator: "\n")
     }
