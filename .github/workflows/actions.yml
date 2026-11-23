@@ -7,6 +7,8 @@ on:
     branches: [main]
     tags:
       - "*"
+      # Desktop app releases (desktop-v*, desktop-appcast) are not CLI releases.
+      - "!desktop-*"
 
 permissions:
   contents: write
@@ -25,7 +27,10 @@ jobs:
       - name: Install deps
         run: go install github.com/jstemmer/go-junit-report/v2@latest
       - name: Run tests
-        run: go test -cover -bench=. -benchmem -race -v 2>&1 ./... | go-junit-report -set-exit-code > report.xml
+        run: go test -cover -bench=. -benchmem -race -v 2>&1 ./... | tee test.log | go-junit-report -set-exit-code > report.xml
+      - name: Show failed test output
+        if: failure()
+        run: grep -n -B5 -A30 -E -- '--- FAIL|\[FAIL\]|panic:|^FAIL' test.log || cat test.log
       - name: Test Summary
         uses: test-summary/action@v2
         with:
