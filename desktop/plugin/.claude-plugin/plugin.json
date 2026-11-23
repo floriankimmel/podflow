@@ -1,0 +1,6 @@
+{
+  "name": "podflow",
+  "version": "0.1.0",
+  "description": "Podcast episode flow for the Podflow desktop app: Auphonic, transcript, shownotes, social, SEO, fact-check, YouTube and WordPress publishing.",
+  "author": { "name": "Florian Kimmel" }
+}
