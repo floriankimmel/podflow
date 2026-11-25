@@ -46,6 +46,9 @@ breaks a plain `swift build`; the Makefile unsets it and uses full Xcode.
 - `seo.md` is read by `ContentParser` (Swift), `seo.sh` and the CLI's
   `wordpress.SEOSections` (Go, for Yoast). All three must give what
   `Tests/fixtures/seo/expected.json` says; add a fixture for new cases.
+- Step status and the backend step report are pinned by
+  `Tests/fixtures/step-report.json`, checked by the plugin, Swift, CLI and
+  backend tests. Change the fixture and all four together.
 - The plugin scripts are bash + curl + jq only. Test them in
   `Tests/plugin/run.sh`.
 - Real Claude runs cost money (a prepare run is about 3 USD). Pipeline tests

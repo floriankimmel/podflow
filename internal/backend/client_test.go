@@ -5,8 +5,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"github.com/floriankimmel/podflow/internal/backend"
+	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
+
+	"github.com/floriankimmel/podflow/internal/backend"
 )
 
 func TestReportWithoutEpisodeNumberIsSkipped(t *testing.T) {
@@ -68,4 +73,48 @@ func TestReportNonFatalOnUnreachableAndError(t *testing.T) {
 	defer server.Close()
 	r = backend.New(server.URL, "secret")
 	r.Report(backend.Metadata{EpisodeNumber: "1"}, "s3", backend.StatusDone)
+}
+
+// The step-report contract shared with the plugin, the backend and the app.
+func TestReportMatchesStepReportContract(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "..", "desktop", "Tests", "fixtures", "step-report.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var contract struct {
+		Statuses []string `json:"statuses"`
+		Path     string   `json:"path"`
+		Report   struct {
+			Step     string           `json:"step"`
+			Status   string           `json:"status"`
+			Metadata backend.Metadata `json:"metadata"`
+		} `json:"report"`
+	}
+	if err := json.Unmarshal(raw, &contract); err != nil {
+		t.Fatal(err)
+	}
+	constants := []string{backend.StatusPending, backend.StatusInProgress, backend.StatusDone, backend.StatusFailed}
+	if strings.Join(constants, ",") != strings.Join(contract.Statuses, ",") {
+		t.Fatalf("status constants %v, contract %v", constants, contract.Statuses)
+	}
+
+	var gotPath string
+	var gotBody map[string]any
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath = r.URL.Path
+		_ = json.NewDecoder(r.Body).Decode(&gotBody)
+	}))
+	defer srv.Close()
+	backend.New(srv.URL, "key").Report(contract.Report.Metadata, contract.Report.Step, contract.Report.Status)
+
+	var wantBody map[string]any
+	var whole map[string]json.RawMessage
+	_ = json.Unmarshal(raw, &whole)
+	_ = json.Unmarshal(whole["report"], &wantBody)
+	if gotPath != contract.Path {
+		t.Fatalf("path = %q, want %q", gotPath, contract.Path)
+	}
+	if !reflect.DeepEqual(gotBody, wantBody) {
+		t.Fatalf("body = %v, want %v", gotBody, wantBody)
+	}
 }

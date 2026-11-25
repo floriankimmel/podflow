@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
 	"testing"
 )
@@ -268,5 +269,44 @@ func TestDeleteEpisode(t *testing.T) {
 	_ = json.Unmarshal(rec.Body.Bytes(), &ep)
 	if len(ep.Steps) != 1 || ep.Steps[0].Step != "transcript" {
 		t.Fatalf("recreated episode carries old data: %+v", ep)
+	}
+}
+
+// The step-report contract shared with the plugin, the CLI and the app.
+func TestStepReportContract(t *testing.T) {
+	raw, err := os.ReadFile(filepath.Join("..", "desktop", "Tests", "fixtures", "step-report.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var contract struct {
+		Statuses []string        `json:"statuses"`
+		Path     string          `json:"path"`
+		Report   json.RawMessage `json:"report"`
+	}
+	if err := json.Unmarshal(raw, &contract); err != nil {
+		t.Fatal(err)
+	}
+	if len(contract.Statuses) != len(validStatuses) {
+		t.Fatalf("statuses = %v, backend accepts %v", contract.Statuses, validStatuses)
+	}
+	for _, status := range contract.Statuses {
+		if !validStatuses[status] {
+			t.Fatalf("backend rejects contract status %q", status)
+		}
+	}
+
+	s := newTestServer(t)
+	req := httptest.NewRequest(http.MethodPost, contract.Path, bytes.NewReader(contract.Report))
+	req.Header.Set("X-Workspace-Key", testKey)
+	rec := httptest.NewRecorder()
+	s.ServeHTTP(rec, req)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("contract report = %d: %s", rec.Code, rec.Body)
+	}
+	var ep Episode
+	_ = json.Unmarshal(rec.Body.Bytes(), &ep)
+	if ep.EpisodeNumber != "371" || ep.Title != "Testfolge" || ep.Profile != "video" ||
+		len(ep.Steps) != 1 || ep.Steps[0].Step != "transcript" || ep.Steps[0].Status != "done" {
+		t.Fatalf("stored = %+v", ep)
 	}
 }

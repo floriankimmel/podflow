@@ -35,7 +35,9 @@ Wrong or missing key → `401 {"error":"invalid workspace key"}`.
   An episode gets its number when its production starts; nothing is stored
   before that. Responses carry it as `episodeNumber` and, for older clients,
   as `id`.
-- **Step status enum**: `pending` | `in_progress` | `done` | `failed`.
+- **Step status enum**: `pending` | `in_progress` | `done` | `failed`. This and
+  the step report payload are pinned by
+  `desktop/Tests/fixtures/step-report.json`, shared with the CLI, plugin and app.
 - **Steps are keyed names**, not a fixed enum — the episode profile decides
   which stages exist. The CLI reports: `ftp_delete`, `ftp_upload`, `download`,
   `s3`, `wordpress`, `steady`, `auphonic`. The app additionally reports:

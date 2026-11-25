@@ -21,7 +21,8 @@ class Handler(BaseHTTPRequestHandler):
     def _record(self, body):
         with open(LOG, "a") as fh:
             fh.write(json.dumps({"method": self.command, "path": self.path,
-                                 "auth": self.headers.get("Authorization", ""), "body": body}) + "\n")
+                                 "auth": self.headers.get("Authorization", ""),
+                                 "key": self.headers.get("X-Workspace-Key", ""), "body": body}) + "\n")
 
     def _details(self):
         files = [{"format": "mp3", "ending": "mp3", "download_url": f"http://127.0.0.1:{PORT}/dl/a.mp3"},

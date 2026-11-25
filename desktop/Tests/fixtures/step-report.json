@@ -1,0 +1,9 @@
+{
+  "statuses": ["pending", "in_progress", "done", "failed"],
+  "path": "/episodes/371/steps",
+  "report": {
+    "step": "transcript",
+    "status": "done",
+    "metadata": { "episodeNumber": "371", "title": "Testfolge", "profile": "video" }
+  }
+}

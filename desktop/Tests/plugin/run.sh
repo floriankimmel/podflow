@@ -106,6 +106,20 @@ bash "$A" youtube-url UUID1 1 >/dev/null; check "youtube url polling gives up" "
 bash "$A" publish UUID1 >/dev/null
 check "publish again is skipped" "already published 1" "$(bash "$A" publish UUID1) $(jq -s '[.[] | select(.path == "/api/production/UUID1/publish.json")] | length' "$LOG")"
 check "youtube url after publish" "https://www.youtube.com/watch?v=abc123" "$(bash "$A" youtube-url UUID1 5)"
+# --- state.sh backend report: the shared step-report contract ---
+CONTRACT="$HERE/../fixtures/step-report.json"
+echo '{"number":"371","title":"Testfolge","type":"compilation","steps":{}}' > report-state.json
+for status in $(jq -r '.statuses[]' "$CONTRACT"); do
+  PODFLOW_STATE_FILE=report-state.json bash "$SCRIPTS/state.sh" set contract_check "$status"
+  check "state accepts contract status $status" "$status" "$(PODFLOW_STATE_FILE=report-state.json bash "$SCRIPTS/state.sh" get contract_check)"
+done
+: > "$LOG"
+PODFLOW_STATE_FILE=report-state.json PODFLOW_BACKEND_URL="http://127.0.0.1:$PORT/" PODFLOW_WORKSPACE_KEY=wk \
+  bash "$SCRIPTS/state.sh" set "$(jq -r .report.step "$CONTRACT")" "$(jq -r .report.status "$CONTRACT")"
+check "backend report path" "$(jq -r .path "$CONTRACT")" "$(jq -rs '.[0].path' "$LOG")"
+check "backend report key" "wk" "$(jq -rs '.[0].key' "$LOG")"
+check "backend report body" "$(jq -cS .report "$CONTRACT")" "$(jq -cSs '.[0].body' "$LOG")"
+
 AUPHONIC_API_KEY=bad bash "$A" start UUID1 >/dev/null 2>&1; check "http error fails" "nonzero" "$([ $? -ne 0 ] && echo nonzero || echo zero)"
 AUPHONIC_BASE="http://127.0.0.1:1" bash "$A" details UUID1 >/dev/null 2>err.txt; check "network error explained" "network error" "$(grep -o 'network error' err.txt)"
 ( unset AUPHONIC_API_KEY; bash "$A" details UUID1 2>/dev/null ); check "missing credentials fail" "2" "$?"
