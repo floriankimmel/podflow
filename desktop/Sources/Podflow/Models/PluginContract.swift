@@ -39,6 +39,8 @@ enum EpisodeFile {
     /// Review decisions that live nowhere else (release date).
     static let review = "review.json"
     static let chapters = "chapters.txt"
+    /// Input of the CLI's `publish-episode`, written before a publish run.
+    static let publishInput = "publish.json"
     static let runLog = "run.log"
     /// Picked images: `<base>.<ext>`. The publish run looks for `cover.*`.
     static let coverBase = "cover"
@@ -77,8 +79,6 @@ enum EnvName {
     static let backendURL = "PODFLOW_BACKEND_URL"
     /// Path of the bundled podflow CLI, used by the skill's `wordpress` step.
     static let cli = "PODFLOW_CLI"
-    /// Read by the podflow CLI, not the plugin.
-    static let configFile = "PODFLOW_CONFIG_FILE"
 }
 
 /// Backend episode profiles. `state.sh` reports steps with the same value.

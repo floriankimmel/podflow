@@ -27,7 +27,6 @@ final class AppModel: ObservableObject {
     private(set) var store: EpisodeStore
     private(set) var pipeline: EpisodePipeline
     private(set) var catalog: EpisodeCatalog
-    private let publishConfig: PublishConfig
 
     private var pollTask: Task<Void, Never>?
     private var folderObserver: AnyCancellable?
@@ -35,12 +34,10 @@ final class AppModel: ObservableObject {
     init(
         settings: SettingsStore,
         setup: ClaudeSetup = ClaudeSetup(),
-        publishConfig: PublishConfig = PublishConfig(),
         backend: (() -> BackendClientProtocol?)? = nil
     ) {
         self.settings = settings
         self.setup = setup
-        self.publishConfig = publishConfig
         let backend = backend ?? { [settings] in
             guard settings.isBackendConfigured else { return nil }
             return BackendClient(baseURL: settings.backendURL, workspaceKey: settings.workspaceKey)
@@ -48,8 +45,8 @@ final class AppModel: ObservableObject {
         self.backend = backend
         let store = EpisodeStore(root: settings.episodesFolderURL)
         self.store = store
-        self.pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup), publishConfig: publishConfig)
-        self.catalog = EpisodeCatalog(store: store, publishConfig: publishConfig, backend: backend)
+        self.pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup))
+        self.catalog = EpisodeCatalog(store: store, backend: backend)
         folderObserver = settings.$episodesFolder
             .dropFirst()
             .removeDuplicates()
@@ -64,8 +61,8 @@ final class AppModel: ObservableObject {
 
     private func useEpisodesFolder(_ root: URL) {
         store = EpisodeStore(root: root)
-        pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup), publishConfig: publishConfig)
-        catalog = EpisodeCatalog(store: store, publishConfig: publishConfig, backend: backend)
+        pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup))
+        catalog = EpisodeCatalog(store: store, backend: backend)
         selectedEpisodeNumber = nil
         Task { await refresh() }
     }

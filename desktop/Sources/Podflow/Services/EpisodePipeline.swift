@@ -1,7 +1,7 @@
 import Foundation
 
 /// Runs an episode through the plugin: `prepare` up to the review, `publish`
-/// after it. Hides the settings check, the CLI config, the run environment,
+/// after it. Hides the settings check, the CLI's publish input, the run environment,
 /// the headless Claude run and the outcome check behind two calls that return
 /// the episode's new state or throw a user-facing error.
 struct EpisodePipeline {
@@ -46,12 +46,10 @@ struct EpisodePipeline {
 
     let store: EpisodeStore
     let runner: ClaudeRunner
-    let publishConfig: PublishConfig
 
-    init(store: EpisodeStore = EpisodeStore(), runner: ClaudeRunner = ClaudeRunner(), publishConfig: PublishConfig = PublishConfig()) {
+    init(store: EpisodeStore = EpisodeStore(), runner: ClaudeRunner = ClaudeRunner()) {
         self.store = store
         self.runner = runner
-        self.publishConfig = publishConfig
     }
 
     /// Auphonic, transcript, generation and fact-check. Resumes after a failure.
@@ -72,24 +70,18 @@ struct EpisodePipeline {
         onLog: @escaping @Sendable (String) -> Void
     ) async throws -> EpisodeState {
         let (folder, state) = try local(episode, settings: settings)
-        let configFile = try publishConfig.write(
-            PublishConfig.Inputs(
-                number: state.number,
-                title: state.title,
-                audioBasename: state.audioBasename,
-                releaseDate: review.releaseDate,
-                coverFile: review.coverFile,
-                featuredFile: review.featuredFile,
-                wordpressServer: settings.wordpressServer,
-                ftpHost: settings.ftpHost,
-                ftpPort: settings.ftpPort,
-                coverBaseURL: settings.coverBaseURL
-            ),
-            episodeFolder: folder
-        )
-        var environment = settings.environment
-        environment[EnvName.configFile] = configFile
-        return try await run(.publish, folder: folder, environment: environment, onLog: onLog)
+        try PublishInput(
+            episodeNumber: state.number,
+            title: state.title,
+            releaseDate: review.releaseDate,
+            audioSlug: state.audioBasename,
+            coverFile: review.coverFile,
+            featuredImageFile: review.featuredFile,
+            coverBaseURL: settings.coverBaseURL,
+            wordpressServer: settings.wordpressServer,
+            ftp: .init(host: settings.ftpHost, port: settings.ftpPort)
+        ).write(to: folder)
+        return try await run(.publish, folder: folder, environment: settings.environment, onLog: onLog)
     }
 
     private func local(_ episode: Episode, settings: Settings) throws -> (URL, EpisodeState) {

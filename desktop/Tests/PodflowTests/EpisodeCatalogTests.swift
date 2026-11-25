@@ -24,7 +24,6 @@ final class FakeBackend: BackendClientProtocol, @unchecked Sendable {
 final class EpisodeCatalogTests: XCTestCase {
     private var root: URL!
     private var store: EpisodeStore!
-    private var configDir: URL!
     private var backend: FakeBackend!
     private var configured = true
 
@@ -32,7 +31,6 @@ final class EpisodeCatalogTests: XCTestCase {
         root = FileManager.default.temporaryDirectory.appendingPathComponent("podflow-tests-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         store = EpisodeStore(root: root.appendingPathComponent("Podflow"))
-        configDir = root.appendingPathComponent("config")
         backend = FakeBackend()
         configured = true
     }
@@ -42,8 +40,7 @@ final class EpisodeCatalogTests: XCTestCase {
     }
 
     private var catalog: EpisodeCatalog {
-        EpisodeCatalog(store: store, publishConfig: PublishConfig(configDirectory: configDir),
-                       backend: { [unowned self] in configured ? backend : nil })
+        EpisodeCatalog(store: store, backend: { [unowned self] in configured ? backend : nil })
     }
 
     private func video() throws -> URL {
@@ -114,11 +111,8 @@ final class EpisodeCatalogTests: XCTestCase {
         XCTAssertEqual(backend.putMetadataCalls.first?.metadata.title, "Neu")
     }
 
-    func testDeleteRemovesSharedStatusFolderAndCLIConfig() async throws {
+    func testDeleteRemovesSharedStatusAndFolder() async throws {
         try store.create(number: "8", title: "Weg", type: .compilation, video: try video(), transcript: nil)
-        try FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
-        let configFile = configDir.appendingPathComponent(PublishConfig.configFileName(number: "8"))
-        try "x".write(to: configFile, atomically: true, encoding: .utf8)
 
         let listed = await catalog.list().episodes
         let episode = try XCTUnwrap(listed.first)
@@ -126,7 +120,6 @@ final class EpisodeCatalogTests: XCTestCase {
 
         XCTAssertEqual(backend.deleted, ["8"])
         XCTAssertFalse(FileManager.default.fileExists(atPath: store.folder(for: "8").path))
-        XCTAssertFalse(FileManager.default.fileExists(atPath: configFile.path))
     }
 
     func testBackendFailureLeavesLocalEpisodeUntouched() async throws {

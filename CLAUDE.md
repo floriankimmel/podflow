@@ -41,9 +41,10 @@ The dev shell is devbox (`devbox.json`, loaded by direnv). It pins Go 1.21.
 
 ## Things that bite
 
-- The CLI reads its config only from `~/.config/podflow/<file>`; the file is
-  picked by `PODFLOW_CONFIG_FILE`. Per-folder progress is in
-  `<folder>.state.yml`.
+- `podflow publish` reads its config only from `~/.config/podflow/<file>`; the
+  file is picked by `PODFLOW_CONFIG_FILE`. The desktop app instead runs
+  `podflow publish-episode publish.json`, which needs no config file. Per-folder
+  progress is in `<folder>.state.yml`.
 - Credentials (Auphonic, WordPress, FTP, workspace key) come from environment
   variables or the macOS Keychain. Never print, log or commit them.
 - GitHub releases: CLI releases come from goreleaser and own "latest". Desktop

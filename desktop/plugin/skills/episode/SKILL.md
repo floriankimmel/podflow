@@ -94,7 +94,7 @@ If `shownotes.md` does not contain the URL yet, append:
 ```
 
 ### `wordpress`
-Run the bundled CLI in the episode folder: `"$PODFLOW_CLI" publish`. The app has already written its config and state files and set `PODFLOW_CONFIG_FILE`. The CLI is resumable; a non-zero exit code is a failure — include the last lines of its output in the error.
+Run the bundled CLI in the episode folder: `"$PODFLOW_CLI" publish-episode publish.json`. The app has already written `publish.json`. The CLI uploads the cover and schedules the WordPress post; it is resumable and does not report step status itself. A non-zero exit code is a failure — include the last lines of its output in the error.
 
 ### `scheduled`
 `state.sh set scheduled done` and print a short summary: YouTube URL (if known) and the release date the WordPress post is scheduled for.

@@ -18,7 +18,7 @@ headless in the episode folder. User-facing flow and setup are in `README.md`.
 | Claude process, stream-json parsing, bundle paths | `Sources/Podflow/Services/ClaudeRunner.swift` |
 | Claude install/login check | `Sources/Podflow/Services/ClaudeSetup.swift` |
 | Review logic (autosave, images, release date, publish gate) | `Sources/Podflow/Services/ReviewSession.swift` |
-| Config for the bundled CLI's WordPress publish | `Sources/Podflow/Services/PublishConfig.swift` |
+| Input for the bundled CLI's `publish-episode` (`publish.json`) | `Sources/Podflow/Services/PublishInput.swift` |
 | Settings, Keychain secrets, run environment | `Sources/Podflow/Services/SettingsStore.swift` |
 | Episode list (local + backend merge), create, delete | `Sources/Podflow/Services/EpisodeCatalog.swift` |
 | UI state: selection, active run, log, error banner | `Sources/Podflow/AppModel.swift` |
@@ -46,6 +46,8 @@ breaks a plain `swift build`; the Makefile unsets it and uses full Xcode.
 - `seo.md` is read by `ContentParser` (Swift), `seo.sh` and the CLI's
   `wordpress.SEOSections` (Go, for Yoast). All three must give what
   `Tests/fixtures/seo/expected.json` says; add a fixture for new cases.
+- `publish.json` is pinned by `Tests/fixtures/publish.json`, checked by
+  `PublishInputTests` and the CLI's `publish_episode_test.go`.
 - Step status and the backend step report are pinned by
   `Tests/fixtures/step-report.json`, checked by the plugin, Swift, CLI and
   backend tests. Change the fixture and all four together.

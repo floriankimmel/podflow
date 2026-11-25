@@ -1,84 +1,39 @@
 import XCTest
-import Yams
 @testable import Podflow
 
-final class PublishConfigTests: XCTestCase {
-    private var root: URL!
+/// `publish.json` is the seam to the CLI's `publish-episode`; the Go tests
+/// read the same fixture.
+final class PublishInputTests: XCTestCase {
+    static let fixture = URL(fileURLWithPath: #filePath)
+        .deletingLastPathComponent().deletingLastPathComponent()
+        .appendingPathComponent("fixtures/publish.json")
 
-    override func setUpWithError() throws {
-        root = FileManager.default.temporaryDirectory.appendingPathComponent("podflow-tests-\(UUID().uuidString)")
-        try FileManager.default.createDirectory(at: root.appendingPathComponent("371"), withIntermediateDirectories: true)
+    static var input: PublishInput {
+        PublishInput(
+            episodeNumber: "371", title: "Großglockner",
+            releaseDate: Date(timeIntervalSince1970: 1_795_766_400), // 2026-11-27T08:00:00Z
+            audioSlug: "371_grossglockner", coverFile: "cover.png", featuredImageFile: "wordpress.jpg",
+            coverBaseURL: "http://files.example.test/data/", wordpressServer: "https://example.test",
+            ftp: .init(host: "ftp.example.test", port: "2121"))
     }
 
-    override func tearDownWithError() throws {
-        try? FileManager.default.removeItem(at: root)
+    private func object(_ data: Data) throws -> NSDictionary {
+        try XCTUnwrap(try JSONSerialization.jsonObject(with: data) as? NSDictionary)
     }
 
-    static var inputs: PublishConfig.Inputs {
-        var components = DateComponents()
-        (components.year, components.month, components.day, components.hour, components.minute) = (2026, 11, 27, 9, 0)
-        return PublishConfig.Inputs(
-            number: "371", title: "Großglockner", audioBasename: "371_grossglockner",
-            releaseDate: Calendar.current.date(from: components)!,
-            coverFile: "cover.png", featuredFile: "wordpress.jpg",
-            wordpressServer: "https://example.test", ftpHost: "ftp.example.test", ftpPort: "21",
-            coverBaseURL: "http://files.example.test/data")
+    func testEncodesAsTheSharedFixture() throws {
+        XCTAssertEqual(try object(Self.input.json()), try object(Data(contentsOf: Self.fixture)))
     }
 
-    private var inputs: PublishConfig.Inputs { Self.inputs }
+    func testWritesPublishJSONIntoTheEpisodeFolder() throws {
+        let folder = FileManager.default.temporaryDirectory.appendingPathComponent("podflow-tests-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: folder) }
 
-    func testConfigHasCoverUploadAndWordPressStepWithoutSecrets() throws {
-        let yaml = try PublishConfig.configYAML(inputs)
-        let config = try XCTUnwrap(try Yams.load(yaml: yaml) as? [String: Any])
-        let steps = try XCTUnwrap(config["steps"] as? [[String: Any]])
-        XCTAssertEqual(steps.count, 2)
+        try Self.input.write(to: folder)
 
-        let ftp = try XCTUnwrap(steps[0]["ftp"] as? [String: Any])
-        XCTAssertEqual(ftp["username"] as? String, "{{env.FTP_USER}}")
-        XCTAssertEqual(ftp["password"] as? String, "{{env.FTP_PWD}}")
-        let upload = try XCTUnwrap((ftp["files"] as? [[String: String]])?.first)
-        XCTAssertEqual(upload, ["source": "cover.png", "target": "371_grossglockner.png"])
-
-        let wordpress = try XCTUnwrap(steps[1]["wordpress"] as? [String: Any])
-        XCTAssertEqual(wordpress["apiKey"] as? String, "{{env.WP_KEY}}")
-        XCTAssertEqual(wordpress["image"] as? String, "wordpress.jpg")
-        XCTAssertEqual(wordpress["poster"] as? String, "http://files.example.test/data/371_grossglockner.png")
-        XCTAssertEqual(wordpress["episode"] as? String, "371_grossglockner")
-        XCTAssertEqual(wordpress["showNotes"] as? String, "shownotes.md")
-        XCTAssertEqual(wordpress["contentFile"] as? String, "seo.md")
-        XCTAssertEqual(wordpress["chapter"] as? String, "chapters.txt")
-    }
-
-    func testWriteCreatesConfigChaptersAndCLIState() throws {
-        let folder = root.appendingPathComponent("371")
-        let configDirectory = root.appendingPathComponent("config")
-        let writer = PublishConfig(configDirectory: configDirectory)
-
-        let fileName = try writer.write(inputs, episodeFolder: folder)
-
-        XCTAssertEqual(fileName, "episode-371.yml")
-        XCTAssertTrue(FileManager.default.fileExists(atPath: configDirectory.appendingPathComponent(fileName).path))
-        XCTAssertEqual(try String(contentsOf: folder.appendingPathComponent("chapters.txt"), encoding: .utf8), "")
-        let state = try XCTUnwrap(
-            try Yams.load(yaml: String(contentsOf: folder.appendingPathComponent("371.state.yml"), encoding: .utf8)) as? [String: Any])
-        let metadata = try XCTUnwrap(state["metadata"] as? [String: Any])
-        XCTAssertEqual(metadata["releaseDate"] as? String, "2026-11-27 09:00:00")
-        XCTAssertEqual(metadata["title"] as? String, "Großglockner")
-        XCTAssertEqual("\(metadata["episodeNumber"] ?? "")", "371")
-    }
-
-    func testCLIProgressSurvivesRewrite() throws {
-        let folder = root.appendingPathComponent("371")
-        let existing = "ftpUploaded: true\nwordpress:\n  wordpressID: \"4711\"\nmetadata:\n  title: Alt\n"
-        try existing.write(to: folder.appendingPathComponent("371.state.yml"), atomically: true, encoding: .utf8)
-
-        try PublishConfig(configDirectory: root.appendingPathComponent("config")).writeCLIState(inputs, episodeFolder: folder)
-
-        let state = try XCTUnwrap(
-            try Yams.load(yaml: String(contentsOf: folder.appendingPathComponent("371.state.yml"), encoding: .utf8)) as? [String: Any])
-        XCTAssertEqual(state["ftpUploaded"] as? Bool, true)
-        XCTAssertEqual("\((state["wordpress"] as? [String: Any])?["wordpressID"] ?? "")", "4711")
-        XCTAssertEqual((state["metadata"] as? [String: Any])?["title"] as? String, "Großglockner")
+        let written = try Data(contentsOf: folder.appendingPathComponent(EpisodeFile.publishInput))
+        XCTAssertEqual(try object(written), try object(Data(contentsOf: Self.fixture)))
     }
 }
 
@@ -242,7 +197,7 @@ final class EpisodePipelineTests: XCTestCase {
         let runner = ClaudeRunner(
             setup: ClaudeSetup(binaryOverride: fake.path),
             pluginDirectory: root.appendingPathComponent("plugin"), cliPath: "/bundle/podflow")
-        return EpisodePipeline(store: store, runner: runner, publishConfig: PublishConfig(configDirectory: root.appendingPathComponent("config")))
+        return EpisodePipeline(store: store, runner: runner)
     }
 
     private func newEpisode() throws -> Episode {
@@ -337,31 +292,33 @@ final class EpisodePipelineTests: XCTestCase {
         }
     }
 
-    func testPublishPreparesCLIFilesAndPointsTheRunAtThem() async throws {
+    func testPublishWritesTheCLIInputBeforeTheRun() async throws {
         let pipeline = try pipeline(fakeClaude: [
-            "echo \"$2|$PODFLOW_CONFIG_FILE|$WP_KEY\" > call.txt",
+            "echo \"$2|$WP_KEY\" > call.txt",
+            "cp publish.json seen-by-run.json",
             setStep(StepID.review, "done"),
             setStep(StepID.scheduled, "done"),
             ok,
         ].joined(separator: "\n"))
         let episode = try newEpisode()
         let folder = episode.folderURL!
-        var components = DateComponents()
-        (components.year, components.month, components.day, components.hour) = (2026, 11, 27, 9)
-        let review = EpisodePipeline.Review(
-            releaseDate: Calendar.current.date(from: components)!, coverFile: "cover.png", featuredFile: "wordpress.jpg")
+        let releaseDate = Date(timeIntervalSince1970: 1_795_766_400)
+        let review = EpisodePipeline.Review(releaseDate: releaseDate, coverFile: "cover.png", featuredFile: "wordpress.jpg")
 
         let state = try await pipeline.publish(episode, review: review, settings: settings, onLog: { _ in })
 
         XCTAssertEqual(state.phase, .scheduled)
         let call = try String(contentsOf: folder.appendingPathComponent("call.txt"), encoding: .utf8)
-        XCTAssertEqual(call.trimmingCharacters(in: .whitespacesAndNewlines), "/podflow:episode publish|episode-371.yml|geheim")
-        let config = try String(contentsOf: root.appendingPathComponent("config/episode-371.yml"), encoding: .utf8)
-        XCTAssertTrue(config.contains("wordpress.jpg"))
-        XCTAssertTrue(config.contains("371_test"))
-        XCTAssertFalse(config.contains("geheim"))
-        let cliState = try String(contentsOf: folder.appendingPathComponent("371.state.yml"), encoding: .utf8)
-        XCTAssertTrue(cliState.contains("2026-11-27 09:00:00"))
+        XCTAssertEqual(call.trimmingCharacters(in: .whitespacesAndNewlines), "/podflow:episode publish|geheim")
+        let seen = try XCTUnwrap(
+            try JSONSerialization.jsonObject(with: Data(contentsOf: folder.appendingPathComponent("seen-by-run.json"))) as? [String: Any])
+        XCTAssertEqual(seen["episodeNumber"] as? String, "371")
+        XCTAssertEqual(seen["audioSlug"] as? String, "371_test")
+        XCTAssertEqual(seen["featuredImageFile"] as? String, "wordpress.jpg")
+        XCTAssertEqual(seen["releaseDate"] as? String, "2026-11-27T08:00:00Z")
+        XCTAssertEqual((seen["ftp"] as? [String: String])?["port"], "21")
+        let written = try String(contentsOf: folder.appendingPathComponent(EpisodeFile.publishInput), encoding: .utf8)
+        XCTAssertFalse(written.contains("geheim"))
     }
 }
 
@@ -404,42 +361,5 @@ final class SettingsTests: XCTestCase {
         let reloaded = SettingsStore(defaults: defaults, keychain: keychain)
         XCTAssertEqual(reloaded.secret(.wordpressKey), "wp")
         XCTAssertEqual(reloaded.auphonicPreset, "PRESET")
-    }
-}
-
-/// Runs the real CLI (`make cli` → build/podflow) against the files the app
-/// generates. Skipped when the binary has not been built.
-final class CLIContractTests: XCTestCase {
-    func testGeneratedConfigAndStateAreAcceptedByPodflowCheck() async throws {
-        let cli = URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
-            .appendingPathComponent("build/podflow").path
-        try XCTSkipUnless(FileManager.default.isExecutableFile(atPath: cli), "build/podflow missing — run `make cli`")
-
-        let home = FileManager.default.temporaryDirectory.appendingPathComponent("podflow-tests-\(UUID().uuidString)")
-        let folder = home.appendingPathComponent("Podflow/371")
-        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        defer { try? FileManager.default.removeItem(at: home) }
-        for name in ["shownotes.md", "seo.md", "cover.png", "wordpress.png"] {
-            try "x".write(to: folder.appendingPathComponent(name), atomically: true, encoding: .utf8)
-        }
-
-        let inputs = PublishConfig.Inputs(
-            number: "371", title: "Test", audioBasename: "371_test", releaseDate: Date(),
-            coverFile: "cover.png", featuredFile: "wordpress.png",
-            wordpressServer: "https://example.test", ftpHost: "ftp.example.test", ftpPort: "21",
-            coverBaseURL: "http://files.example.test/data/")
-        let configFile = try PublishConfig(configDirectory: home.appendingPathComponent(".config/podflow"))
-            .write(inputs, episodeFolder: folder)
-
-        let result = try await ProcessRunner.run(
-            cli, ["check"],
-            environment: ProcessRunner.environment(adding: ["HOME": home.path, "PODFLOW_CONFIG_FILE": configFile]),
-            currentDirectory: folder)
-
-        XCTAssertEqual(result.exitCode, 0, result.output)
-        for name in ["Shownotes", "SEO", "Cover", "WordPress-Bild", "Kapitel"] {
-            XCTAssertTrue(result.output.contains("\(name) is already created"), result.output)
-        }
     }
 }

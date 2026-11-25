@@ -18,7 +18,6 @@ struct EpisodeCatalog {
     }
 
     let store: EpisodeStore
-    let publishConfig: PublishConfig
     /// The backend as currently configured, nil when it is not set up.
     let backend: () -> BackendClientProtocol?
 
@@ -72,7 +71,7 @@ struct EpisodeCatalog {
     }
 
     /// Removes the episode from the shared status first, then, when it is on
-    /// this Mac, moves its folder to the Trash and drops its CLI config. A
+    /// this Mac, moves its folder to the Trash. A
     /// backend failure stops before anything local is touched. Nothing is
     /// removed from Auphonic, YouTube or WordPress.
     func delete(_ episode: Episode) async throws {
@@ -81,7 +80,6 @@ struct EpisodeCatalog {
         }
         if episode.isLocal {
             try store.delete(number: episode.number)
-            publishConfig.remove(number: episode.number)
         }
     }
 }

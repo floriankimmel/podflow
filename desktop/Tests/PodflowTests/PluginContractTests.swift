@@ -57,11 +57,10 @@ final class PluginContractTests: XCTestCase {
             .union([EnvName.auphonicPreset, EnvName.backendURL, EnvName.cli])
 
         XCTAssertEqual(read.subtracting(scriptOwned), pluginProvided, "plugin reads ≠ app provides")
+    }
 
-        let config = try PublishConfig.configYAML(PublishConfigTests.inputs)
-        for secret in cliSecrets {
-            XCTAssertTrue(config.contains("{{env.\(secret.rawValue)}}"), "CLI config lacks \(secret.rawValue)")
-        }
+    func testSkillHandsThePublishInputToTheCLI() throws {
+        XCTAssertTrue(try read("SKILL.md").contains("\"$\(EnvName.cli)\" publish-episode \(EpisodeFile.publishInput)"))
     }
 
     func testStateScriptReportsTheAppsBackendProfile() throws {
