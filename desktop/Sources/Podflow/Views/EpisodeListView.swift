@@ -5,7 +5,7 @@ struct EpisodeListView: View {
     @State private var deleting: Episode?
 
     var body: some View {
-        List(selection: $model.selectedEpisodeID) {
+        List(selection: $model.selectedEpisodeNumber) {
             if model.episodes.isEmpty {
                 Label("Noch keine Episoden", systemImage: "tray")
                     .foregroundStyle(.secondary)

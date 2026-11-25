@@ -9,12 +9,12 @@ final class AppModel: ObservableObject {
     typealias ConnectionState = EpisodeCatalog.Connection
 
     struct ActiveRun: Equatable {
-        var episodeID: String
+        var episodeNumber: String
         var mode: RunMode
     }
 
     @Published var episodes: [Episode] = []
-    @Published var selectedEpisodeID: String?
+    @Published var selectedEpisodeNumber: String?
     @Published var connection: ConnectionState = .unconfigured
     @Published var activeRun: ActiveRun?
     @Published var runLog: [String] = []
@@ -66,16 +66,16 @@ final class AppModel: ObservableObject {
         store = EpisodeStore(root: root)
         pipeline = EpisodePipeline(store: store, runner: ClaudeRunner(setup: setup), publishConfig: publishConfig)
         catalog = EpisodeCatalog(store: store, publishConfig: publishConfig, backend: backend)
-        selectedEpisodeID = nil
+        selectedEpisodeNumber = nil
         Task { await refresh() }
     }
 
     var selectedEpisode: Episode? {
-        episodes.first { $0.id == selectedEpisodeID }
+        episodes.first { $0.id == selectedEpisodeNumber }
     }
 
     func isRunning(_ episode: Episode) -> Bool {
-        activeRun?.episodeID == episode.id
+        activeRun?.episodeNumber == episode.id
     }
 
     var nextEpisodeNumber: String {
@@ -107,7 +107,7 @@ final class AppModel: ObservableObject {
     func createEpisode(number: String, title: String, type: EpisodeType, video: URL?, transcript: URL?) async throws {
         try await catalog.create(number: number, title: title, type: type, video: video, transcript: transcript)
         await refresh()
-        selectedEpisodeID = number
+        selectedEpisodeNumber = number
     }
 
     /// Removes the episode from the shared status (for both hosts) and, when
@@ -118,7 +118,7 @@ final class AppModel: ObservableObject {
         lastError = nil
         do {
             try await catalog.delete(episode)
-            if selectedEpisodeID == episode.id { selectedEpisodeID = nil }
+            if selectedEpisodeNumber == episode.id { selectedEpisodeNumber = nil }
         } catch {
             lastError = "Episode konnte nicht gelöscht werden: \(error.localizedDescription)"
         }
@@ -147,7 +147,7 @@ final class AppModel: ObservableObject {
         _ work: @escaping (@escaping @Sendable (String) -> Void) async throws -> EpisodeState
     ) async {
         guard activeRun == nil else { return }
-        activeRun = ActiveRun(episodeID: episode.id, mode: mode)
+        activeRun = ActiveRun(episodeNumber: episode.id, mode: mode)
         runLog = []
         lastError = nil
         startPolling()

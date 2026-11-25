@@ -21,7 +21,7 @@ struct EpisodeDetailView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 header
-                if let error = model.lastError, model.selectedEpisodeID == episode.id {
+                if let error = model.lastError, model.selectedEpisodeNumber == episode.id {
                     errorBanner(error)
                 }
                 content
