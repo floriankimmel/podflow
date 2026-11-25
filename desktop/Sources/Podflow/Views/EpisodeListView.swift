@@ -40,6 +40,7 @@ struct EpisodeRow: View {
         case .preparing, .publishing: return ("circle.bottomhalf.filled", Theme.accent, "in Arbeit")
         case .review: return ("eye.circle.fill", Theme.accent, "bereit zum Prüfen")
         case .scheduled: return ("calendar.badge.checkmark", .green, "geplant")
+        case .live: return ("checkmark.circle.fill", .green, "online")
         }
     }
 

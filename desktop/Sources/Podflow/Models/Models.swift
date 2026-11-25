@@ -124,9 +124,22 @@ enum EpisodePhase: Equatable, Sendable {
     case publishing
     /// Handed over to YouTube, feed and website; waiting for the release date.
     case scheduled
+    /// The release date has passed: the website post is public.
+    case live
 
-    static func derive(started: Bool, status: (String) -> StepState) -> EpisodePhase {
-        if status(StepID.scheduled) == .done { return .scheduled }
+    /// Scheduled or live: publishing is done.
+    var isPublished: Bool { self == .scheduled || self == .live }
+
+    static func derive(
+        started: Bool,
+        status: (String) -> StepState,
+        releaseDate: Date? = nil,
+        now: Date = Date()
+    ) -> EpisodePhase {
+        if status(StepID.scheduled) == .done {
+            if let releaseDate, releaseDate <= now { return .live }
+            return .scheduled
+        }
         if status(StepID.review) == .done { return .publishing }
         if status(StepID.review) == .inProgress { return .review }
         return started ? .preparing : .notStarted
@@ -200,6 +213,8 @@ struct Episode: Identifiable, Equatable, Sendable {
     var state: EpisodeState?
     var backendTitle: String?
     var backendSteps: [StepStatus] = []
+    /// From the review on this Mac, or from the backend for the other host's episodes.
+    var releaseDate: Date?
 
     var number: String { state?.number ?? id }
     var title: String {
@@ -214,9 +229,11 @@ struct Episode: Identifiable, Equatable, Sendable {
         return backendSteps.first { $0.step == step }?.status ?? .pending
     }
 
-    var phase: EpisodePhase {
-        if let state { return state.phase }
-        return EpisodePhase.derive(started: !backendSteps.isEmpty, status: status(of:))
+    var phase: EpisodePhase { phase(at: Date()) }
+
+    func phase(at now: Date) -> EpisodePhase {
+        let started = state.map { !$0.steps.isEmpty } ?? !backendSteps.isEmpty
+        return EpisodePhase.derive(started: started, status: status(of:), releaseDate: releaseDate, now: now)
     }
 
     var hasFailure: Bool {

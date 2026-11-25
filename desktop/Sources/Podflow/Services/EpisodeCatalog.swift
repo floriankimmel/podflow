@@ -38,6 +38,9 @@ struct EpisodeCatalog {
                     var episode = merged[id] ?? Episode(id: id)
                     episode.backendTitle = record.title
                     episode.backendSteps = record.steps
+                    if episode.releaseDate == nil, let date = record.releaseDate {
+                        episode.releaseDate = ISO8601DateFormatter().date(from: date)
+                    }
                     merged[id] = episode
                 }
                 connection = .connected
@@ -68,6 +71,16 @@ struct EpisodeCatalog {
                 episodeNumber: number, title: title, releaseDate: nil, profile: BackendProfile.video)
             try? await client.putMetadata(number: number, metadata: metadata)
         }
+    }
+
+    /// Shares the release date of a published episode, so the other host sees
+    /// when it goes live. Best effort.
+    func announceRelease(number: String, releaseDate: Date) async {
+        guard let client = backend() else { return }
+        let metadata = BackendMetadata(
+            episodeNumber: number, title: nil,
+            releaseDate: ISO8601DateFormatter().string(from: releaseDate), profile: nil)
+        try? await client.putMetadata(number: number, metadata: metadata)
     }
 
     /// Removes the episode from the shared status first, then, when it is on

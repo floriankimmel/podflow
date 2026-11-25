@@ -161,9 +161,14 @@ struct ReviewView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 switch phase {
-                case .scheduled:
-                    Label("Die Episode ist geplant und geht zum gewählten Termin online.", systemImage: "calendar.badge.checkmark")
-                        .font(.title3.weight(.semibold)).foregroundStyle(.green)
+                case .scheduled, .live:
+                    if phase == .live {
+                        Label("Die Episode ist online.", systemImage: "checkmark.circle.fill")
+                            .font(.title3.weight(.semibold)).foregroundStyle(.green)
+                    } else {
+                        Label("Die Episode ist geplant und geht zum gewählten Termin online.", systemImage: "calendar.badge.checkmark")
+                            .font(.title3.weight(.semibold)).foregroundStyle(.green)
+                    }
                     if let url = episode.state?.youtubeURL, let link = URL(string: url) {
                         Link("Video auf YouTube öffnen", destination: link)
                     }

@@ -95,7 +95,7 @@ final class ReviewSession: ObservableObject {
         guard draft != saved, !runStatus.isRunning else { return }
         var toSave = draft
         if !isEditable { toSave.shownotes = saved.shownotes }
-        if runStatus.phase == .scheduled { toSave.releaseDate = saved.releaseDate }
+        if runStatus.phase.isPublished { toSave.releaseDate = saved.releaseDate }
         guard toSave != saved else { return }
         do {
             try store.saveReviewDraft(toSave, in: folder)

@@ -131,8 +131,10 @@ final class AppModel: ObservableObject {
     }
 
     func startPublish(_ episode: Episode, review: EpisodePipeline.Review) async {
-        await track(.publish, episode) { [pipeline, settings = settings.pipelineSettings] onLog in
-            try await pipeline.publish(episode, review: review, settings: settings, onLog: onLog)
+        await track(.publish, episode) { [pipeline, catalog, settings = settings.pipelineSettings] onLog in
+            let state = try await pipeline.publish(episode, review: review, settings: settings, onLog: onLog)
+            await catalog.announceRelease(number: episode.number, releaseDate: review.releaseDate)
+            return state
         }
     }
 

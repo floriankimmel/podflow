@@ -98,7 +98,7 @@ struct EpisodeDetailView: View {
                     text: "Bereits erledigte Schritte werden übersprungen. Das Video wird nicht noch einmal hochgeladen.",
                     button: episode.hasFailure ? "Erneut versuchen" : "Fortsetzen"
                 )
-            case .review, .publishing, .scheduled:
+            case .review, .publishing, .scheduled, .live:
                 if let folder = episode.folderURL {
                     ReviewView(episode: episode, folder: folder, store: model.store, releaseTime: settings.releaseTime)
                 }

@@ -79,7 +79,9 @@ struct EpisodeStore {
         ) else { return [] }
         return entries.compactMap { folder in
             guard let state = readState(in: folder) else { return nil }
-            return Episode(id: state.number, folderURL: folder, state: state)
+            var episode = Episode(id: state.number, folderURL: folder, state: state)
+            episode.releaseDate = readReviewFile(in: folder).releaseDate
+            return episode
         }
     }
 

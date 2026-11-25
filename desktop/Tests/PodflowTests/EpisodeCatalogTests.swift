@@ -75,6 +75,42 @@ final class EpisodeCatalogTests: XCTestCase {
         XCTAssertEqual(remote.title, "Vom Co-Host")
     }
 
+    func testOtherHostsScheduledEpisodeIsLiveAfterItsReleaseDate() async throws {
+        var published = record("372", title: "Vom Co-Host", steps: [StepID.scheduled: .done])
+        published.releaseDate = "2026-11-27T08:00:00Z"
+        backend.episodes = [published]
+
+        let listed = await catalog.list().episodes
+        let episode = try XCTUnwrap(listed.first)
+
+        XCTAssertEqual(episode.releaseDate, Date(timeIntervalSince1970: 1_795_766_400))
+        XCTAssertEqual(episode.phase(at: Date(timeIntervalSince1970: 1_795_766_399)), .scheduled)
+        XCTAssertEqual(episode.phase(at: Date(timeIntervalSince1970: 1_795_766_400)), .live)
+    }
+
+    func testLocalEpisodeTakesItsReleaseDateFromTheReview() async throws {
+        let folder = try store.create(number: "373", title: "Lokal", type: .compilation, video: try video(), transcript: nil)
+        var draft = store.loadReviewDraft(in: folder)
+        draft.releaseDate = Date(timeIntervalSince1970: 1_795_766_400)
+        try store.saveReviewDraft(draft, in: folder)
+        var remote = record("373", title: "Lokal")
+        remote.releaseDate = "2030-01-01T00:00:00Z"
+        backend.episodes = [remote]
+
+        let listed = await catalog.list().episodes
+        let episode = try XCTUnwrap(listed.first)
+
+        XCTAssertEqual(episode.releaseDate, Date(timeIntervalSince1970: 1_795_766_400))
+    }
+
+    func testPublishedReleaseDateIsShared() async throws {
+        await catalog.announceRelease(number: "374", releaseDate: Date(timeIntervalSince1970: 1_795_766_400))
+
+        XCTAssertEqual(backend.putMetadataCalls.map(\.number), ["374"])
+        XCTAssertEqual(backend.putMetadataCalls.first?.metadata.releaseDate, "2026-11-27T08:00:00Z")
+        XCTAssertNil(backend.putMetadataCalls.first?.metadata.title)
+    }
+
     func testRecordWithoutNumberIsKeyedByIdAndSortedAfterNumbers() async {
         backend.episodes = [record(nil, id: "spezial", title: "Ohne Nummer"), record("2", title: "Zwei"), record("10", title: "Zehn")]
 
