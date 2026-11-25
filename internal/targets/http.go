@@ -3,7 +3,7 @@ package targets
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -26,7 +26,7 @@ type HTTPRequest struct {
 func SendHTTPRequest(request HTTPRequest) (*APIResponse, error) {
 	var payload bytes.Buffer
 
-	log.Printf("Headers: %s\n", request.Headers)
+	log.Printf("Headers: %s\n", redacted(request.Headers))
 	log.Printf("Method: %s\n", request.Method)
 
 	if strings.Contains(request.Headers["Content-Type"], "json") {
@@ -72,14 +72,13 @@ func SendHTTPRequest(request HTTPRequest) (*APIResponse, error) {
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
+	if err != nil {
+		log.Printf("Error sending request: %s\n", err)
+		return nil, err
+	}
 
 	apiResponse := &APIResponse{
 		Status: resp.StatusCode,
-	}
-
-	if err != nil {
-		log.Printf("Error sending request: %s\n", err)
-		return apiResponse, err
 	}
 
 	defer resp.Body.Close()
@@ -94,9 +93,23 @@ func SendHTTPRequest(request HTTPRequest) (*APIResponse, error) {
 	if resp.StatusCode != 200 && resp.StatusCode != 201 {
 		log.Printf("Error sending request: %s\n", resp.Status)
 		log.Printf("Response body: %s\n", apiResponse.Body)
-		return apiResponse, errors.New("error sending request")
+		return apiResponse, fmt.Errorf("error sending request: %s %s: %s", request.Method, request.URL, resp.Status)
 	}
 
 	log.Printf("Response body: %s\n", string(apiResponse.Body))
 	return apiResponse, nil
+}
+
+// redacted returns headers safe to log: credentials are masked.
+func redacted(headers map[string]string) map[string]string {
+	safe := make(map[string]string, len(headers))
+	for key, value := range headers {
+		switch strings.ToLower(key) {
+		case "authorization", "x-workspace-key", "api-key", "x-api-key":
+			safe[key] = "[redacted]"
+		default:
+			safe[key] = value
+		}
+	}
+	return safe
 }
