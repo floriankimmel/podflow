@@ -162,7 +162,7 @@ func TestMigrateFromSlugIdentity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if ep.Title != "Mein Marathon" || ep.Profile != "video" || len(ep.Steps) != 1 || ep.Content["shownotes"] != "# 260" {
+	if ep.Title != "Mein Marathon" || ep.Profile != "video" || len(ep.Steps) != 1 {
 		t.Fatalf("migrated ep = %+v", ep)
 	}
 }
@@ -209,24 +209,13 @@ func TestSharedViewConsistency(t *testing.T) {
 	}
 }
 
-func TestContentStoreAndFetch(t *testing.T) {
+func TestContentRouteIsGone(t *testing.T) {
 	s := newTestServer(t)
 	report := stepReport{Step: "transcribe", Status: "done", Metadata: Metadata{EpisodeNumber: "7"}}
 	request(t, s, http.MethodPost, "/episodes/7/steps", testKey, report)
-
-	body := contentReport{Key: "shownotes", Body: "# Folge 7"}
-	if rec := request(t, s, http.MethodPost, "/episodes/7/content", testKey, body); rec.Code != http.StatusOK {
-		t.Fatalf("content = %d", rec.Code)
-	}
-	rec := request(t, s, http.MethodGet, "/episodes/7", testKey, nil)
-	var ep Episode
-	_ = json.Unmarshal(rec.Body.Bytes(), &ep)
-	if ep.Content["shownotes"] != "# Folge 7" {
-		t.Fatalf("content = %+v", ep.Content)
-	}
-	// Content on unknown episode → 404.
-	if rec := request(t, s, http.MethodPost, "/episodes/nope/content", testKey, body); rec.Code != http.StatusNotFound {
-		t.Fatalf("content unknown ep = %d", rec.Code)
+	body := map[string]string{"key": "shownotes", "body": "# Folge 7"}
+	if rec := request(t, s, http.MethodPost, "/episodes/7/content", testKey, body); rec.Code != http.StatusNotFound {
+		t.Fatalf("content = %d, want 404", rec.Code)
 	}
 }
 
@@ -250,7 +239,6 @@ func TestDeleteEpisode(t *testing.T) {
 		report := stepReport{Step: "auphonic_wait", Status: "done", Metadata: Metadata{EpisodeNumber: n}}
 		request(t, s, http.MethodPost, "/episodes/"+n+"/steps", testKey, report)
 	}
-	request(t, s, http.MethodPost, "/episodes/1/content", testKey, contentReport{Key: "shownotes", Body: "x"})
 
 	if rec := request(t, s, http.MethodDelete, "/episodes/1", "", nil); rec.Code != http.StatusUnauthorized {
 		t.Fatalf("delete without key = %d, want 401", rec.Code)
@@ -272,13 +260,13 @@ func TestDeleteEpisode(t *testing.T) {
 		t.Fatalf("list after delete = %+v", eps)
 	}
 
-	// A new report for the same number starts fresh: no old steps or content.
+	// A new report for the same number starts fresh: no old steps.
 	report := stepReport{Step: "transcript", Status: "in_progress", Metadata: Metadata{EpisodeNumber: "1"}}
 	request(t, s, http.MethodPost, "/episodes/1/steps", testKey, report)
 	rec = request(t, s, http.MethodGet, "/episodes/1", testKey, nil)
 	var ep Episode
 	_ = json.Unmarshal(rec.Body.Bytes(), &ep)
-	if len(ep.Steps) != 1 || ep.Steps[0].Step != "transcript" || len(ep.Content) != 0 {
+	if len(ep.Steps) != 1 || ep.Steps[0].Step != "transcript" {
 		t.Fatalf("recreated episode carries old data: %+v", ep)
 	}
 }

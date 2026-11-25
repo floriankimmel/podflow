@@ -66,17 +66,11 @@ type stepReport struct {
 	Metadata Metadata `json:"metadata"`
 }
 
-type contentReport struct {
-	Key  string `json:"key"`
-	Body string `json:"body"`
-}
-
 // Routes:
 //
-//	GET    /episodes/{number}          episode with steps + content
-//	DELETE /episodes/{number}          delete episode with steps + content
+//	GET    /episodes/{number}          episode with steps
+//	DELETE /episodes/{number}          delete episode with steps
 //	POST   /episodes/{number}/steps    upsert a step status (creates episode on first report)
-//	POST   /episodes/{number}/content  store a content artifact
 //	POST   /episodes/{number}/metadata upsert metadata (profile, title, ...)
 //
 // The episode number in the path is the episode's identity; it overrides any
@@ -151,22 +145,6 @@ func (s *Server) handleEpisode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, http.StatusOK, ep)
-
-	case sub == "content" && r.Method == http.MethodPost:
-		var report contentReport
-		if err := json.NewDecoder(r.Body).Decode(&report); err != nil || report.Key == "" {
-			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "key and body required"})
-			return
-		}
-		if err := s.store.PutContent(number, report.Key, report.Body); err != nil {
-			if errors.Is(err, ErrNotFound) {
-				writeJSON(w, http.StatusNotFound, map[string]string{"error": "episode not found"})
-				return
-			}
-			serverError(w, err)
-			return
-		}
-		writeJSON(w, http.StatusOK, map[string]string{"status": "stored"})
 
 	default:
 		writeJSON(w, http.StatusNotFound, map[string]string{"error": "not found"})

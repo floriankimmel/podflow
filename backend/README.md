@@ -42,8 +42,6 @@ Wrong or missing key → `401 {"error":"invalid workspace key"}`.
   `ingest`, `reaper`, `video`, `auphonic_production`, `download_audio`,
   `transcribe`, `shownotes`, `social`, `seo`.
 - **Profile**: stored per episode (`studio` | `video`), set at creation.
-- **Content**: named text artifacts per episode (`transcript`, `shownotes`,
-  `social_discord`, …, `seo`) for shared viewing.
 
 ## Endpoints
 
@@ -57,7 +55,6 @@ curl http://localhost:8080/health
 ### `GET /episodes`
 
 List all episodes (newest number first), each with metadata + per-step status.
-Content bodies are omitted in the list.
 
 ```sh
 curl -H "X-Workspace-Key: dev-key" http://localhost:8080/episodes
@@ -65,7 +62,7 @@ curl -H "X-Workspace-Key: dev-key" http://localhost:8080/episodes
 
 ### `GET /episodes/{number}`
 
-One episode with steps and content. `404` when unknown.
+One episode with its steps. `404` when unknown.
 
 ```sh
 curl -H "X-Workspace-Key: dev-key" http://localhost:8080/episodes/259
@@ -73,7 +70,7 @@ curl -H "X-Workspace-Key: dev-key" http://localhost:8080/episodes/259
 
 ### `DELETE /episodes/{number}`
 
-Remove an episode with its steps and content. `404` when it does not exist.
+Remove an episode with its steps. `404` when it does not exist.
 A later step report for the same number creates a fresh episode.
 
 ```sh
@@ -102,19 +99,3 @@ curl -X POST -H "X-Workspace-Key: dev-key" -H "Content-Type: application/json" \
   http://localhost:8080/episodes/300/metadata
 ```
 
-### `POST /episodes/{number}/content`
-
-Store a named content artifact for shared viewing. `404` when the episode does
-not exist yet.
-
-```sh
-curl -X POST -H "X-Workspace-Key: dev-key" -H "Content-Type: application/json" \
-  -d '{"key":"shownotes","body":"# Folge 259"}' \
-  http://localhost:8080/episodes/259/content
-```
-
-## Tests
-
-```sh
-CGO_ENABLED=0 go test ./...
-```

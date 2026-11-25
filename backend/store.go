@@ -29,14 +29,13 @@ type StepStatus struct {
 type Episode struct {
 	// ID repeats the episode number for clients that still read "id"
 	// (desktop 1.3.0 and older).
-	ID            string            `json:"id"`
-	EpisodeNumber string            `json:"episodeNumber"`
-	Title         string            `json:"title,omitempty"`
-	ReleaseDate   string            `json:"releaseDate,omitempty"`
-	Profile       string            `json:"profile,omitempty"`
-	Steps         []StepStatus      `json:"steps"`
-	Content       map[string]string `json:"content,omitempty"`
-	UpdatedAt     string            `json:"updatedAt"`
+	ID            string       `json:"id"`
+	EpisodeNumber string       `json:"episodeNumber"`
+	Title         string       `json:"title,omitempty"`
+	ReleaseDate   string       `json:"releaseDate,omitempty"`
+	Profile       string       `json:"profile,omitempty"`
+	Steps         []StepStatus `json:"steps"`
+	UpdatedAt     string       `json:"updatedAt"`
 }
 
 type Metadata struct {
@@ -80,14 +79,6 @@ const schema = `
 		PRIMARY KEY (episode_number, step),
 		FOREIGN KEY (episode_number) REFERENCES episodes(episode_number) ON DELETE CASCADE
 	);
-	CREATE TABLE IF NOT EXISTS content (
-		episode_number TEXT NOT NULL,
-		key TEXT NOT NULL,
-		body TEXT NOT NULL,
-		updated_at TEXT NOT NULL,
-		PRIMARY KEY (episode_number, key),
-		FOREIGN KEY (episode_number) REFERENCES episodes(episode_number) ON DELETE CASCADE
-	);
 `
 
 func (s *Store) migrate() error {
@@ -98,7 +89,8 @@ func (s *Store) migrate() error {
 	if legacy {
 		return s.migrateFromSlugIdentity()
 	}
-	_, err = s.db.Exec(schema)
+	// The content table held shared text artifacts nobody wrote; drop it.
+	_, err = s.db.Exec(schema + `DROP TABLE IF EXISTS content;`)
 	return err
 }
 
@@ -112,7 +104,8 @@ func (s *Store) hasColumn(table, column string) (bool, error) {
 
 // migrateFromSlugIdentity converts the old schema, where an episode was keyed
 // by its slug until it had a number, to one keyed by the episode number.
-// Episodes that never got a number are dropped with their steps and content.
+// Episodes that never got a number are dropped with their steps; stored
+// content is dropped.
 func (s *Store) migrateFromSlugIdentity() error {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -123,7 +116,6 @@ func (s *Store) migrateFromSlugIdentity() error {
 	for _, stmt := range []string{
 		`ALTER TABLE episodes RENAME TO episodes_old`,
 		`ALTER TABLE steps RENAME TO steps_old`,
-		`ALTER TABLE content RENAME TO content_old`,
 		schema,
 		`INSERT INTO episodes (episode_number, title, release_date, profile, updated_at)
 			SELECT episode_number, title, release_date, profile, updated_at
@@ -132,11 +124,7 @@ func (s *Store) migrateFromSlugIdentity() error {
 			SELECT e.episode_number, st.step, st.status, st.updated_at
 			FROM steps_old st JOIN episodes_old e ON e.id = st.episode_id
 			WHERE e.episode_number != ''`,
-		`INSERT INTO content (episode_number, key, body, updated_at)
-			SELECT e.episode_number, c.key, c.body, c.updated_at
-			FROM content_old c JOIN episodes_old e ON e.id = c.episode_id
-			WHERE e.episode_number != ''`,
-		`DROP TABLE content_old`,
+		`DROP TABLE IF EXISTS content`,
 		`DROP TABLE steps_old`,
 		`DROP TABLE episodes_old`,
 	} {
@@ -149,9 +137,9 @@ func (s *Store) migrateFromSlugIdentity() error {
 
 func (s *Store) Close() error { return s.db.Close() }
 
-// Delete removes an episode with its steps and content. SQLite does not
-// enforce the ON DELETE CASCADE without a per-connection pragma, so the
-// child rows are deleted explicitly.
+// Delete removes an episode with its steps. SQLite does not enforce the
+// ON DELETE CASCADE without a per-connection pragma, so the step rows are
+// deleted explicitly.
 func (s *Store) Delete(number string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -160,9 +148,6 @@ func (s *Store) Delete(number string) error {
 	defer func() { _ = tx.Rollback() }()
 
 	if _, err := tx.Exec(`DELETE FROM steps WHERE episode_number = ?`, number); err != nil {
-		return err
-	}
-	if _, err := tx.Exec(`DELETE FROM content WHERE episode_number = ?`, number); err != nil {
 		return err
 	}
 	res, err := tx.Exec(`DELETE FROM episodes WHERE episode_number = ?`, number)
@@ -228,29 +213,8 @@ func (s *Store) UpsertMetadata(meta Metadata) (*Episode, error) {
 	return s.Get(meta.EpisodeNumber)
 }
 
-// PutContent stores a named content artifact (transcript, shownotes, ...) for shared viewing.
-func (s *Store) PutContent(number, key, body string) error {
-	var exists string
-	if err := s.db.QueryRow(`SELECT episode_number FROM episodes WHERE episode_number = ?`, number).Scan(&exists); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return ErrNotFound
-		}
-		return err
-	}
-	ts := now()
-	_, err := s.db.Exec(`
-		INSERT INTO content (episode_number, key, body, updated_at) VALUES (?, ?, ?, ?)
-		ON CONFLICT(episode_number, key) DO UPDATE SET body = excluded.body, updated_at = excluded.updated_at
-	`, number, key, body, ts)
-	if err != nil {
-		return err
-	}
-	_, err = s.db.Exec(`UPDATE episodes SET updated_at = ? WHERE episode_number = ?`, ts, number)
-	return err
-}
-
 func (s *Store) Get(number string) (*Episode, error) {
-	ep := &Episode{ID: number, EpisodeNumber: number, Steps: []StepStatus{}, Content: map[string]string{}}
+	ep := &Episode{ID: number, EpisodeNumber: number, Steps: []StepStatus{}}
 	err := s.db.QueryRow(
 		`SELECT title, release_date, profile, updated_at FROM episodes WHERE episode_number = ?`, number,
 	).Scan(&ep.Title, &ep.ReleaseDate, &ep.Profile, &ep.UpdatedAt)
@@ -273,21 +237,6 @@ func (s *Store) Get(number string) (*Episode, error) {
 		ep.Steps = append(ep.Steps, st)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	crows, err := s.db.Query(`SELECT key, body FROM content WHERE episode_number = ?`, number)
-	if err != nil {
-		return nil, err
-	}
-	defer crows.Close()
-	for crows.Next() {
-		var k, b string
-		if err := crows.Scan(&k, &b); err != nil {
-			return nil, err
-		}
-		ep.Content[k] = b
-	}
-	if err := crows.Err(); err != nil {
 		return nil, err
 	}
 	return ep, nil
@@ -316,8 +265,6 @@ func (s *Store) List() ([]*Episode, error) {
 		if err != nil {
 			return nil, err
 		}
-		// Keep list payload small: no content bodies in the list.
-		ep.Content = nil
 		episodes = append(episodes, ep)
 	}
 	return episodes, nil
