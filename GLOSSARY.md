@@ -10,6 +10,10 @@ How a finished episode of the Laufend Entdecken running podcast gets from a cut 
 One of the two people who make the podcast and produce its episodes.
 _Avoid_: user, cutter, editor
 
+**Workspace**:
+The shared production state of all episodes, which both hosts see and work on.
+_Avoid_: team, account, project
+
 ### Episode
 
 **Episode**:
@@ -17,8 +21,8 @@ One release of the podcast, identified by its episode number.
 _Avoid_: show, production, folge (in code)
 
 **Episode number**:
-The sequential number of an episode; it is also the episode's address on the website (`/371`).
-_Avoid_: episode id
+The sequential number of an episode; it is also the episode's address on the website (`/371`). An episode gets its number when its production starts and is known by it from then on.
+_Avoid_: episode id, slug
 
 **Zencastr recording**:
 An episode recorded in one Zencastr session; its transcript comes from Zencastr.
