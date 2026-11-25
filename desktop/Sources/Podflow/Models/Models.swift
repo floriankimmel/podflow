@@ -42,7 +42,6 @@ struct BackendEpisode: Codable, Identifiable, Sendable {
     var releaseDate: String?
     var profile: String?
     var steps: [StepStatus]
-    var content: [String: String]?
     var updatedAt: String?
 
     func status(of step: String) -> StepState {

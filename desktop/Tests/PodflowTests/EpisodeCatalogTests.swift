@@ -13,10 +13,7 @@ final class FakeBackend: BackendClientProtocol, @unchecked Sendable {
         if let listError { throw listError }
         return episodes
     }
-    func getEpisode(number: String) async throws -> BackendEpisode { throw BackendError.notFound }
-    func reportStep(number: String, step: String, status: StepState, metadata: BackendMetadata) async throws {}
     func putMetadata(number: String, metadata: BackendMetadata) async throws { putMetadataCalls.append((number, metadata)) }
-    func putContent(number: String, key: String, body: String) async throws {}
     func deleteEpisode(number: String) async throws {
         if let deleteError { throw deleteError }
         deleted.append(number)

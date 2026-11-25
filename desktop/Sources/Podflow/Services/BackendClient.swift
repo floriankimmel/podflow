@@ -20,10 +20,7 @@ enum BackendError: LocalizedError, Equatable {
 
 protocol BackendClientProtocol: Sendable {
     func listEpisodes() async throws -> [BackendEpisode]
-    func getEpisode(number: String) async throws -> BackendEpisode
-    func reportStep(number: String, step: String, status: StepState, metadata: BackendMetadata) async throws
     func putMetadata(number: String, metadata: BackendMetadata) async throws
-    func putContent(number: String, key: String, body: String) async throws
     func deleteEpisode(number: String) async throws
 }
 
@@ -78,23 +75,6 @@ struct BackendClient: BackendClientProtocol {
         return try JSONDecoder().decode([BackendEpisode].self, from: data)
     }
 
-    func getEpisode(number: String) async throws -> BackendEpisode {
-        let encoded = number.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? number
-        let data = try await send(request(path: "/episodes/\(encoded)"))
-        return try JSONDecoder().decode(BackendEpisode.self, from: data)
-    }
-
-    func reportStep(number: String, step: String, status: StepState, metadata: BackendMetadata) async throws {
-        struct Payload: Codable {
-            var step: String
-            var status: String
-            var metadata: BackendMetadata
-        }
-        let encoded = number.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? number
-        let body = try JSONEncoder().encode(Payload(step: step, status: status.rawValue, metadata: metadata))
-        _ = try await send(request(path: "/episodes/\(encoded)/steps", method: "POST", body: body))
-    }
-
     func putMetadata(number: String, metadata: BackendMetadata) async throws {
         let encoded = number.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? number
         let body = try JSONEncoder().encode(metadata)
@@ -109,15 +89,5 @@ struct BackendClient: BackendClientProtocol {
         } catch BackendError.notFound {
             return
         }
-    }
-
-    func putContent(number: String, key: String, body: String) async throws {
-        struct Payload: Codable {
-            var key: String
-            var body: String
-        }
-        let encoded = number.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? number
-        let data = try JSONEncoder().encode(Payload(key: key, body: body))
-        _ = try await send(request(path: "/episodes/\(encoded)/content", method: "POST", body: data))
     }
 }
