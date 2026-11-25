@@ -4,147 +4,171 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
+
 	config "github.com/floriankimmel/podflow/internal/configuration"
-	"github.com/floriankimmel/podflow/internal/state"
+	"github.com/floriankimmel/podflow/internal/markdown"
 )
 
-func ScheduleEpisode(
-	wordpressConfig config.Wordpress,
-	stateIo state.StateReaderWriter,
-	title string,
-	currentEpisodeNumber string,
-	scheduledDate string,
-) (Episode, error) {
-	fmt.Printf(" Schedule blogpost '%s' for %s \n", title, scheduledDate)
+// Site is the WordPress installation with Podlove and Yoast.
+type Site struct {
+	Server string
+	APIKey string
+}
 
-	currentState, err := stateIo.Read()
+// Post is everything the episode's website post shows.
+type Post struct {
+	Title         string
+	EpisodeNumber string
+	// ReleaseDate is the WordPress post date, "yyyy-MM-dd HH:mm:ss".
+	ReleaseDate string
+	// AudioSlug is the Podlove slug: the audio file's base name on the server.
+	AudioSlug string
+	// ShowNotesFile is the shownotes markdown; skipped when the file is missing.
+	ShowNotesFile string
+	// FeaturedImageFile is uploaded once and shown above the post.
+	FeaturedImageFile string
+	// CoverURL is the public URL of the Cover, used as the Podlove poster.
+	CoverURL     string
+	ChaptersFile string
+	SEO          SEOTexts
+}
 
-	if err != nil {
-		return Episode{}, err
+// SEOTexts are the Yoast and Podlove texts taken from seo.md.
+type SEOTexts struct {
+	MetaDescription string
+	FocusKeywords   string
+}
+
+// IDs are what ScheduleEpisode creates. Passing them back in resumes a run
+// without creating the post or uploading the featured image again.
+type IDs struct {
+	PodloveID       json.Number
+	WordpressID     string
+	FeaturedMediaID string
+}
+
+// NewPost builds the post from a CLI wordpress step.
+func NewPost(cfg config.Wordpress, title, episodeNumber, releaseDate string) (Post, error) {
+	post := Post{
+		Title:             title,
+		EpisodeNumber:     episodeNumber,
+		ReleaseDate:       releaseDate,
+		AudioSlug:         cfg.Episode,
+		ShowNotesFile:     cfg.ShowNotes,
+		FeaturedImageFile: cfg.Image,
+		CoverURL:          cfg.Poster,
+		ChaptersFile:      cfg.Chapter,
 	}
-
-	episode := Episode{}
-
-	if currentState.Wordpress.WordpressID == "" {
-		fmt.Println(" Initiating episode")
-		episode.create(wordpressConfig.Server, wordpressConfig.APIKey)
-
-		currentState.Wordpress.PodloveID = episode.PodloveID
-		currentState.Wordpress.WordpressID = episode.WordpressID
-
-		if err := stateIo.Write(currentState); err != nil {
-			return Episode{}, err
-		}
-
-	} else {
-		fmt.Println(" Episode already initiated")
-
-		episode.APIKey = wordpressConfig.APIKey
-		episode.Server = wordpressConfig.Server
-		episode.WordpressID = currentState.Wordpress.WordpressID
-		episode.PodloveID = currentState.Wordpress.PodloveID
-	}
-
-	fullTitle := fmt.Sprintf("LEP#%s - %s", currentEpisodeNumber, title)
-
-	fmt.Println(" Setting title")
-	if err := episode.setTitle(fullTitle); err != nil {
-		return Episode{}, err
-	}
-
-	fmt.Println(" Setting URL")
-	if err := episode.setURL(currentEpisodeNumber); err != nil {
-		return Episode{}, err
-	}
-
-	fmt.Println(" Setting slug")
-	if err := episode.setSlug(wordpressConfig.Episode); err != nil {
-		return Episode{}, err
-	}
-
-	fmt.Println(" Setting episode number")
-	if err := episode.setEpisodeNumber(currentEpisodeNumber); err != nil {
-		return Episode{}, err
-	}
-
-	if _, err := os.Stat(wordpressConfig.ShowNotes); err == nil {
-		fmt.Println(" Setting show notes")
-		if err := episode.setContent(wordpressConfig.ShowNotes); err != nil {
-			return Episode{}, err
-		}
-	}
-
-	fmt.Println(" Setting scheduled date")
-	if err := episode.schedulePostFor(scheduledDate); err != nil {
-		return Episode{}, err
-	}
-
-	image := Image{
-		title: title,
-		path:  wordpressConfig.Image,
-	}
-
-	if currentState.Wordpress.FeaturedMediaID == "" {
-		fmt.Println(" Uploading featured image")
-
-		if err := image.uploadTo(wordpressConfig.Server, wordpressConfig.APIKey); err != nil {
-			return Episode{}, err
-		}
-		currentState.Wordpress.FeaturedMediaID = image.ID.String()
-		if err := stateIo.Write(currentState); err != nil {
-			return Episode{}, err
-		}
-	} else {
-		fmt.Println(" Featured image already uploaded")
-		image.ID = json.Number(currentState.Wordpress.FeaturedMediaID)
-	}
-
-	fmt.Printf("\n")
-	fmt.Println(" Set featured image")
-	if err := episode.setFeaturedMedia(image); err != nil {
-		return Episode{}, err
-	}
-
-	fmt.Println(" Set poster")
-	if err := episode.setPoster(wordpressConfig.Poster); err != nil {
-		return Episode{}, err
-	}
-
-	fmt.Println(" Setting Assets")
-	if err := episode.enableAsset("2"); err != nil {
-		return Episode{}, err
-	}
-
-	if err := episode.enableAsset("3"); err != nil {
-		return Episode{}, err
-	}
-
-	fmt.Println(" Adding Chapter markers")
-	if err := episode.addChapters(wordpressConfig.Chapter); err != nil {
-		return Episode{}, err
-	}
-
-	if wordpressConfig.ContentFile != "" {
-		fmt.Println(" Parsing content metadata")
-		metadata, err := parseContentMetadata(wordpressConfig.ContentFile, currentEpisodeNumber)
+	if cfg.ContentFile != "" {
+		path := strings.ReplaceAll(cfg.ContentFile, "{{episodeNumber}}", episodeNumber)
+		content, err := os.ReadFile(path)
 		if err != nil {
-			return Episode{}, err
+			return Post{}, err
 		}
-
-		if metadata.FocusKeywords != "" || metadata.MetaDescription != "" {
-			fmt.Println(" Setting SEO settings")
-			if err := episode.setSEOSettings(metadata.FocusKeywords, metadata.MetaDescription); err != nil {
-				return Episode{}, err
-			}
-		}
-
-		if metadata.MetaDescription != "" {
-			fmt.Println(" Setting summary")
-			if err := episode.setSummary(metadata.MetaDescription); err != nil {
-				return Episode{}, err
-			}
+		sections := SEOSections(string(content))
+		post.SEO = SEOTexts{
+			MetaDescription: sections["Meta-Description"],
+			FocusKeywords:   sections["Focus Keywords"],
 		}
 	}
+	return post, nil
+}
 
-	return episode, nil
+// ScheduleEpisode creates or updates the episode's website post and schedules
+// it for its release date. save is called whenever a new id exists, so a
+// failed run can resume from the ids it returns or saved.
+func ScheduleEpisode(site Site, post Post, ids IDs, save func(IDs) error) (IDs, error) {
+	fmt.Printf(" Schedule blogpost '%s' for %s \n", post.Title, post.ReleaseDate)
+	api := client{site: site}
+
+	if ids.WordpressID == "" {
+		fmt.Println(" Initiating episode")
+		podloveID, wordpressID, err := api.createEpisode()
+		if err != nil {
+			return ids, err
+		}
+		ids.PodloveID, ids.WordpressID = podloveID, wordpressID
+		if err := save(ids); err != nil {
+			return ids, err
+		}
+	} else {
+		fmt.Println(" Episode already initiated")
+	}
+
+	podlove := api.podloveEpisode(ids.PodloveID)
+	wp := api.wordpressPost(ids.WordpressID)
+
+	content := ""
+	if _, err := os.Stat(post.ShowNotesFile); err == nil {
+		notes, err := os.ReadFile(post.ShowNotesFile)
+		if err != nil {
+			return ids, err
+		}
+		content = markdown.ToHTML(string(notes))
+	}
+
+	if ids.FeaturedMediaID == "" {
+		fmt.Println(" Uploading featured image")
+		mediaID, err := api.uploadImage(post.Title, post.FeaturedImageFile)
+		if err != nil {
+			return ids, err
+		}
+		ids.FeaturedMediaID = mediaID
+		if err := save(ids); err != nil {
+			return ids, err
+		}
+	} else {
+		fmt.Println(" Featured image already uploaded")
+	}
+
+	chapters, err := readChapters(post.ChaptersFile)
+	if err != nil {
+		return ids, err
+	}
+
+	steps := []struct {
+		name string
+		run  func() error
+	}{
+		{"title", func() error {
+			return podlove(map[string]any{"title": fmt.Sprintf("LEP#%s - %s", post.EpisodeNumber, post.Title)})
+		}},
+		{"URL", func() error { return wp(map[string]any{"slug": post.EpisodeNumber}) }},
+		{"slug", func() error { return podlove(map[string]any{"slug": post.AudioSlug}) }},
+		{"episode number", func() error { return podlove(map[string]any{"number": withoutLetters(post.EpisodeNumber)}) }},
+		{"show notes", func() error {
+			if content == "" {
+				return nil
+			}
+			return wp(map[string]any{"content": content})
+		}},
+		{"release date", func() error { return wp(map[string]any{"status": "future", "date": post.ReleaseDate}) }},
+		{"featured image", func() error { return wp(map[string]any{"featured_media": ids.FeaturedMediaID}) }},
+		{"poster", func() error { return podlove(map[string]any{"poster": post.CoverURL, "episode_poster": post.CoverURL}) }},
+		{"assets", func() error { return api.enableAssets(ids.PodloveID, audioAssetIDs...) }},
+		{"chapter markers", func() error { return api.putChapters(ids.PodloveID, chapters) }},
+		{"SEO settings", func() error {
+			if post.SEO.FocusKeywords == "" && post.SEO.MetaDescription == "" {
+				return nil
+			}
+			return wp(map[string]any{"meta": map[string]string{
+				"_yoast_wpseo_focuskw":  post.SEO.FocusKeywords,
+				"_yoast_wpseo_metadesc": post.SEO.MetaDescription,
+			}})
+		}},
+		{"summary", func() error {
+			if post.SEO.MetaDescription == "" {
+				return nil
+			}
+			return podlove(map[string]any{"summary": post.SEO.MetaDescription})
+		}},
+	}
+	for _, step := range steps {
+		fmt.Printf(" Setting %s\n", step.name)
+		if err := step.run(); err != nil {
+			return ids, fmt.Errorf("wordpress: set %s: %w", step.name, err)
+		}
+	}
+	return ids, nil
 }

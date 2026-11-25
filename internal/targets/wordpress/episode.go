@@ -2,118 +2,115 @@ package wordpress
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"os"
-	"github.com/floriankimmel/podflow/internal/markdown"
-	"github.com/floriankimmel/podflow/internal/targets"
-	"regexp"
 	"strings"
 	"unicode"
+
+	"github.com/floriankimmel/podflow/internal/targets"
 )
 
 const podloveURLPath = "/wp-json/podlove/v2/episodes/"
 const podloveChaptersURLPath = "/wp-json/podlove/v2/chapters/"
 const wpURLPath = "/wp-json/wp/v2/episodes/"
+const mediaURLPath = "/wp-json/wp/v2/media"
 
-type Episode struct {
-	PodloveID   json.Number `json:"id,omitempty"`
-	WordpressID string      `json:"post_id,omitempty"`
-	Server      string
-	APIKey      string
-}
+// audioAssetIDs are the Podlove episode assets (audio files) to enable.
+var audioAssetIDs = []string{"2", "3"}
 
-type Chapter struct {
+type chapter struct {
 	Start string `json:"start"`
 	Title string `json:"title"`
 }
 
-type Chapters struct {
-	Chapters []Chapter `json:"chapters"`
+type chapters struct {
+	Chapters []chapter `json:"chapters"`
 }
 
-type ContentMetadata struct {
-	MetaDescription string
-	FocusKeywords   string
+type client struct {
+	site Site
 }
 
-func headers(apiKey string) map[string]string {
+func (c client) headers() map[string]string {
 	return map[string]string{
-		"Authorization": "Basic " + apiKey,
+		"Authorization": "Basic " + c.site.APIKey,
 		"Content-Type":  "application/json",
 	}
 }
 
-func (e *Episode) setURL(url string) error {
-	body := map[string]string{
-		"slug": url,
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + wpURLPath + e.WordpressID,
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
+func (c client) send(method, path string, body any) ([]byte, error) {
+	resp, err := targets.SendHTTPRequest(targets.HTTPRequest{
+		Method:  method,
+		URL:     c.site.Server + path,
+		Headers: c.headers(),
+		Body:    body,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+}
 
+// podloveEpisode returns a setter for fields of the Podlove episode.
+func (c client) podloveEpisode(id json.Number) func(map[string]any) error {
+	return func(fields map[string]any) error {
+		_, err := c.send("POST", podloveURLPath+string(id), fields)
+		return err
+	}
+}
+
+// wordpressPost returns a setter for fields of the WordPress episode post.
+func (c client) wordpressPost(id string) func(map[string]any) error {
+	return func(fields map[string]any) error {
+		_, err := c.send("POST", wpURLPath+id, fields)
+		return err
+	}
+}
+
+// createEpisode creates a Podlove episode, which creates its WordPress post.
+func (c client) createEpisode() (json.Number, string, error) {
+	created, err := c.send("POST", podloveURLPath, nil)
+	if err != nil {
+		return "", "", fmt.Errorf("wordpress: create episode: %w", err)
+	}
+	var episode struct {
+		PodloveID   json.Number `json:"id"`
+		WordpressID string      `json:"post_id"`
+	}
+	if err := json.Unmarshal(created, &episode); err != nil {
+		return "", "", fmt.Errorf("wordpress: create episode: %w", err)
+	}
+	podloveID := episode.PodloveID
+
+	info, err := c.send("GET", podloveURLPath+string(podloveID), nil)
+	if err != nil {
+		return "", "", fmt.Errorf("wordpress: read episode %s: %w", podloveID, err)
+	}
+	if err := json.Unmarshal(info, &episode); err != nil {
+		return "", "", fmt.Errorf("wordpress: read episode %s: %w", podloveID, err)
+	}
+	if episode.WordpressID == "" {
+		return "", "", fmt.Errorf("wordpress: episode %s has no post id", podloveID)
+	}
+	return podloveID, episode.WordpressID, nil
+}
+
+func (c client) enableAssets(podloveID json.Number, assetIDs ...string) error {
+	for _, asset := range assetIDs {
+		if _, err := c.send("POST", podloveURLPath+string(podloveID)+"/media/"+asset+"/enable", nil); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c client) putChapters(podloveID json.Number, list chapters) error {
+	_, err := c.send("PUT", podloveChaptersURLPath+string(podloveID), list)
 	return err
 }
 
-func (e *Episode) setPoster(poster string) error {
-	body := map[string]string{
-		"poster":         poster,
-		"episode_poster": poster,
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + podloveURLPath + string(e.PodloveID),
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
-	})
-
-	return err
-}
-
-func (e *Episode) setSlug(slug string) error {
-	body := map[string]string{
-		"slug": slug,
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + podloveURLPath + string(e.PodloveID),
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
-	})
-
-	return err
-}
-
-func (e *Episode) setContent(showNotesFile string) error {
-	content, showNotesErr := os.ReadFile(showNotesFile)
-
-	if showNotesErr != nil {
-		return showNotesErr
-	}
-
-	body := map[string]string{
-		"content": markdown.ToHTML(string(content)),
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + wpURLPath + e.WordpressID,
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
-	})
-
-	return err
-}
-
-func removeLetters(s string) string {
+func withoutLetters(s string) string {
 	var result strings.Builder
 	for _, r := range s {
 		if !unicode.IsLetter(r) {
@@ -123,250 +120,23 @@ func removeLetters(s string) string {
 	return result.String()
 }
 
-func (e *Episode) setEpisodeNumber(episodeNumber string) error {
-	body := map[string]string{
-		"number": removeLetters(episodeNumber),
+// readChapters reads "<start> <title>" lines. A missing file means the
+// episode has no chapters.
+func readChapters(file string) (chapters, error) {
+	content, err := os.ReadFile(file)
+	if errors.Is(err, os.ErrNotExist) {
+		return chapters{Chapters: []chapter{}}, nil
 	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + podloveURLPath + string(e.PodloveID),
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
-	})
-
-	return err
-}
-
-func (e *Episode) schedulePostFor(scheduledDate string) error {
-	body := map[string]string{
-		"status": "future",
-		"date":   scheduledDate,
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + wpURLPath + e.WordpressID,
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
-	})
-
-	return err
-}
-
-func (e *Episode) setFeaturedMedia(image Image) error {
-	body := map[string]string{
-		"featured_media": string(image.ID),
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + wpURLPath + e.WordpressID,
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
-	})
-
-	return err
-}
-
-func (e *Episode) setTitle(title string) error {
-	body := map[string]string{
-		"title": title,
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + podloveURLPath + string(e.PodloveID),
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
-	})
-
-	return err
-}
-
-func (e *Episode) create(server string, apiKey string) {
-	createPodloveEpisodeResponse, podloveErr := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         server + podloveURLPath,
-		Headers:     headers(apiKey),
-		Body:        nil,
-		ProgressBar: false,
-	})
-
-	if podloveErr != nil {
-		panic(podloveErr)
-	}
-
-	create, marshalError := toEpisode(createPodloveEpisodeResponse.Body)
-	if marshalError != nil {
-		panic(marshalError)
-	}
-
-	e.PodloveID = create.PodloveID
-
-	getPodloveInfoResponse, podloveInfoErr := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "GET",
-		URL:         server + podloveURLPath + string(e.PodloveID),
-		Headers:     headers(apiKey),
-		Body:        nil,
-		ProgressBar: false,
-	})
-
-	if podloveInfoErr != nil {
-		panic(podloveInfoErr)
-	}
-
-	info, marshalError := toEpisode(getPodloveInfoResponse.Body)
-	if marshalError != nil {
-		panic(marshalError)
-	}
-
-	e.WordpressID = info.WordpressID
-	e.APIKey = apiKey
-	e.Server = server
-}
-
-func (e *Episode) enableAsset(assetID string) error {
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + podloveURLPath + string(e.PodloveID) + "/media/" + assetID + "/enable",
-		Headers:     headers(e.APIKey),
-		Body:        nil,
-		ProgressBar: false,
-	})
-
 	if err != nil {
-		return err
+		return chapters{}, fmt.Errorf("wordpress: read chapters: %w", err)
 	}
-	return nil
-}
-
-func (e *Episode) addChapters(chapterFile string) error {
-	chapters, chaptersErr := chaptersExportToJSON(chapterFile)
-
-	if chaptersErr != nil {
-		panic(chaptersErr)
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "PUT",
-		URL:         e.Server + podloveChaptersURLPath + string(e.PodloveID),
-		Headers:     headers(e.APIKey),
-		Body:        chapters,
-		ProgressBar: false,
-	})
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func (e *Episode) setSEOSettings(keyword string, description string) error {
-	body := map[string]map[string]string{
-		"meta": {
-			"_yoast_wpseo_focuskw":  keyword,
-			"_yoast_wpseo_metadesc": description,
-		},
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + wpURLPath + e.WordpressID,
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
-	})
-
-	return err
-}
-
-func (e *Episode) setSummary(summary string) error {
-	body := map[string]string{
-		"summary": summary,
-	}
-
-	_, err := targets.SendHTTPRequest(targets.HTTPRequest{
-		Method:      "POST",
-		URL:         e.Server + podloveURLPath + string(e.PodloveID),
-		Headers:     headers(e.APIKey),
-		Body:        body,
-		ProgressBar: false,
-	})
-
-	return err
-}
-
-func parseContentMetadata(contentFile string, episodeNumber string) (ContentMetadata, error) {
-	// Replace placeholders in the file path
-	resolvedPath := strings.ReplaceAll(contentFile, "{{episodeNumber}}", episodeNumber)
-	
-	content, err := os.ReadFile(resolvedPath)
-	if err != nil {
-		return ContentMetadata{}, err
-	}
-
-	contentStr := string(content)
-	
-	// Extract Meta-Description
-	metaDescRegex := regexp.MustCompile(`\*\*Meta-Description:\*\*\s*\n([^\n]+)`)
-	metaDescMatch := metaDescRegex.FindStringSubmatch(contentStr)
-	metaDescription := ""
-	if len(metaDescMatch) > 1 {
-		metaDescription = strings.TrimSpace(metaDescMatch[1])
-	}
-
-	// Extract Focus Keywords
-	focusKeywordsRegex := regexp.MustCompile(`\*\*Focus Keywords:\*\*\s*\n([^\n]+)`)
-	focusKeywordsMatch := focusKeywordsRegex.FindStringSubmatch(contentStr)
-	focusKeywords := ""
-	if len(focusKeywordsMatch) > 1 {
-		focusKeywords = strings.TrimSpace(focusKeywordsMatch[1])
-	}
-
-	return ContentMetadata{
-		MetaDescription: metaDescription,
-		FocusKeywords:   focusKeywords,
-	}, nil
-}
-
-func chaptersExportToJSON(chapterFile string) (Chapters, error) {
-	content, err := os.ReadFile(chapterFile)
-	if err != nil {
-		return Chapters{}, err
-	}
-
-	lines := strings.Split(string(content), "\n")
-	chapters := []Chapter{}
-
-	for _, line := range lines {
+	list := []chapter{}
+	for _, line := range strings.Split(string(content), "\n") {
 		parts := strings.Split(line, " ")
-
 		if len(parts) < 2 {
 			continue
 		}
-
-		chapter := Chapter{
-			Start: parts[0],
-			Title: strings.Join(parts[1:], " "),
-		}
-
-		chapters = append(chapters, chapter)
+		list = append(list, chapter{Start: parts[0], Title: strings.Join(parts[1:], " ")})
 	}
-
-	return Chapters{chapters}, nil
-}
-
-func toEpisode(body []byte) (Episode, error) {
-	episode := Episode{}
-	err := json.Unmarshal(body, &episode)
-
-	if err != nil {
-		return Episode{}, err
-	}
-
-	return episode, nil
+	return chapters{list}, nil
 }

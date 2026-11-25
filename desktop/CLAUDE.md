@@ -43,8 +43,9 @@ breaks a plain `swift build`; the Makefile unsets it and uses full Xcode.
   reads `SKILL.md`, the SEO prompt and the scripts and fails on drift.
 - `SKILL.md` has one `` ### `<step_id>` `` heading per step, in
   `PipelineStage.all` order.
-- `seo.md` is read by `ContentParser` (Swift) and `seo.sh`. Both must give
-  what `Tests/fixtures/seo/expected.json` says; add a fixture for new cases.
+- `seo.md` is read by `ContentParser` (Swift), `seo.sh` and the CLI's
+  `wordpress.SEOSections` (Go, for Yoast). All three must give what
+  `Tests/fixtures/seo/expected.json` says; add a fixture for new cases.
 - The plugin scripts are bash + curl + jq only. Test them in
   `Tests/plugin/run.sh`.
 - Real Claude runs cost money (a prepare run is about 3 USD). Pipeline tests

@@ -1,9 +1,9 @@
 import XCTest
 @testable import Podflow
 
-/// `seo.md` is read by the app (`ContentParser`) and by the plugin
-/// (`seo.sh`). Both must read the shared fixtures in `Tests/fixtures/seo`
-/// the same way, as `expected.json` says.
+/// `seo.md` is read by the app (`ContentParser`), the plugin (`seo.sh`) and
+/// the CLI (`wordpress.SEOSections`, tested in Go). All must read the shared
+/// fixtures in `Tests/fixtures/seo` the same way, as `expected.json` says.
 final class SEOGrammarTests: XCTestCase {
     private static let desktop = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()

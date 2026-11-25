@@ -2,13 +2,13 @@ package cmd
 
 import (
 	"fmt"
-	"path/filepath"
 	"github.com/floriankimmel/podflow/internal/backend"
 	config "github.com/floriankimmel/podflow/internal/configuration"
 	"github.com/floriankimmel/podflow/internal/input"
 	"github.com/floriankimmel/podflow/internal/state"
 	"github.com/floriankimmel/podflow/internal/targets"
 	"github.com/floriankimmel/podflow/internal/targets/wordpress"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -198,14 +198,7 @@ func Publish(
 			fmt.Printf("\n\n[%d/%d] Wordpress \n", (i + 1), len(replacedPodflowConfig.Steps))
 			if !currentState.WordpressBlogCreated {
 				report("wordpress", backend.StatusInProgress)
-				_, err := wordpress.ScheduleEpisode(
-					step.Wordpress,
-					stateIo,
-					currentState.Metadata.Title,
-					currentState.Metadata.EpisodeNumber,
-					currentState.Metadata.ReleaseDate,
-				)
-
+				err := scheduleWordpress(step.Wordpress, currentState.Metadata, stateIo)
 				if err != nil {
 					report("wordpress", backend.StatusFailed)
 					color.Red(errorPrefix + err.Error())
@@ -281,4 +274,34 @@ func Publish(
 		}
 	}
 	return nil
+}
+
+// scheduleWordpress schedules the website post and keeps the WordPress ids in
+// the state file as they are created, so a failed run resumes.
+func scheduleWordpress(cfg config.Wordpress, metadata state.Metadata, stateIo state.StateReaderWriter) error {
+	post, err := wordpress.NewPost(cfg, metadata.Title, metadata.EpisodeNumber, metadata.ReleaseDate)
+	if err != nil {
+		return err
+	}
+	current, err := stateIo.Read()
+	if err != nil {
+		return err
+	}
+	ids := wordpress.IDs{
+		PodloveID:       current.Wordpress.PodloveID,
+		WordpressID:     current.Wordpress.WordpressID,
+		FeaturedMediaID: current.Wordpress.FeaturedMediaID,
+	}
+	save := func(ids wordpress.IDs) error {
+		current, err := stateIo.Read()
+		if err != nil {
+			return err
+		}
+		current.Wordpress.PodloveID = ids.PodloveID
+		current.Wordpress.WordpressID = ids.WordpressID
+		current.Wordpress.FeaturedMediaID = ids.FeaturedMediaID
+		return stateIo.Write(current)
+	}
+	_, err = wordpress.ScheduleEpisode(wordpress.Site{Server: cfg.Server, APIKey: cfg.APIKey}, post, ids, save)
+	return err
 }

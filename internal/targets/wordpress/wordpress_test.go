@@ -1,7 +1,7 @@
 package wordpress_test
 
 import (
-	"encoding/json"
+	"net/http"
 	"os"
 	"path/filepath"
 
@@ -9,137 +9,129 @@ import (
 	. "github.com/onsi/gomega"
 
 	config "github.com/floriankimmel/podflow/internal/configuration"
-	"github.com/floriankimmel/podflow/internal/state"
 	"github.com/floriankimmel/podflow/internal/targets/wordpress"
-	testData "github.com/floriankimmel/podflow/test/testdata"
 )
 
-var workingDir = filepath.Join(os.TempDir(), "github.com/floriankimmel/podflow")
-
-var _ = Describe("An wordpress episode can be", Ordered, func() {
-	var wordpressTestServer *wordpress.WordpressTestServer
-	var stateFile *os.File
-	var chapterFile *os.File
-	var contentFile *os.File
-	var file *os.File
+var _ = Describe("An episode's website post", func() {
+	var server *wordpress.WordpressTestServer
+	var dir string
+	var post wordpress.Post
+	var saved []wordpress.IDs
+	save := func(ids wordpress.IDs) error { saved = append(saved, ids); return nil }
 
 	BeforeEach(func() {
-		os.MkdirAll(workingDir, 0755)
-		
-		stateFilePath := filepath.Join(workingDir, "podflow.state.yml")
-		stateFile, _ = os.Create(stateFilePath)
-
-		filePath := filepath.Join(workingDir, "podflow.mp3")
-		file, _ = os.Create(filePath)
-
-		chapterFilePath := filepath.Join(workingDir, "podflow.chapters.txt")
-		chapterFile, _ = os.Create(chapterFilePath)
-		if err := os.WriteFile(chapterFilePath, []byte("00:01:01.517 Automated Test"), 0600); err != nil {
-			panic(err)
+		dir = GinkgoT().TempDir()
+		write := func(name, content string) string {
+			path := filepath.Join(dir, name)
+			Expect(os.WriteFile(path, []byte(content), 0600)).To(Succeed())
+			return path
 		}
-
-		contentFilePath := filepath.Join(workingDir, "content-1.md")
-		contentFile, _ = os.Create(contentFilePath)
-		contentData := `## Test Content
-
-**Meta-Description:**
-Test meta description for episode
-
-**Focus Keywords:**
-test keyword
-`
-		if err := os.WriteFile(contentFilePath, []byte(contentData), 0600); err != nil {
-			panic(err)
+		server = wordpress.CreateWordPressTestServer("4", "2", "3")
+		saved = nil
+		post = wordpress.Post{
+			Title:             "Großglockner",
+			EpisodeNumber:     "371",
+			ReleaseDate:       "2026-11-27 09:00:00",
+			AudioSlug:         "371_grossglockner",
+			ShowNotesFile:     write("shownotes.md", "# Folge 371"),
+			FeaturedImageFile: write("featured.png", "png"),
+			CoverURL:          "http://files.example.test/data/371_grossglockner.png",
+			ChaptersFile:      write("chapters.txt", "00:01:01.517 Start\n00:10:00.000 Gipfel erreicht"),
+			SEO:               wordpress.SEOTexts{MetaDescription: "Laufen auf 3.798 Meter", FocusKeywords: "Glocknerlauf"},
 		}
-
-		WordpressID := "4"
-		PodloveID := "2"
-		FeaturedMediaID := "3"
-
-		wordpressTestServer = wordpress.CreateWordPressTestServer(WordpressID, PodloveID, FeaturedMediaID)
 	})
 
-	AfterEach(func() {
-		wordpressTestServer.Server.Close()
-		os.Remove(stateFile.Name())
-		os.Remove(file.Name())
-		os.Remove(chapterFile.Name())
-		os.Remove(contentFile.Name())
+	AfterEach(func() { server.Server.Close() })
+
+	site := func() wordpress.Site { return wordpress.Site{Server: server.Server.URL, APIKey: "apiKey"} }
+
+	It("is created, filled and scheduled", func() {
+		ids, err := wordpress.ScheduleEpisode(site(), post, wordpress.IDs{}, save)
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(ids).To(Equal(wordpress.IDs{PodloveID: "2", WordpressID: "4", FeaturedMediaID: "3"}))
+		Expect(saved).To(Equal([]wordpress.IDs{
+			{PodloveID: "2", WordpressID: "4"},
+			{PodloveID: "2", WordpressID: "4", FeaturedMediaID: "3"},
+		}))
+
+		episode, wp := server.PodloveEpisodePath(), server.PostPath()
+		Expect(server.Field(episode, "title")).To(Equal("LEP#371 - Großglockner"))
+		Expect(server.Field(episode, "slug")).To(Equal("371_grossglockner"))
+		Expect(server.Field(episode, "number")).To(Equal("371"))
+		Expect(server.Field(episode, "poster")).To(Equal(post.CoverURL))
+		Expect(server.Field(episode, "episode_poster")).To(Equal(post.CoverURL))
+		Expect(server.Field(episode, "summary")).To(Equal("Laufen auf 3.798 Meter"))
+
+		Expect(server.Field(wp, "slug")).To(Equal("371"))
+		Expect(server.Field(wp, "status")).To(Equal("future"))
+		Expect(server.Field(wp, "date")).To(Equal("2026-11-27 09:00:00"))
+		Expect(server.Field(wp, "featured_media")).To(Equal("3"))
+		Expect(server.Field(wp, "content")).To(ContainSubstring("Folge 371"))
+		Expect(server.Field(wp, "meta")).To(Equal(map[string]any{
+			"_yoast_wpseo_focuskw":  "Glocknerlauf",
+			"_yoast_wpseo_metadesc": "Laufen auf 3.798 Meter",
+		}))
+
+		chapters := server.Requests(server.ChaptersPath())
+		Expect(chapters).To(HaveLen(1))
+		Expect(chapters[0].Method).To(Equal(http.MethodPut))
+		Expect(chapters[0].Fields["chapters"]).To(Equal([]any{
+			map[string]any{"start": "00:01:01.517", "title": "Start"},
+			map[string]any{"start": "00:10:00.000", "title": "Gipfel erreicht"},
+		}))
+		Expect(server.Requests(server.PodloveEpisodePath() + "/media/2/enable")).To(HaveLen(1))
+		Expect(server.Requests(server.PodloveEpisodePath() + "/media/3/enable")).To(HaveLen(1))
 	})
 
-	It("scheduled successfully", func() {
-		step := config.Step{
-			Wordpress: config.Wordpress{
-				APIKey:  "apiKey",
-				Server:  wordpressTestServer.Server.URL,
-				Image:   "wordpress.go",
-				Episode: "episode.mp3",
-				Chapter: chapterFile.Name(),
-			},
-		}
-		title := "title"
-		scheduledDate := "2021-07-10 00:00:00"
+	It("resumes without creating the post or uploading the image again", func() {
+		ids := wordpress.IDs{PodloveID: "2", WordpressID: "4", FeaturedMediaID: "3"}
+		_, err := wordpress.ScheduleEpisode(site(), post, ids, save)
 
-		stateIo := testData.TempStateFile{}
-		episode, err := wordpress.ScheduleEpisode(step.Wordpress, stateIo, title, "1", scheduledDate)
-
-		Expect(err).Should(BeNil())
-		Expect(episode.WordpressID).Should(Equal(wordpressTestServer.WordpressID))
-		Expect(wordpressTestServer.CreateCalled).Should(BeTrue())
+		Expect(err).ToNot(HaveOccurred())
+		Expect(server.Requests(server.CreatePath())).To(BeEmpty())
+		Expect(server.Requests("/wp-json/wp/v2/media")).To(BeEmpty())
+		Expect(saved).To(BeEmpty())
 	})
 
-	It("scheduled successfully for the second time", func() {
-		step := config.Step{
-			Wordpress: config.Wordpress{
-				APIKey:  "apiKey",
-				Server:  wordpressTestServer.Server.URL,
-				Image:   "wordpress.go",
-				Episode: "episode.mp3",
-				Chapter: chapterFile.Name(),
-			},
-		}
-		title := "title"
-		scheduledDate := "2021-07-10 00:00:00"
+	It("skips SEO settings and summary without SEO texts", func() {
+		post.SEO = wordpress.SEOTexts{}
+		_, err := wordpress.ScheduleEpisode(site(), post, wordpress.IDs{}, save)
 
-		stateIo := testData.TempStateFile{}
-		if err := stateIo.Write(state.State{
-			Wordpress: state.Wordpress{
-				WordpressID:     wordpressTestServer.WordpressID,
-				PodloveID:       json.Number(wordpressTestServer.PodloveID),
-				FeaturedMediaID: wordpressTestServer.FeaturedMediaID,
-			},
-		}); err != nil {
-			panic(err)
-		}
-
-		episode, err := wordpress.ScheduleEpisode(step.Wordpress, stateIo, title, "1", scheduledDate)
-
-		Expect(err).Should(BeNil())
-		Expect(episode.WordpressID).Should(Equal(wordpressTestServer.WordpressID))
-		Expect(wordpressTestServer.CreateCalled).Should(BeFalse())
+		Expect(err).ToNot(HaveOccurred())
+		Expect(server.Field(server.PostPath(), "meta")).To(BeNil())
+		Expect(server.Field(server.PodloveEpisodePath(), "summary")).To(BeNil())
 	})
 
-	It("scheduled successfully with content file", func() {
-		step := config.Step{
-			Wordpress: config.Wordpress{
-				APIKey:      "apiKey",
-				Server:      wordpressTestServer.Server.URL,
-				Image:       "wordpress.go",
-				Episode:     "episode.mp3",
-				Chapter:     chapterFile.Name(),
-				ContentFile: filepath.Join(workingDir, "content-{{episodeNumber}}.md"),
-			},
-		}
-		title := "title"
-		scheduledDate := "2021-07-10 00:00:00"
-
-		stateIo := testData.TempStateFile{}
-		episode, err := wordpress.ScheduleEpisode(step.Wordpress, stateIo, title, "1", scheduledDate)
-
-		Expect(err).Should(BeNil())
-		Expect(episode.WordpressID).Should(Equal(wordpressTestServer.WordpressID))
-		Expect(wordpressTestServer.SEOSettingsCalled).Should(BeTrue())
-		Expect(wordpressTestServer.SummaryCalled).Should(BeTrue())
+	It("returns an error instead of panicking when WordPress is unreachable", func() {
+		unreachable := wordpress.Site{Server: "http://127.0.0.1:1", APIKey: "apiKey"}
+		var err error
+		Expect(func() { _, err = wordpress.ScheduleEpisode(unreachable, post, wordpress.IDs{}, save) }).ToNot(Panic())
+		Expect(err).To(HaveOccurred())
 	})
 
+	It("sends no chapters when the chapters file is missing", func() {
+		post.ChaptersFile = filepath.Join(dir, "missing.txt")
+		_, err := wordpress.ScheduleEpisode(site(), post, wordpress.IDs{PodloveID: "2", WordpressID: "4", FeaturedMediaID: "3"}, save)
+
+		Expect(err).ToNot(HaveOccurred())
+		chapters := server.Requests(server.ChaptersPath())
+		Expect(chapters).To(HaveLen(1))
+		Expect(chapters[0].Fields["chapters"]).To(BeEmpty())
+	})
+
+	It("reads its SEO texts from the configured content file", func() {
+		Expect(os.WriteFile(filepath.Join(dir, "content-371.md"),
+			[]byte("**Meta-Description:**\nBeschreibung\n\n**Focus Keywords:**\n\n**Facebook OG Title:**\nTitel\n"), 0600)).To(Succeed())
+		post, err := wordpress.NewPost(config.Wordpress{
+			ContentFile: filepath.Join(dir, "content-{{episodeNumber}}.md"),
+			Episode:     "371_grossglockner",
+			Poster:      "http://cover",
+		}, "Großglockner", "371", "2026-11-27 09:00:00")
+
+		Expect(err).ToNot(HaveOccurred())
+		Expect(post.SEO).To(Equal(wordpress.SEOTexts{MetaDescription: "Beschreibung"}))
+		Expect(post.AudioSlug).To(Equal("371_grossglockner"))
+		Expect(post.CoverURL).To(Equal("http://cover"))
+	})
 })
