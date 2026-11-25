@@ -21,19 +21,9 @@ const (
 
 type Metadata struct {
 	EpisodeNumber string `json:"episodeNumber,omitempty"`
-	Slug          string `json:"slug,omitempty"`
 	Title         string `json:"title,omitempty"`
 	ReleaseDate   string `json:"releaseDate,omitempty"`
 	Profile       string `json:"profile,omitempty"`
-}
-
-// Identity returns the stable episode identity: the episode number once
-// assigned, the folder slug before that.
-func Identity(meta Metadata) string {
-	if meta.EpisodeNumber != "" {
-		return meta.EpisodeNumber
-	}
-	return meta.Slug
 }
 
 type Reporter struct {
@@ -62,13 +52,13 @@ type stepReport struct {
 }
 
 // Report sends one step status to the backend. Best-effort: any error is
-// logged and swallowed.
+// logged and swallowed. Without an episode number there is nothing to report
+// to: the backend knows episodes only by their number.
 func (r *Reporter) Report(meta Metadata, step string, status string) {
 	if r == nil {
 		return
 	}
-	identity := Identity(meta)
-	if identity == "" {
+	if meta.EpisodeNumber == "" {
 		return
 	}
 	body, err := json.Marshal(stepReport{Step: step, Status: status, Metadata: meta})
@@ -76,7 +66,7 @@ func (r *Reporter) Report(meta Metadata, step string, status string) {
 		log.Printf("backend report skipped: %v", err)
 		return
 	}
-	endpoint := fmt.Sprintf("%s/episodes/%s/steps", r.url, identity)
+	endpoint := fmt.Sprintf("%s/episodes/%s/steps", r.url, meta.EpisodeNumber)
 	req, err := http.NewRequest(http.MethodPost, endpoint, bytes.NewReader(body))
 	if err != nil {
 		log.Printf("backend report skipped: %v", err)

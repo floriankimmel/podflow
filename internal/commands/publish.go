@@ -94,7 +94,6 @@ func Publish(
 	reporter := backend.New(backendConfig.URL, backendConfig.WorkspaceKey)
 	episodeMetadata := backend.Metadata{
 		EpisodeNumber: currentState.Metadata.EpisodeNumber,
-		Slug:          filepath.Base(workingDir),
 		Title:         currentState.Metadata.Title,
 		ReleaseDate:   currentState.Metadata.ReleaseDate,
 	}

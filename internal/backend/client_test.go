@@ -9,14 +9,15 @@ import (
 	"testing"
 )
 
-func TestIdentityNumberWinsOverSlug(t *testing.T) {
-	meta := backend.Metadata{Slug: "my-folder"}
-	if got := backend.Identity(meta); got != "my-folder" {
-		t.Fatalf("pre-number identity = %q, want slug", got)
-	}
-	meta.EpisodeNumber = "259"
-	if got := backend.Identity(meta); got != "259" {
-		t.Fatalf("numbered identity = %q, want 259", got)
+func TestReportWithoutEpisodeNumberIsSkipped(t *testing.T) {
+	called := false
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		called = true
+	}))
+	defer srv.Close()
+	backend.New(srv.URL, "key").Report(backend.Metadata{Title: "Ohne Nummer"}, "s3", backend.StatusDone)
+	if called {
+		t.Fatal("report without episode number must not reach the backend")
 	}
 }
 
