@@ -6,20 +6,20 @@ final class FakeBackend: BackendClientProtocol, @unchecked Sendable {
     var episodes: [BackendEpisode] = []
     var listError: Error?
     var deleteError: Error?
-    private(set) var putMetadataCalls: [(id: String, metadata: BackendMetadata)] = []
+    private(set) var putMetadataCalls: [(number: String, metadata: BackendMetadata)] = []
     private(set) var deleted: [String] = []
 
     func listEpisodes() async throws -> [BackendEpisode] {
         if let listError { throw listError }
         return episodes
     }
-    func getEpisode(id: String) async throws -> BackendEpisode { throw BackendError.notFound }
-    func reportStep(id: String, step: String, status: StepState, metadata: BackendMetadata) async throws {}
-    func putMetadata(id: String, metadata: BackendMetadata) async throws { putMetadataCalls.append((id, metadata)) }
-    func putContent(id: String, key: String, body: String) async throws {}
-    func deleteEpisode(id: String) async throws {
+    func getEpisode(number: String) async throws -> BackendEpisode { throw BackendError.notFound }
+    func reportStep(number: String, step: String, status: StepState, metadata: BackendMetadata) async throws {}
+    func putMetadata(number: String, metadata: BackendMetadata) async throws { putMetadataCalls.append((number, metadata)) }
+    func putContent(number: String, key: String, body: String) async throws {}
+    func deleteEpisode(number: String) async throws {
         if let deleteError { throw deleteError }
-        deleted.append(id)
+        deleted.append(number)
     }
 }
 
@@ -112,7 +112,7 @@ final class EpisodeCatalogTests: XCTestCase {
         try await catalog.create(number: "12", title: "Neu", type: .compilation, video: try video(), transcript: nil)
 
         XCTAssertNotNil(store.readState(in: store.folder(for: "12")))
-        XCTAssertEqual(backend.putMetadataCalls.map(\.id), ["12"])
+        XCTAssertEqual(backend.putMetadataCalls.map(\.number), ["12"])
         XCTAssertEqual(backend.putMetadataCalls.first?.metadata.profile, BackendProfile.video)
         XCTAssertEqual(backend.putMetadataCalls.first?.metadata.title, "Neu")
     }

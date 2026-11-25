@@ -38,7 +38,6 @@ struct StepStatus: Codable, Hashable, Sendable {
 struct BackendEpisode: Codable, Identifiable, Sendable {
     var id: String
     var episodeNumber: String?
-    var slug: String?
     var title: String?
     var releaseDate: String?
     var profile: String?

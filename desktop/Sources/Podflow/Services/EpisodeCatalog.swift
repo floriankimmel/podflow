@@ -66,8 +66,8 @@ struct EpisodeCatalog {
         try store.create(number: number, title: title, type: type, video: video, transcript: transcript)
         if let client = backend() {
             let metadata = BackendMetadata(
-                episodeNumber: number, slug: nil, title: title, releaseDate: nil, profile: BackendProfile.video)
-            try? await client.putMetadata(id: number, metadata: metadata)
+                episodeNumber: number, title: title, releaseDate: nil, profile: BackendProfile.video)
+            try? await client.putMetadata(number: number, metadata: metadata)
         }
     }
 
@@ -77,7 +77,7 @@ struct EpisodeCatalog {
     /// removed from Auphonic, YouTube or WordPress.
     func delete(_ episode: Episode) async throws {
         if let client = backend() {
-            try await client.deleteEpisode(id: episode.id)
+            try await client.deleteEpisode(number: episode.id)
         }
         if episode.isLocal {
             try store.delete(number: episode.number)
