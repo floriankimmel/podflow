@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -106,27 +107,63 @@ func TestStepInvalidStatus(t *testing.T) {
 	}
 }
 
-func TestSlugToNumberPromotion(t *testing.T) {
+func TestPathNumberIsIdentity(t *testing.T) {
 	s := newTestServer(t)
-	// First report: slug only (no number assigned yet).
-	report := stepReport{Step: "transcribe", Status: "done", Metadata: Metadata{Slug: "mein-marathon"}}
-	if rec := request(t, s, http.MethodPost, "/episodes/mein-marathon/steps", testKey, report); rec.Code != http.StatusOK {
-		t.Fatalf("slug create = %d", rec.Code)
-	}
-	// Second report: number assigned, same slug.
-	report = stepReport{Step: "ftp_upload", Status: "done", Metadata: Metadata{EpisodeNumber: "260", Slug: "mein-marathon"}}
+	report := stepReport{Step: "transcript", Status: "done", Metadata: Metadata{EpisodeNumber: "999", Title: "Mein Marathon"}}
 	rec := request(t, s, http.MethodPost, "/episodes/260/steps", testKey, report)
 	if rec.Code != http.StatusOK {
-		t.Fatalf("promote = %d: %s", rec.Code, rec.Body)
+		t.Fatalf("report = %d: %s", rec.Code, rec.Body)
 	}
 	var ep Episode
 	_ = json.Unmarshal(rec.Body.Bytes(), &ep)
-	if ep.ID != "260" || len(ep.Steps) != 2 {
-		t.Fatalf("promotion lost steps: id=%s steps=%+v", ep.ID, ep.Steps)
+	if ep.EpisodeNumber != "260" || ep.ID != "260" || ep.Title != "Mein Marathon" {
+		t.Fatalf("ep = %+v", ep)
 	}
-	// Old slug record must be gone.
-	if rec := request(t, s, http.MethodGet, "/episodes/mein-marathon", testKey, nil); rec.Code != http.StatusNotFound {
-		t.Fatalf("old slug record still present = %d", rec.Code)
+	if rec := request(t, s, http.MethodGet, "/episodes/999", testKey, nil); rec.Code != http.StatusNotFound {
+		t.Fatalf("body number created an episode = %d", rec.Code)
+	}
+}
+
+func TestMigrateFromSlugIdentity(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "legacy.db")
+	db, err := sql.Open("sqlite", path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, stmt := range []string{
+		`CREATE TABLE episodes (id TEXT PRIMARY KEY, episode_number TEXT NOT NULL DEFAULT '', slug TEXT NOT NULL DEFAULT '',
+			title TEXT NOT NULL DEFAULT '', release_date TEXT NOT NULL DEFAULT '', profile TEXT NOT NULL DEFAULT '', updated_at TEXT NOT NULL)`,
+		`CREATE TABLE steps (episode_id TEXT NOT NULL, step TEXT NOT NULL, status TEXT NOT NULL, updated_at TEXT NOT NULL,
+			PRIMARY KEY (episode_id, step), FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE CASCADE)`,
+		`CREATE TABLE content (episode_id TEXT NOT NULL, key TEXT NOT NULL, body TEXT NOT NULL, updated_at TEXT NOT NULL,
+			PRIMARY KEY (episode_id, key), FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE CASCADE)`,
+		`INSERT INTO episodes VALUES ('260', '260', 'mein-marathon', 'Mein Marathon', '', 'video', 't')`,
+		`INSERT INTO episodes VALUES ('ohne-nummer', '', 'ohne-nummer', '', '', '', 't')`,
+		`INSERT INTO steps VALUES ('260', 'transcript', 'done', 't')`,
+		`INSERT INTO steps VALUES ('ohne-nummer', 'transcript', 'done', 't')`,
+		`INSERT INTO content VALUES ('260', 'shownotes', '# 260', 't')`,
+	} {
+		if _, err := db.Exec(stmt); err != nil {
+			t.Fatalf("%s: %v", stmt, err)
+		}
+	}
+	_ = db.Close()
+
+	store, err := NewStore(path)
+	if err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	eps, err := store.List()
+	if err != nil || len(eps) != 1 {
+		t.Fatalf("list = %+v, %v", eps, err)
+	}
+	ep, err := store.Get("260")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if ep.Title != "Mein Marathon" || ep.Profile != "video" || len(ep.Steps) != 1 || ep.Content["shownotes"] != "# 260" {
+		t.Fatalf("migrated ep = %+v", ep)
 	}
 }
 

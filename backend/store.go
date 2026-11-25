@@ -27,9 +27,10 @@ type StepStatus struct {
 }
 
 type Episode struct {
+	// ID repeats the episode number for clients that still read "id"
+	// (desktop 1.3.0 and older).
 	ID            string            `json:"id"`
-	EpisodeNumber string            `json:"episodeNumber,omitempty"`
-	Slug          string            `json:"slug,omitempty"`
+	EpisodeNumber string            `json:"episodeNumber"`
 	Title         string            `json:"title,omitempty"`
 	ReleaseDate   string            `json:"releaseDate,omitempty"`
 	Profile       string            `json:"profile,omitempty"`
@@ -40,7 +41,6 @@ type Episode struct {
 
 type Metadata struct {
 	EpisodeNumber string `json:"episodeNumber,omitempty"`
-	Slug          string `json:"slug,omitempty"`
 	Title         string `json:"title,omitempty"`
 	ReleaseDate   string `json:"releaseDate,omitempty"`
 	Profile       string `json:"profile,omitempty"`
@@ -64,35 +64,87 @@ func NewStore(path string) (*Store, error) {
 	return s, nil
 }
 
+const schema = `
+	CREATE TABLE IF NOT EXISTS episodes (
+		episode_number TEXT PRIMARY KEY,
+		title TEXT NOT NULL DEFAULT '',
+		release_date TEXT NOT NULL DEFAULT '',
+		profile TEXT NOT NULL DEFAULT '',
+		updated_at TEXT NOT NULL
+	);
+	CREATE TABLE IF NOT EXISTS steps (
+		episode_number TEXT NOT NULL,
+		step TEXT NOT NULL,
+		status TEXT NOT NULL,
+		updated_at TEXT NOT NULL,
+		PRIMARY KEY (episode_number, step),
+		FOREIGN KEY (episode_number) REFERENCES episodes(episode_number) ON DELETE CASCADE
+	);
+	CREATE TABLE IF NOT EXISTS content (
+		episode_number TEXT NOT NULL,
+		key TEXT NOT NULL,
+		body TEXT NOT NULL,
+		updated_at TEXT NOT NULL,
+		PRIMARY KEY (episode_number, key),
+		FOREIGN KEY (episode_number) REFERENCES episodes(episode_number) ON DELETE CASCADE
+	);
+`
+
 func (s *Store) migrate() error {
-	_, err := s.db.Exec(`
-		CREATE TABLE IF NOT EXISTS episodes (
-			id TEXT PRIMARY KEY,
-			episode_number TEXT NOT NULL DEFAULT '',
-			slug TEXT NOT NULL DEFAULT '',
-			title TEXT NOT NULL DEFAULT '',
-			release_date TEXT NOT NULL DEFAULT '',
-			profile TEXT NOT NULL DEFAULT '',
-			updated_at TEXT NOT NULL
-		);
-		CREATE TABLE IF NOT EXISTS steps (
-			episode_id TEXT NOT NULL,
-			step TEXT NOT NULL,
-			status TEXT NOT NULL,
-			updated_at TEXT NOT NULL,
-			PRIMARY KEY (episode_id, step),
-			FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE CASCADE
-		);
-		CREATE TABLE IF NOT EXISTS content (
-			episode_id TEXT NOT NULL,
-			key TEXT NOT NULL,
-			body TEXT NOT NULL,
-			updated_at TEXT NOT NULL,
-			PRIMARY KEY (episode_id, key),
-			FOREIGN KEY (episode_id) REFERENCES episodes(id) ON DELETE CASCADE
-		);
-	`)
+	legacy, err := s.hasColumn("episodes", "id")
+	if err != nil {
+		return err
+	}
+	if legacy {
+		return s.migrateFromSlugIdentity()
+	}
+	_, err = s.db.Exec(schema)
 	return err
+}
+
+func (s *Store) hasColumn(table, column string) (bool, error) {
+	var n int
+	err := s.db.QueryRow(
+		`SELECT COUNT(*) FROM pragma_table_info(?) WHERE name = ?`, table, column,
+	).Scan(&n)
+	return n > 0, err
+}
+
+// migrateFromSlugIdentity converts the old schema, where an episode was keyed
+// by its slug until it had a number, to one keyed by the episode number.
+// Episodes that never got a number are dropped with their steps and content.
+func (s *Store) migrateFromSlugIdentity() error {
+	tx, err := s.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	for _, stmt := range []string{
+		`ALTER TABLE episodes RENAME TO episodes_old`,
+		`ALTER TABLE steps RENAME TO steps_old`,
+		`ALTER TABLE content RENAME TO content_old`,
+		schema,
+		`INSERT INTO episodes (episode_number, title, release_date, profile, updated_at)
+			SELECT episode_number, title, release_date, profile, updated_at
+			FROM episodes_old WHERE episode_number != ''`,
+		`INSERT INTO steps (episode_number, step, status, updated_at)
+			SELECT e.episode_number, st.step, st.status, st.updated_at
+			FROM steps_old st JOIN episodes_old e ON e.id = st.episode_id
+			WHERE e.episode_number != ''`,
+		`INSERT INTO content (episode_number, key, body, updated_at)
+			SELECT e.episode_number, c.key, c.body, c.updated_at
+			FROM content_old c JOIN episodes_old e ON e.id = c.episode_id
+			WHERE e.episode_number != ''`,
+		`DROP TABLE content_old`,
+		`DROP TABLE steps_old`,
+		`DROP TABLE episodes_old`,
+	} {
+		if _, err := tx.Exec(stmt); err != nil {
+			return fmt.Errorf("migrate to episode number identity: %w", err)
+		}
+	}
+	return tx.Commit()
 }
 
 func (s *Store) Close() error { return s.db.Close() }
@@ -100,20 +152,20 @@ func (s *Store) Close() error { return s.db.Close() }
 // Delete removes an episode with its steps and content. SQLite does not
 // enforce the ON DELETE CASCADE without a per-connection pragma, so the
 // child rows are deleted explicitly.
-func (s *Store) Delete(id string) error {
+func (s *Store) Delete(number string) error {
 	tx, err := s.db.Begin()
 	if err != nil {
 		return err
 	}
 	defer func() { _ = tx.Rollback() }()
 
-	if _, err := tx.Exec(`DELETE FROM steps WHERE episode_id = ?`, id); err != nil {
+	if _, err := tx.Exec(`DELETE FROM steps WHERE episode_number = ?`, number); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(`DELETE FROM content WHERE episode_id = ?`, id); err != nil {
+	if _, err := tx.Exec(`DELETE FROM content WHERE episode_number = ?`, number); err != nil {
 		return err
 	}
-	res, err := tx.Exec(`DELETE FROM episodes WHERE id = ?`, id)
+	res, err := tx.Exec(`DELETE FROM episodes WHERE episode_number = ?`, number)
 	if err != nil {
 		return err
 	}
@@ -125,49 +177,24 @@ func (s *Store) Delete(id string) error {
 
 func now() string { return time.Now().UTC().Format(time.RFC3339) }
 
-// resolveID returns the canonical episode row id for an incoming identity.
-// Identity is the episode number when present, otherwise the slug.
-// A report carrying both a number and a slug promotes an existing slug-keyed
-// row to the number (slug→number promotion, design D3).
-func (s *Store) resolveID(meta Metadata) (string, error) {
-	identity := meta.EpisodeNumber
-	if identity == "" {
-		identity = meta.Slug
-	}
-	if identity == "" {
-		return "", errors.New("episode identity required (episodeNumber or slug)")
-	}
+var errNumberRequired = errors.New("episode number required")
 
-	if meta.EpisodeNumber != "" && meta.Slug != "" {
-		// Promote a pre-number record keyed by slug.
-		var oldID string
-		err := s.db.QueryRow(
-			`SELECT id FROM episodes WHERE id = ? AND episode_number = ''`, meta.Slug,
-		).Scan(&oldID)
-		if err == nil && oldID != meta.EpisodeNumber {
-			tx, err := s.db.Begin()
-			if err != nil {
-				return "", err
-			}
-			defer func() { _ = tx.Rollback() }()
-			if _, err := tx.Exec(`UPDATE episodes SET id = ?, episode_number = ? WHERE id = ?`,
-				meta.EpisodeNumber, meta.EpisodeNumber, oldID); err != nil {
-				return "", err
-			}
-			if _, err := tx.Exec(`UPDATE steps SET episode_id = ? WHERE episode_id = ?`,
-				meta.EpisodeNumber, oldID); err != nil {
-				return "", err
-			}
-			if _, err := tx.Exec(`UPDATE content SET episode_id = ? WHERE episode_id = ?`,
-				meta.EpisodeNumber, oldID); err != nil {
-				return "", err
-			}
-			if err := tx.Commit(); err != nil {
-				return "", err
-			}
-		}
+const upsertEpisode = `
+	INSERT INTO episodes (episode_number, title, release_date, profile, updated_at)
+	VALUES (?, ?, ?, ?, ?)
+	ON CONFLICT(episode_number) DO UPDATE SET
+		title        = CASE WHEN excluded.title        != '' THEN excluded.title        ELSE episodes.title        END,
+		release_date = CASE WHEN excluded.release_date != '' THEN excluded.release_date ELSE episodes.release_date END,
+		profile      = CASE WHEN excluded.profile      != '' THEN excluded.profile      ELSE episodes.profile      END,
+		updated_at = excluded.updated_at
+`
+
+func (s *Store) upsertEpisode(meta Metadata, ts string) error {
+	if meta.EpisodeNumber == "" {
+		return errNumberRequired
 	}
-	return identity, nil
+	_, err := s.db.Exec(upsertEpisode, meta.EpisodeNumber, meta.Title, meta.ReleaseDate, meta.Profile, ts)
+	return err
 }
 
 // UpsertStep creates the episode on first report and records the step status.
@@ -178,63 +205,33 @@ func (s *Store) UpsertStep(meta Metadata, step, status string) (*Episode, error)
 	if step == "" {
 		return nil, errors.New("step required")
 	}
-	id, err := s.resolveID(meta)
-	if err != nil {
-		return nil, err
-	}
 	ts := now()
-	_, err = s.db.Exec(`
-		INSERT INTO episodes (id, episode_number, slug, title, release_date, profile, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(id) DO UPDATE SET
-			episode_number = CASE WHEN excluded.episode_number != '' THEN excluded.episode_number ELSE episodes.episode_number END,
-			slug           = CASE WHEN excluded.slug           != '' THEN excluded.slug           ELSE episodes.slug           END,
-			title          = CASE WHEN excluded.title          != '' THEN excluded.title          ELSE episodes.title          END,
-			release_date   = CASE WHEN excluded.release_date   != '' THEN excluded.release_date   ELSE episodes.release_date   END,
-			profile        = CASE WHEN excluded.profile        != '' THEN excluded.profile        ELSE episodes.profile        END,
-			updated_at = excluded.updated_at
-	`, id, meta.EpisodeNumber, meta.Slug, meta.Title, meta.ReleaseDate, meta.Profile, ts)
+	if err := s.upsertEpisode(meta, ts); err != nil {
+		return nil, err
+	}
+	_, err := s.db.Exec(`
+		INSERT INTO steps (episode_number, step, status, updated_at) VALUES (?, ?, ?, ?)
+		ON CONFLICT(episode_number, step) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at
+	`, meta.EpisodeNumber, step, status, ts)
 	if err != nil {
 		return nil, err
 	}
-	_, err = s.db.Exec(`
-		INSERT INTO steps (episode_id, step, status, updated_at) VALUES (?, ?, ?, ?)
-		ON CONFLICT(episode_id, step) DO UPDATE SET status = excluded.status, updated_at = excluded.updated_at
-	`, id, step, status, ts)
-	if err != nil {
-		return nil, err
-	}
-	return s.Get(id)
+	return s.Get(meta.EpisodeNumber)
 }
 
 // UpsertMetadata creates/updates an episode without touching steps.
 func (s *Store) UpsertMetadata(meta Metadata) (*Episode, error) {
-	id, err := s.resolveID(meta)
-	if err != nil {
-		return nil, err
-	}
 	ts := now()
-	_, err = s.db.Exec(`
-		INSERT INTO episodes (id, episode_number, slug, title, release_date, profile, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
-		ON CONFLICT(id) DO UPDATE SET
-			episode_number = CASE WHEN excluded.episode_number != '' THEN excluded.episode_number ELSE episodes.episode_number END,
-			slug           = CASE WHEN excluded.slug           != '' THEN excluded.slug           ELSE episodes.slug           END,
-			title          = CASE WHEN excluded.title          != '' THEN excluded.title          ELSE episodes.title          END,
-			release_date   = CASE WHEN excluded.release_date   != '' THEN excluded.release_date   ELSE episodes.release_date   END,
-			profile        = CASE WHEN excluded.profile        != '' THEN excluded.profile        ELSE episodes.profile        END,
-			updated_at = excluded.updated_at
-	`, id, meta.EpisodeNumber, meta.Slug, meta.Title, meta.ReleaseDate, meta.Profile, ts)
-	if err != nil {
+	if err := s.upsertEpisode(meta, ts); err != nil {
 		return nil, err
 	}
-	return s.Get(id)
+	return s.Get(meta.EpisodeNumber)
 }
 
 // PutContent stores a named content artifact (transcript, shownotes, ...) for shared viewing.
-func (s *Store) PutContent(id, key, body string) error {
+func (s *Store) PutContent(number, key, body string) error {
 	var exists string
-	if err := s.db.QueryRow(`SELECT id FROM episodes WHERE id = ?`, id).Scan(&exists); err != nil {
+	if err := s.db.QueryRow(`SELECT episode_number FROM episodes WHERE episode_number = ?`, number).Scan(&exists); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return ErrNotFound
 		}
@@ -242,28 +239,28 @@ func (s *Store) PutContent(id, key, body string) error {
 	}
 	ts := now()
 	_, err := s.db.Exec(`
-		INSERT INTO content (episode_id, key, body, updated_at) VALUES (?, ?, ?, ?)
-		ON CONFLICT(episode_id, key) DO UPDATE SET body = excluded.body, updated_at = excluded.updated_at
-	`, id, key, body, ts)
+		INSERT INTO content (episode_number, key, body, updated_at) VALUES (?, ?, ?, ?)
+		ON CONFLICT(episode_number, key) DO UPDATE SET body = excluded.body, updated_at = excluded.updated_at
+	`, number, key, body, ts)
 	if err != nil {
 		return err
 	}
-	_, err = s.db.Exec(`UPDATE episodes SET updated_at = ? WHERE id = ?`, ts, id)
+	_, err = s.db.Exec(`UPDATE episodes SET updated_at = ? WHERE episode_number = ?`, ts, number)
 	return err
 }
 
-func (s *Store) Get(id string) (*Episode, error) {
-	ep := &Episode{ID: id, Steps: []StepStatus{}, Content: map[string]string{}}
+func (s *Store) Get(number string) (*Episode, error) {
+	ep := &Episode{ID: number, EpisodeNumber: number, Steps: []StepStatus{}, Content: map[string]string{}}
 	err := s.db.QueryRow(
-		`SELECT episode_number, slug, title, release_date, profile, updated_at FROM episodes WHERE id = ?`, id,
-	).Scan(&ep.EpisodeNumber, &ep.Slug, &ep.Title, &ep.ReleaseDate, &ep.Profile, &ep.UpdatedAt)
+		`SELECT title, release_date, profile, updated_at FROM episodes WHERE episode_number = ?`, number,
+	).Scan(&ep.Title, &ep.ReleaseDate, &ep.Profile, &ep.UpdatedAt)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, ErrNotFound
 	}
 	if err != nil {
 		return nil, err
 	}
-	rows, err := s.db.Query(`SELECT step, status, updated_at FROM steps WHERE episode_id = ? ORDER BY step`, id)
+	rows, err := s.db.Query(`SELECT step, status, updated_at FROM steps WHERE episode_number = ? ORDER BY step`, number)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +275,7 @@ func (s *Store) Get(id string) (*Episode, error) {
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	crows, err := s.db.Query(`SELECT key, body FROM content WHERE episode_id = ?`, id)
+	crows, err := s.db.Query(`SELECT key, body FROM content WHERE episode_number = ?`, number)
 	if err != nil {
 		return nil, err
 	}
@@ -297,25 +294,25 @@ func (s *Store) Get(id string) (*Episode, error) {
 }
 
 func (s *Store) List() ([]*Episode, error) {
-	rows, err := s.db.Query(`SELECT id FROM episodes ORDER BY CAST(episode_number AS INTEGER) DESC, id DESC`)
+	rows, err := s.db.Query(`SELECT episode_number FROM episodes ORDER BY CAST(episode_number AS INTEGER) DESC, episode_number DESC`)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var ids []string
+	var numbers []string
 	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
+		var number string
+		if err := rows.Scan(&number); err != nil {
 			return nil, err
 		}
-		ids = append(ids, id)
+		numbers = append(numbers, number)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	episodes := []*Episode{}
-	for _, id := range ids {
-		ep, err := s.Get(id)
+	for _, number := range numbers {
+		ep, err := s.Get(number)
 		if err != nil {
 			return nil, err
 		}

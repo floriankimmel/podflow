@@ -73,16 +73,20 @@ type contentReport struct {
 
 // Routes:
 //
-//	GET  /episodes/{id}          episode with steps + content
-//	POST /episodes/{id}/steps    upsert a step status (creates episode on first report)
-//	POST /episodes/{id}/content  store a content artifact
-//	POST /episodes/{id}/metadata upsert metadata (profile, title, ...)
+//	GET    /episodes/{number}          episode with steps + content
+//	DELETE /episodes/{number}          delete episode with steps + content
+//	POST   /episodes/{number}/steps    upsert a step status (creates episode on first report)
+//	POST   /episodes/{number}/content  store a content artifact
+//	POST   /episodes/{number}/metadata upsert metadata (profile, title, ...)
+//
+// The episode number in the path is the episode's identity; it overrides any
+// episodeNumber in the request body.
 func (s *Server) handleEpisode(w http.ResponseWriter, r *http.Request) {
 	rest := strings.TrimPrefix(r.URL.Path, "/episodes/")
 	parts := strings.SplitN(rest, "/", 2)
-	id := parts[0]
-	if id == "" {
-		writeJSON(w, http.StatusNotFound, map[string]string{"error": "episode id required"})
+	number := parts[0]
+	if number == "" {
+		writeJSON(w, http.StatusNotFound, map[string]string{"error": "episode number required"})
 		return
 	}
 	sub := ""
@@ -92,7 +96,7 @@ func (s *Server) handleEpisode(w http.ResponseWriter, r *http.Request) {
 
 	switch {
 	case sub == "" && r.Method == http.MethodGet:
-		ep, err := s.store.Get(id)
+		ep, err := s.store.Get(number)
 		if errors.Is(err, ErrNotFound) {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "episode not found"})
 			return
@@ -104,7 +108,7 @@ func (s *Server) handleEpisode(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, ep)
 
 	case sub == "" && r.Method == http.MethodDelete:
-		err := s.store.Delete(id)
+		err := s.store.Delete(number)
 		if errors.Is(err, ErrNotFound) {
 			writeJSON(w, http.StatusNotFound, map[string]string{"error": "episode not found"})
 			return
@@ -122,10 +126,7 @@ func (s *Server) handleEpisode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		meta := report.Metadata
-		if meta.EpisodeNumber == "" && meta.Slug == "" {
-			// Fall back to the URL id as identity.
-			meta.Slug = id
-		}
+		meta.EpisodeNumber = number
 		ep, err := s.store.UpsertStep(meta, report.Step, report.Status)
 		if err != nil {
 			if errors.Is(err, ErrInvalidStatus) || strings.Contains(err.Error(), "required") {
@@ -143,9 +144,7 @@ func (s *Server) handleEpisode(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "invalid json"})
 			return
 		}
-		if meta.EpisodeNumber == "" && meta.Slug == "" {
-			meta.Slug = id
-		}
+		meta.EpisodeNumber = number
 		ep, err := s.store.UpsertMetadata(meta)
 		if err != nil {
 			serverError(w, err)
@@ -159,7 +158,7 @@ func (s *Server) handleEpisode(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusBadRequest, map[string]string{"error": "key and body required"})
 			return
 		}
-		if err := s.store.PutContent(id, report.Key, report.Body); err != nil {
+		if err := s.store.PutContent(number, report.Key, report.Body); err != nil {
 			if errors.Is(err, ErrNotFound) {
 				writeJSON(w, http.StatusNotFound, map[string]string{"error": "episode not found"})
 				return

@@ -31,9 +31,10 @@ Wrong or missing key → `401 {"error":"invalid workspace key"}`.
 
 ## Data model
 
-- **Episode identity**: the episode number (`"259"`) once assigned, the folder
-  slug before that. A report that carries both number and slug promotes an
-  existing slug-keyed record to the number (steps and content move with it).
+- **Episode identity**: the episode number (`"259"`), taken from the URL path.
+  An episode gets its number when its production starts; nothing is stored
+  before that. Responses carry it as `episodeNumber` and, for older clients,
+  as `id`.
 - **Step status enum**: `pending` | `in_progress` | `done` | `failed`.
 - **Steps are keyed names**, not a fixed enum — the episode profile decides
   which stages exist. The CLI reports: `ftp_delete`, `ftp_upload`, `download`,
@@ -62,7 +63,7 @@ Content bodies are omitted in the list.
 curl -H "X-Workspace-Key: dev-key" http://localhost:8080/episodes
 ```
 
-### `GET /episodes/{id}`
+### `GET /episodes/{number}`
 
 One episode with steps and content. `404` when unknown.
 
@@ -70,7 +71,7 @@ One episode with steps and content. `404` when unknown.
 curl -H "X-Workspace-Key: dev-key" http://localhost:8080/episodes/259
 ```
 
-### `DELETE /episodes/{id}`
+### `DELETE /episodes/{number}`
 
 Remove an episode with its steps and content. `404` when it does not exist.
 A later step report for the same number creates a fresh episode.
@@ -79,29 +80,29 @@ A later step report for the same number creates a fresh episode.
 curl -X DELETE -H "X-Workspace-Key: dev-key" http://localhost:8080/episodes/259
 ```
 
-### `POST /episodes/{id}/steps`
+### `POST /episodes/{number}/steps`
 
 Upsert a step status. Creates the episode on first report.
 
 ```sh
 curl -X POST -H "X-Workspace-Key: dev-key" -H "Content-Type: application/json" \
-  -d '{"step":"ftp_upload","status":"in_progress","metadata":{"episodeNumber":"259","slug":"259_marathon","title":"Marathon Spezial","releaseDate":"2026-11-05","profile":"studio"}}' \
+  -d '{"step":"ftp_upload","status":"in_progress","metadata":{"title":"Marathon Spezial","releaseDate":"2026-11-05","profile":"studio"}}' \
   http://localhost:8080/episodes/259/steps
 ```
 
 Unknown status → `400`. Empty step → `400`.
 
-### `POST /episodes/{id}/metadata`
+### `POST /episodes/{number}/metadata`
 
 Upsert metadata (title, release date, profile) without touching steps.
 
 ```sh
 curl -X POST -H "X-Workspace-Key: dev-key" -H "Content-Type: application/json" \
-  -d '{"episodeNumber":"300","title":"Video Folge","profile":"video"}' \
+  -d '{"title":"Video Folge","profile":"video"}' \
   http://localhost:8080/episodes/300/metadata
 ```
 
-### `POST /episodes/{id}/content`
+### `POST /episodes/{number}/content`
 
 Store a named content artifact for shared viewing. `404` when the episode does
 not exist yet.
