@@ -2,37 +2,37 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleName</key>
-	<string>Podflow</string>
 	<key>CFBundleDisplayName</key>
 	<string>Podflow</string>
+	<key>CFBundleExecutable</key>
+	<string>Podflow</string>
+	<key>CFBundleIconFile</key>
+	<string>Podflow.icns</string>
 	<key>CFBundleIdentifier</key>
 	<string>at.laufendentdecken.podflow</string>
-	<key>CFBundleVersion</key>
-	<string>1.3.0</string>
-	<key>CFBundleShortVersionString</key>
-	<string>1.3.0</string>
-	<key>CFBundleExecutable</key>
+	<key>CFBundleName</key>
 	<string>Podflow</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
-	<key>CFBundleIconFile</key>
-	<string>Podflow.icns</string>
-	<key>LSMinimumSystemVersion</key>
-	<string>15.0</string>
-	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
-	<key>NSHighResolutionCapable</key>
-	<true/>
+	<key>CFBundleShortVersionString</key>
+	<string>1.4.0</string>
+	<key>CFBundleVersion</key>
+	<string>1.4.0</string>
 	<key>LSApplicationCategoryType</key>
 	<string>public.app-category.productivity</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>15.0</string>
+	<key>NSHighResolutionCapable</key>
+	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>Laufend Entdecken</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
 	<key>SUFeedURL</key>
 	<string>https://github.com/floriankimmel/podflow/releases/download/desktop-appcast/appcast.xml</string>
 	<key>SUPublicEDKey</key>
 	<string>/HPI1iqF0hDgaTsUpvLZARrUxxywisSuswbx605rzX4=</string>
-	<key>SUEnableAutomaticChecks</key>
-	<true/>
-	<key>NSHumanReadableCopyright</key>
-	<string>Laufend Entdecken</string>
 </dict>
 </plist>
