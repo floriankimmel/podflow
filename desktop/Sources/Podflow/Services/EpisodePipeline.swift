@@ -14,7 +14,7 @@ struct EpisodePipeline {
         var wordpressServer: String
         var ftpHost: String
         var ftpPort: String
-        var posterBaseURL: String
+        var coverBaseURL: String
     }
 
     /// What the review step decides before publishing.
@@ -83,7 +83,7 @@ struct EpisodePipeline {
                 wordpressServer: settings.wordpressServer,
                 ftpHost: settings.ftpHost,
                 ftpPort: settings.ftpPort,
-                posterBaseURL: settings.posterBaseURL
+                coverBaseURL: settings.coverBaseURL
             ),
             episodeFolder: folder
         )

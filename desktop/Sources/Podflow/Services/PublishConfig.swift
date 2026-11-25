@@ -17,7 +17,7 @@ struct PublishConfig {
         var wordpressServer: String
         var ftpHost: String
         var ftpPort: String
-        var posterBaseURL: String
+        var coverBaseURL: String
     }
 
     let configDirectory: URL
@@ -55,7 +55,7 @@ struct PublishConfig {
     static func configYAML(_ inputs: Inputs) throws -> String {
         let coverExtension = (inputs.coverFile as NSString).pathExtension
         let coverTarget = "\(inputs.audioBasename).\(coverExtension)"
-        let posterBase = inputs.posterBaseURL.hasSuffix("/") ? inputs.posterBaseURL : inputs.posterBaseURL + "/"
+        let coverBase = inputs.coverBaseURL.hasSuffix("/") ? inputs.coverBaseURL : inputs.coverBaseURL + "/"
 
         func env(_ secret: SettingsStore.Secret) -> String { "{{env.\(secret.rawValue)}}" }
         func file(_ name: String, _ fileName: String) -> [String: Any] {
@@ -83,7 +83,7 @@ struct PublishConfig {
                     "apiKey": env(.wordpressKey),
                     "server": inputs.wordpressServer,
                     "image": inputs.featuredFile,
-                    "poster": posterBase + coverTarget,
+                    "poster": coverBase + coverTarget,
                     "episode": inputs.audioBasename,
                     "showNotes": EpisodeFile.shownotes,
                     "chapter": EpisodeFile.chapters,

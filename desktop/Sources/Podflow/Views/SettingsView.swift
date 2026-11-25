@@ -70,7 +70,7 @@ struct SettingsView: View {
                 TextField("WordPress-Adresse", text: $settings.wordpressServer)
                 TextField("FTP-Server", text: $settings.ftpHost)
                 TextField("FTP-Port", text: $settings.ftpPort)
-                TextField("Adresse der hochgeladenen Dateien", text: $settings.posterBaseURL)
+                TextField("Adresse der hochgeladenen Dateien", text: $settings.coverBaseURL)
                 TextField("Übliche Uhrzeit der Veröffentlichung", text: $settings.releaseTime)
             }
         }

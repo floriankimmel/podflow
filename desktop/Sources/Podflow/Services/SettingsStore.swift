@@ -17,7 +17,8 @@ final class SettingsStore: ObservableObject {
         static let wordpressServer = "wordpressServer"
         static let ftpHost = "ftpHost"
         static let ftpPort = "ftpPort"
-        static let posterBaseURL = "posterBaseURL"
+        /// Stored under the old name so existing settings survive the rename.
+        static let coverBaseURL = "posterBaseURL"
         static let releaseTime = "releaseTime"
         static let episodesFolder = "episodesFolder"
     }
@@ -35,7 +36,7 @@ final class SettingsStore: ObservableObject {
     static let defaultBackendURL = "https://podflow-backend.fly.dev"
     static let defaultWordpressServer = "https://laufendentdecken-podcast.at"
     static let defaultFTPHost = "rssfeed.laufendentdecken-podcast.at"
-    static let defaultPosterBaseURL = "http://rssfeed.laufendentdecken-podcast.at/data/"
+    static let defaultCoverBaseURL = "http://rssfeed.laufendentdecken-podcast.at/data/"
 
     init(defaults: UserDefaults = .standard, keychain: KeychainStoring = KeychainStore()) {
         self.defaults = defaults
@@ -46,7 +47,7 @@ final class SettingsStore: ObservableObject {
         wordpressServer = defaults.string(forKey: Keys.wordpressServer) ?? Self.defaultWordpressServer
         ftpHost = defaults.string(forKey: Keys.ftpHost) ?? Self.defaultFTPHost
         ftpPort = defaults.string(forKey: Keys.ftpPort) ?? "21"
-        posterBaseURL = defaults.string(forKey: Keys.posterBaseURL) ?? Self.defaultPosterBaseURL
+        coverBaseURL = defaults.string(forKey: Keys.coverBaseURL) ?? Self.defaultCoverBaseURL
         releaseTime = defaults.string(forKey: Keys.releaseTime) ?? "09:00"
         episodesFolder = defaults.string(forKey: Keys.episodesFolder) ?? EpisodeStore.defaultRoot.path
         var loaded: [Secret: String] = [:]
@@ -81,8 +82,8 @@ final class SettingsStore: ObservableObject {
     }
 
     /// Public URL prefix of the files uploaded by FTP (podcast cover).
-    @Published var posterBaseURL: String {
-        didSet { defaults.set(posterBaseURL, forKey: Keys.posterBaseURL) }
+    @Published var coverBaseURL: String {
+        didSet { defaults.set(coverBaseURL, forKey: Keys.coverBaseURL) }
     }
 
     /// Default release time of day ("HH:mm") suggested in the review step.
@@ -134,7 +135,7 @@ final class SettingsStore: ObservableObject {
             wordpressServer: wordpressServer,
             ftpHost: ftpHost,
             ftpPort: ftpPort,
-            posterBaseURL: posterBaseURL
+            coverBaseURL: coverBaseURL
         )
     }
 

@@ -22,7 +22,7 @@ final class PublishConfigTests: XCTestCase {
             releaseDate: Calendar.current.date(from: components)!,
             coverFile: "cover.png", featuredFile: "wordpress.jpg",
             wordpressServer: "https://example.test", ftpHost: "ftp.example.test", ftpPort: "21",
-            posterBaseURL: "http://files.example.test/data")
+            coverBaseURL: "http://files.example.test/data")
     }
 
     private var inputs: PublishConfig.Inputs { Self.inputs }
@@ -227,7 +227,7 @@ final class EpisodePipelineTests: XCTestCase {
         settings = EpisodePipeline.Settings(
             environment: ["WP_KEY": "geheim"], missing: [],
             wordpressServer: "https://example.test", ftpHost: "ftp.example.test", ftpPort: "21",
-            posterBaseURL: "http://files.example.test/data/")
+            coverBaseURL: "http://files.example.test/data/")
     }
 
     override func tearDownWithError() throws {
@@ -428,7 +428,7 @@ final class CLIContractTests: XCTestCase {
             number: "371", title: "Test", audioBasename: "371_test", releaseDate: Date(),
             coverFile: "cover.png", featuredFile: "wordpress.png",
             wordpressServer: "https://example.test", ftpHost: "ftp.example.test", ftpPort: "21",
-            posterBaseURL: "http://files.example.test/data/")
+            coverBaseURL: "http://files.example.test/data/")
         let configFile = try PublishConfig(configDirectory: home.appendingPathComponent(".config/podflow"))
             .write(inputs, episodeFolder: folder)
 
