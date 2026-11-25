@@ -1,0 +1,14 @@
+{
+  "audioSlug" : "371_grossglockner",
+  "coverBaseURL" : "http://files.example.test/data/",
+  "coverFile" : "cover.png",
+  "episodeNumber" : "371",
+  "featuredImageFile" : "wordpress.jpg",
+  "ftp" : {
+    "host" : "ftp.example.test",
+    "port" : "2121"
+  },
+  "releaseDate" : "2026-11-27T08:00:00Z",
+  "title" : "Großglockner",
+  "wordpressServer" : "https://example.test"
+}

@@ -24,6 +24,18 @@ func Publish(
 	userInput input.Input,
 	workingDir string,
 ) error {
+	return publish(io, stateIo, userInput, workingDir, true)
+}
+
+// publish runs the configured steps. reportSteps sends step status to the
+// backend; it is off when a caller (the desktop app's run) owns the status.
+func publish(
+	io config.ConfigurationReaderWriter,
+	stateIo state.StateReaderWriter,
+	userInput input.Input,
+	workingDir string,
+	reportSteps bool,
+) error {
 	if err := Check(io, workingDir); err != nil {
 		fmt.Println(" Error: " + err.Error())
 		return err
@@ -91,7 +103,10 @@ func Publish(
 	// Best-effort backend reporting: nil reporter (unconfigured) is a no-op,
 	// and failures never interrupt the publish pipeline.
 	backendConfig := podflowConfig.ResolvedBackend()
-	reporter := backend.New(backendConfig.URL, backendConfig.WorkspaceKey)
+	var reporter *backend.Reporter
+	if reportSteps {
+		reporter = backend.New(backendConfig.URL, backendConfig.WorkspaceKey)
+	}
 	episodeMetadata := backend.Metadata{
 		EpisodeNumber: currentState.Metadata.EpisodeNumber,
 		Title:         currentState.Metadata.Title,
@@ -101,178 +116,115 @@ func Publish(
 		reporter.Report(episodeMetadata, step, status)
 	}
 
+	total := len(replacedPodflowConfig.Steps)
 	for i := range replacedPodflowConfig.Steps {
 		step := replacedPodflowConfig.Steps[i]
-		if len(step.FTP.Delete) > 0 {
-			fmt.Printf("\n\n[%d/%d] Delete FTP files \n", (i + 1), len(replacedPodflowConfig.Steps))
-			if !currentState.FTPDeleted {
-				report("ftp_delete", backend.StatusInProgress)
-				err := targets.FtpDelete(step)
-				if err != nil {
-					report("ftp_delete", backend.StatusFailed)
-					color.Red(errorPrefix + err.Error())
+		metadata := currentState.Metadata
+		steps := []resumableStep{
+			{
+				id: "ftp_delete", heading: "Delete FTP files", label: "FTP deletion",
+				applies: len(step.FTP.Delete) > 0,
+				done:    func(s *state.State) *bool { return &s.FTPDeleted },
+				run:     func() error { return targets.FtpDelete(step) },
+			},
+			{
+				id: "ftp_upload", heading: "FTP", label: "FTP upload",
+				applies: len(step.FTP.Files) > 0,
+				done:    func(s *state.State) *bool { return &s.FTPUploaded },
+				run:     func() error { return targets.FtpUpload(step) },
+			},
+			{
+				id: "download", heading: "Download", label: "Download",
+				applies: len(step.Download.Files) > 0,
+				done:    func(s *state.State) *bool { return &s.Downloaded },
+				run:     func() error { return targets.FtpDownload(step) },
+			},
+			{
+				id: "s3", heading: "Amazon S3", label: "S3 upload",
+				applies: len(step.S3.Buckets) > 0,
+				done:    func(s *state.State) *bool { return &s.S3Uploaded },
+				run:     func() error { return targets.S3Upload(step.S3) },
+			},
+			{
+				id: "wordpress", heading: "Wordpress", label: "Wordpress production",
+				applies: step.Wordpress != (config.Wordpress{}),
+				done:    func(s *state.State) *bool { return &s.WordpressBlogCreated },
+				run:     func() error { return scheduleWordpress(step.Wordpress, metadata, stateIo) },
+			},
+			{
+				id: "steady", heading: "SteadyHq", label: "Steady production",
+				applies: step.SteadyHq != (config.SteadyHq{}),
+				done:    func(s *state.State) *bool { return &s.SteadyHqCreated },
+				run: func() error {
+					steady := step.SteadyHq
+					steady.Title = strings.ReplaceAll(steady.Title, "{{episodeTitle}}", metadata.Title)
+					return targets.ScheduleSteadyHq(steady, metadata.ReleaseDate)
+				},
+			},
+			{
+				id: "auphonic", heading: "Auphonic", label: "Auphonic production",
+				applies: len(step.Auphonic.Title) > 0,
+				done:    func(s *state.State) *bool { return &s.AuphonicProduction },
+				run: func() error {
+					auphonic := step
+					auphonic.Auphonic.Title = strings.ReplaceAll(auphonic.Auphonic.Title, "{{episodeTitle}}", metadata.Title)
+					_, err := targets.StartAuphonicProduction("https://auphonic.com", auphonic, 20)
 					return err
-				}
-
-				currentState.FTPDeleted = true
-				if err := stateIo.Write(currentState); err != nil {
-					return err
-				}
-				report("ftp_delete", backend.StatusDone)
-				color.Green("  FTP deletion done")
-			} else {
-				report("ftp_delete", backend.StatusDone)
-				color.Green("  FTP deletion skipped")
-			}
+				},
+			},
 		}
-
-		if len(step.FTP.Files) > 0 {
-			fmt.Printf("\n\n[%d/%d] FTP \n", (i + 1), len(replacedPodflowConfig.Steps))
-			if !currentState.FTPUploaded {
-				report("ftp_upload", backend.StatusInProgress)
-				err := targets.FtpUpload(step)
-				if err != nil {
-					report("ftp_upload", backend.StatusFailed)
-					color.Red(errorPrefix + err.Error())
-					return err
-				}
-
-				currentState.FTPUploaded = true
-				if err := stateIo.Write(currentState); err != nil {
-					return err
-				}
-				report("ftp_upload", backend.StatusDone)
-				color.Green("  FTP upload done")
-			} else {
-				report("ftp_upload", backend.StatusDone)
-				color.Green("  FTP upload skipped")
+		for _, resumable := range steps {
+			if !resumable.applies {
+				continue
 			}
-		}
-
-		if len(step.Download.Files) > 0 {
-			fmt.Printf("\n\n[%d/%d] Download \n", (i + 1), len(replacedPodflowConfig.Steps))
-			if !currentState.Downloaded {
-				report("download", backend.StatusInProgress)
-				err := targets.FtpDownload(step)
-				if err != nil {
-					report("download", backend.StatusFailed)
-					color.Red(errorPrefix + err.Error())
-					return err
-				}
-
-				currentState.Downloaded = true
-				if err := stateIo.Write(currentState); err != nil {
-					return err
-				}
-				report("download", backend.StatusDone)
-				color.Green("  Download done")
-			} else {
-				report("download", backend.StatusDone)
-				color.Green("  Download skipped")
-			}
-		}
-
-		if len(step.S3.Buckets) > 0 {
-			fmt.Printf("\n\n[%d/%d] Amazon S3 \n", (i + 1), len(replacedPodflowConfig.Steps))
-			if !currentState.S3Uploaded {
-				report("s3", backend.StatusInProgress)
-				err := targets.S3Upload(step.S3)
-				if err != nil {
-					report("s3", backend.StatusFailed)
-					color.Red(errorPrefix + err.Error())
-					return err
-				}
-
-				currentState.S3Uploaded = true
-				if err := stateIo.Write(currentState); err != nil {
-					return err
-				}
-				report("s3", backend.StatusDone)
-				color.Green("  S3 upload done")
-			} else {
-				report("s3", backend.StatusDone)
-				color.Green("  S3 upload skipped")
-			}
-		}
-		if step.Wordpress != (config.Wordpress{}) {
-			fmt.Printf("\n\n[%d/%d] Wordpress \n", (i + 1), len(replacedPodflowConfig.Steps))
-			if !currentState.WordpressBlogCreated {
-				report("wordpress", backend.StatusInProgress)
-				err := scheduleWordpress(step.Wordpress, currentState.Metadata, stateIo)
-				if err != nil {
-					report("wordpress", backend.StatusFailed)
-					color.Red(errorPrefix + err.Error())
-					return err
-				}
-
-				currentState, _ = stateIo.Read()
-				currentState.WordpressBlogCreated = true
-				if err := stateIo.Write(currentState); err != nil {
-					return err
-				}
-				report("wordpress", backend.StatusDone)
-				color.Green("  Wordpress production done")
-			} else {
-				report("wordpress", backend.StatusDone)
-				color.Green("  Wordpress production skipped")
-			}
-		}
-
-		if step.SteadyHq != (config.SteadyHq{}) {
-			fmt.Printf("\n\n[%d/%d] SteadyHq \n", (i + 1), len(replacedPodflowConfig.Steps))
-			if !currentState.SteadyHqCreated {
-				report("steady", backend.StatusInProgress)
-				step.SteadyHq.Title = strings.ReplaceAll(step.SteadyHq.Title, "{{episodeTitle}}", currentState.Metadata.Title)
-
-				err := targets.ScheduleSteadyHq(
-					step.SteadyHq,
-					currentState.Metadata.ReleaseDate,
-				)
-
-				if err != nil {
-					report("steady", backend.StatusFailed)
-					color.Red(errorPrefix + err.Error())
-					return err
-				}
-
-				currentState, _ = stateIo.Read()
-				currentState.SteadyHqCreated = true
-				if err := stateIo.Write(currentState); err != nil {
-					return err
-				}
-				report("steady", backend.StatusDone)
-				color.Green("  Steady production done")
-			} else {
-				report("steady", backend.StatusDone)
-				color.Green("  Steady production skipped")
-			}
-		}
-
-		if len(step.Auphonic.Title) > 0 {
-			fmt.Printf("\n\n[%d/%d] Auphonic \n", (i + 1), len(replacedPodflowConfig.Steps))
-			if !currentState.AuphonicProduction {
-				report("auphonic", backend.StatusInProgress)
-				step.Auphonic.Title = strings.ReplaceAll(step.Auphonic.Title, "{{episodeTitle}}", currentState.Metadata.Title)
-				_, err := targets.StartAuphonicProduction("https://auphonic.com", step, 20)
-
-				if err != nil {
-					report("auphonic", backend.StatusFailed)
-					color.Red(errorPrefix + err.Error())
-					return err
-				}
-
-				currentState.AuphonicProduction = true
-				if err := stateIo.Write(currentState); err != nil {
-					return err
-				}
-				report("auphonic", backend.StatusDone)
-				color.Green("  Auphonic production done")
-			} else {
-				report("auphonic", backend.StatusDone)
-				color.Green("  Auphonic production skipped")
+			fmt.Printf("\n\n[%d/%d] %s \n", i+1, total, resumable.heading)
+			if err := resumable.runOnce(stateIo, report); err != nil {
+				return err
 			}
 		}
 	}
+	return nil
+}
+
+// resumableStep is one publish target. Its done flag in the state file makes
+// a repeated publish skip it.
+type resumableStep struct {
+	// id is the step name reported to the backend.
+	id, heading, label string
+	applies            bool
+	done               func(*state.State) *bool
+	run                func() error
+}
+
+func (r resumableStep) runOnce(stateIo state.StateReaderWriter, report func(step, status string)) error {
+	current, err := stateIo.Read()
+	if err != nil {
+		return err
+	}
+	if *r.done(&current) {
+		report(r.id, backend.StatusDone)
+		color.Green("  " + r.label + " skipped")
+		return nil
+	}
+
+	report(r.id, backend.StatusInProgress)
+	if err := r.run(); err != nil {
+		report(r.id, backend.StatusFailed)
+		color.Red(errorPrefix + err.Error())
+		return err
+	}
+
+	// The step may have saved progress of its own (e.g. WordPress ids).
+	current, err = stateIo.Read()
+	if err != nil {
+		return err
+	}
+	*r.done(&current) = true
+	if err := stateIo.Write(current); err != nil {
+		return err
+	}
+	report(r.id, backend.StatusDone)
+	color.Green("  " + r.label + " done")
 	return nil
 }
 

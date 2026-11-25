@@ -114,6 +114,24 @@ func main() {
 				},
 			},
 			{
+				Name:      "publish-episode",
+				Usage:     "Publish the website post from a publish.json written by the desktop app",
+				ArgsUsage: "<publish.json>",
+				Action: func(c *cli.Context) error {
+					if c.NArg() != 1 {
+						return cli.Exit("usage: podflow publish-episode <publish.json>", 2)
+					}
+					input, err := cmd.ReadEpisodeInput(c.Args().First())
+					if err != nil {
+						return cli.Exit(" Error: "+err.Error(), 2)
+					}
+					if err := cmd.PublishEpisode(input, state.StateFile{}, config.Dir()); err != nil {
+						return cli.Exit("", 1)
+					}
+					return nil
+				},
+			},
+			{
 				Name:  "archive",
 				Usage: "archive episodes that have already been published",
 				Action: func(cCtx *cli.Context) error {
