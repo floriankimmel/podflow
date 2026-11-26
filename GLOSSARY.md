@@ -44,6 +44,10 @@ _Avoid_: solo episode, Host-Gespräch (in code)
 The fully cut video of an episode, the starting point of production.
 _Avoid_: raw video, recording, input file
 
+**Chapter marks**:
+Timestamps with titles that split an episode's audio into topics. A host adds them during the recording; `podflow chapter export` writes them to the chapters file used by the website post and Auphonic.
+_Avoid_: timestamps, markers
+
 **Transcript**:
 The full text of what is said in an episode, used as the source for all written content.
 
@@ -73,7 +77,7 @@ _Avoid_: approval, check
 
 **Cover**:
 The square episode artwork shown in podcast players and apps and used for the YouTube video.
-_Avoid_: poster, episode image, thumbnail
+_Avoid_: poster (in prose; `poster` is the Podlove/WordPress config field that holds the Cover's URL), episode image, thumbnail
 
 **Featured image**:
 The image shown above the episode's post on the website.
@@ -84,6 +88,10 @@ _Avoid_: image, Beitragsbild (in code), wordpress image
 **Publish**:
 The host's decision after the review that hands the episode to YouTube, the podcast feed and the website.
 _Avoid_: release, go live
+
+**Step**:
+One publish target run by `podflow publish` (FTP upload or delete, download, S3, WordPress, SteadyHQ, Auphonic). A finished step is recorded in the episode's state file and is not run again; its status is shown live in the desktop app.
+_Avoid_: task, job
 
 **Release date**:
 The date and time at which the episode's website post goes public.
