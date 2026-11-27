@@ -6,7 +6,7 @@ programs live in this repo:
 | Path | What | Language |
 |---|---|---|
 | `cmd/podflow`, `internal/` | `podflow` CLI: config-driven publish steps (FTP, S3, Auphonic, SteadyHQ, WordPress), chapter marks, resumable state | Go module `github.com/floriankimmel/podflow` |
-| `backend/` | Shared episode-state service on fly.io (`podflow-backend`), SQLite, `X-Workspace-Key` auth | separate Go module |
+| `backend/` | Shared episode-state service on the Pi `withalm` (`https://podflow.withalm-pi.cc`), SQLite, `X-Workspace-Key` auth | separate Go module |
 | `desktop/` | SwiftUI macOS app plus a Claude Code plugin; the app runs the plugin headless for the episode flow and bundles the CLI | Swift, bash, Markdown. See `desktop/CLAUDE.md` |
 
 Domain terms (Episode, Review, Cover, Featured image, Publish, …) are defined in
@@ -19,7 +19,7 @@ make build                       # CLI: go mod tidy + build to bin/ and ~/go/bin
 go test -count=1 ./...           # CLI tests (Ginkgo/Gomega suites, *_suite_test.go)
 golangci-lint run                # CLI lint
 (cd backend && go test ./...)    # backend tests
-(cd backend && fly deploy)       # backend deploy
+make deploy-backend              # backend deploy to the Pi
 cd desktop && make test          # plugin script tests + Swift tests
 ```
 

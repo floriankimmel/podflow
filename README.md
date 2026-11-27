@@ -172,7 +172,7 @@ of local truth.
 
 ```yml
 backend:
-    url: https://podflow-backend.fly.dev
+    url: https://podflow.withalm-pi.cc
     workspaceKey: '{{env.PODFLOW_WORKSPACE_KEY}}'
 ```
 
