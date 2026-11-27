@@ -1,7 +1,8 @@
 # podflow backend
 
 Source of truth for shared episode publish state. Small Go HTTP service with a
-SQLite database file, deployed on fly.io with a persistent volume.
+SQLite database file, running on the Pi `withalm` (systemd unit `podflow`)
+behind Cloudflare Tunnel: https://podflow.withalm-pi.cc
 
 ## Run locally
 
@@ -9,13 +10,14 @@ SQLite database file, deployed on fly.io with a persistent volume.
 WORKSPACE_KEY=dev-key DATABASE_PATH=/tmp/podflow.db go run .
 ```
 
-## Deploy (fly.io)
+## Deploy (Pi)
 
 ```sh
-fly volumes create podflow_data --size 1
-fly secrets set WORKSPACE_KEY=<shared team key>
-fly deploy
+make deploy-backend   # from the repo root; runs backend/deploy.sh
 ```
+
+Syncs the source to the Pi, builds there, restarts `podflow`, checks `/health`.
+Data: `/srv/apps/podflow/data/podflow.db`. Secrets: `/etc/apps/podflow.env`.
 
 ## Auth
 

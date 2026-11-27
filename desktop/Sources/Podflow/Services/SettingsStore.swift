@@ -33,7 +33,9 @@ final class SettingsStore: ObservableObject {
         case ftpPassword = "FTP_PWD"
     }
 
-    static let defaultBackendURL = "https://podflow-backend.fly.dev"
+    static let defaultBackendURL = "https://podflow.withalm-pi.cc"
+    /// Old Fly.io URL; a saved copy of it is replaced by defaultBackendURL.
+    static let legacyBackendURL = "https://podflow-backend.fly.dev"
     static let defaultWordpressServer = "https://laufendentdecken-podcast.at"
     static let defaultFTPHost = "rssfeed.laufendentdecken-podcast.at"
     static let defaultCoverBaseURL = "http://rssfeed.laufendentdecken-podcast.at/data/"
@@ -41,7 +43,8 @@ final class SettingsStore: ObservableObject {
     init(defaults: UserDefaults = .standard, keychain: KeychainStoring = KeychainStore()) {
         self.defaults = defaults
         self.keychain = keychain
-        backendURL = defaults.string(forKey: Keys.backendURL) ?? Self.defaultBackendURL
+        backendURL = defaults.string(forKey: Keys.backendURL)
+            .flatMap { $0 == Self.legacyBackendURL ? nil : $0 } ?? Self.defaultBackendURL
         onboardingCompleted = defaults.bool(forKey: Keys.onboardingCompleted)
         auphonicPreset = defaults.string(forKey: Keys.auphonicPreset) ?? ""
         wordpressServer = defaults.string(forKey: Keys.wordpressServer) ?? Self.defaultWordpressServer
